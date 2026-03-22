@@ -118,12 +118,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           })}
         </nav>
 
-        <div className="absolute inset-x-4 bottom-4 rounded-3xl border border-white/10 bg-gradient-to-br from-sky-500/20 to-indigo-500/10 p-4">
-          <p className="text-sm font-semibold text-white">Role-aware workspace</p>
-          <p className="mt-1 text-xs leading-5 text-slate-300">
-            Giao diện được tối ưu cho HR, payroll và management.
-          </p>
-        </div>
       </aside>
     </>
   );

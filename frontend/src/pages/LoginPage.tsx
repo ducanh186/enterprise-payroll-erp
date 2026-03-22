@@ -149,7 +149,7 @@ export default function LoginPage() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin / hr_staff / accountant"
+                  placeholder="admin01 / hr01 / payroll01"
                   className="block w-full rounded-t-lg rounded-b-none border-b-2 border-transparent bg-slate-100 py-3.5 pl-11 pr-4 font-medium text-slate-900 placeholder:text-slate-400/60 transition-all focus:border-slate-950 focus:outline-none focus:ring-0"
                 />
               </div>
