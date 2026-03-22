@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Architect Ledger - Attendance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#dfe3e7",
+              "on-secondary": "#ffffff",
+              "error-container": "#ffdad6",
+              "outline": "#757684",
+              "on-primary-fixed-variant": "#173bab",
+              "surface": "#f6fafe",
+              "surface-bright": "#f6fafe",
+              "surface-container-high": "#e4e9ed",
+              "surface-dim": "#d6dade",
+              "tertiary-fixed": "#d3e4fe",
+              "on-tertiary-fixed-variant": "#38485d",
+              "tertiary-fixed-dim": "#b7c8e1",
+              "outline-variant": "#c4c5d5",
+              "inverse-primary": "#b8c4ff",
+              "tertiary-container": "#3c4c61",
+              "on-error": "#ffffff",
+              "surface-container": "#eaeef2",
+              "on-surface": "#171c1f",
+              "primary-fixed-dim": "#b8c4ff",
+              "secondary-fixed": "#95f8a7",
+              "on-tertiary-fixed": "#0b1c30",
+              "on-error-container": "#93000a",
+              "surface-container-low": "#f0f4f8",
+              "inverse-on-surface": "#edf1f5",
+              "on-primary": "#ffffff",
+              "on-secondary-fixed-variant": "#005323",
+              "surface-tint": "#3755c3",
+              "on-primary-fixed": "#001453",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#acbcd6",
+              "secondary-fixed-dim": "#79db8d",
+              "primary-container": "#1e40af",
+              "surface-container-highest": "#dfe3e7",
+              "primary-fixed": "#dde1ff",
+              "on-secondary-container": "#007233",
+              "background": "#f6fafe",
+              "error": "#ba1a1a",
+              "on-primary-container": "#a8b8ff",
+              "on-surface-variant": "#444653",
+              "on-tertiary": "#ffffff",
+              "on-background": "#171c1f",
+              "inverse-surface": "#2c3134",
+              "secondary": "#006d30",
+              "tertiary": "#25354a",
+              "primary": "#00288e",
+              "secondary-container": "#92f5a4",
+              "on-secondary-fixed": "#00210a"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .tnum { font-feature-settings: "tnum"; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen p-4 gap-2 bg-[#f0f4f8] dark:bg-slate-900 docked left-0 w-64 fixed z-50">
+<div class="flex items-center gap-3 px-2 mb-6">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-icon="architecture">architecture</span>
+</div>
+<div>
+<h1 class="text-lg font-bold text-blue-950 dark:text-white leading-tight">The Ledger</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500">Enterprise HRM</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-medium text-sm">Self-Service</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-medium text-sm">Contracts</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-blue-900 dark:text-blue-300 shadow-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span class="font-medium text-sm">Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-medium text-sm">Payroll</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="font-medium text-sm">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings_suggest">settings_suggest</span>
+<span class="font-medium text-sm">Admin</span>
+</a>
+</nav>
+<div class="mt-auto pt-4">
+<button class="w-full py-3 px-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-lg font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span>New Entry</span>
+</button>
+</div>
+</aside>
+<main class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-6 h-16 bg-[#f6fafe] dark:bg-slate-950 sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-black text-blue-900 dark:text-blue-100 font-headline tracking-tight">Architect Ledger</h2>
+<div class="h-6 w-px bg-outline-variant/30 hidden lg:block"></div>
+<div class="hidden lg:flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-full">
+<span class="material-symbols-outlined text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-xs w-48" placeholder="Search logs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="swap_horiz">swap_horiz</span>
+</button>
+<div class="flex items-center gap-3 pl-2 border-l border-outline-variant/20">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold leading-none">Julian Vellum</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Senior Architect</p>
+</div>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full border-2 border-surface-container-high object-cover" data-alt="Corporate headshot of a male professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWwYo32zUoXrkD8rKljuqf7wnNszPbA4KYUoa74RJJIPe8DsRn-vXbtdSSSBDw1DgClmPy8zm3lq3M3Z4LHbJWYeS5CPFc0LvJ0MeEIPvwGZ6121ihOVDVO6v2EWdHBiCuFMnymQq8009j79QX7oP9eURwYFOahvBAkzo3d84lZa73QOLKmr0_UT4fzNzToMvZELhc-GoM-GRcQWQP4WqdVyNargg280cCiiKxjSS4hLnvXvy-BtH8znmMrm5a0A5mtqnSJEPUGB8y"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-6 lg:p-10 space-y-10">
+<!-- Summary Bar -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-primary flex items-center justify-between">
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Total Hours (Oct)</p>
+<p class="text-3xl font-black text-primary tnum">164.5</p>
+</div>
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed-variant" data-icon="timer">timer</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-secondary flex items-center justify-between">
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">On-Time Accuracy</p>
+<p class="text-3xl font-black text-secondary tnum">98.2%</p>
+</div>
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-fixed-variant" data-icon="verified">verified</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-tertiary flex items-center justify-between">
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Leave Balance</p>
+<p class="text-3xl font-black text-tertiary tnum">12 <span class="text-sm font-normal text-on-surface-variant">Days</span></p>
+</div>
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-fixed-variant" data-icon="flight_takeoff">flight_takeoff</span>
+</div>
+</div>
+</section>
+<!-- Main Interactive Area -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+<!-- Calendar View (Left side) -->
+<div class="xl:col-span-7 bg-surface-container-low rounded-xl p-8 space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-bold tracking-tight">Attendance Ledger</h3>
+<div class="flex items-center gap-2">
+<select class="bg-surface-container-lowest border-none text-sm font-bold rounded-lg py-2 pl-4 pr-10 focus:ring-2 focus:ring-primary shadow-sm">
+<option>October 2023</option>
+<option>September 2023</option>
+<option>August 2023</option>
+</select>
+<button class="p-2 hover:bg-surface-container-high transition-colors rounded-lg">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+</button>
+</div>
+</div>
+<!-- Simplified Calendar Grid -->
+<div class="grid grid-cols-7 gap-3">
+<!-- Days Header -->
+<div class="text-[10px] font-black text-on-surface-variant text-center uppercase py-2">Mon</div>
+<div class="text-[10px] font-black text-on-surface-variant text-center uppercase py-2">Tue</div>
+<div class="text-[10px] font-black text-on-surface-variant text-center uppercase py-2">Wed</div>
+<div class="text-[10px] font-black text-on-surface-variant text-center uppercase py-2">Thu</div>
+<div class="text-[10px] font-black text-on-surface-variant text-center uppercase py-2">Fri</div>
+<div class="text-[10px] font-black text-on-surface-variant text-center uppercase py-2">Sat</div>
+<div class="text-[10px] font-black text-on-surface-variant text-center uppercase py-2">Sun</div>
+<!-- Row 1 -->
+<div class="h-24 bg-surface-container-highest/20 rounded-lg p-2 text-on-surface-variant/40 text-xs font-bold">25</div>
+<div class="h-24 bg-surface-container-highest/20 rounded-lg p-2 text-on-surface-variant/40 text-xs font-bold">26</div>
+<div class="h-24 bg-surface-container-highest/20 rounded-lg p-2 text-on-surface-variant/40 text-xs font-bold">27</div>
+<div class="h-24 bg-surface-container-highest/20 rounded-lg p-2 text-on-surface-variant/40 text-xs font-bold">28</div>
+<div class="h-24 bg-surface-container-highest/20 rounded-lg p-2 text-on-surface-variant/40 text-xs font-bold">29</div>
+<div class="h-24 bg-surface-container-highest/20 rounded-lg p-2 text-on-surface-variant/40 text-xs font-bold">30</div>
+<div class="h-24 bg-surface-container-lowest rounded-lg p-2 flex flex-col justify-between border-2 border-transparent">
+<span class="text-xs font-bold">1</span>
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+</div>
+<!-- Row 2 -->
+<div class="h-24 bg-surface-container-lowest rounded-lg p-2 flex flex-col justify-between">
+<span class="text-xs font-bold">2</span>
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+</div>
+<div class="h-24 bg-surface-container-lowest rounded-lg p-2 flex flex-col justify-between">
+<span class="text-xs font-bold">3</span>
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+</div>
+<div class="h-24 bg-surface-container-lowest rounded-lg p-2 flex flex-col justify-between">
+<span class="text-xs font-bold">4</span>
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+</div>
+<div class="h-24 bg-surface-container-lowest rounded-lg p-2 flex flex-col justify-between border-2 border-primary">
+<span class="text-xs font-bold text-primary">5</span>
+<div class="flex gap-1">
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+<div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+</div>
+</div>
+<div class="h-24 bg-surface-container-lowest rounded-lg p-2 flex flex-col justify-between">
+<span class="text-xs font-bold">6</span>
+<div class="w-1.5 h-1.5 bg-error rounded-full"></div>
+</div>
+<div class="h-24 bg-surface-container-highest/40 rounded-lg p-2 flex flex-col justify-between">
+<span class="text-xs font-bold">7</span>
+</div>
+<div class="h-24 bg-surface-container-highest/40 rounded-lg p-2 flex flex-col justify-between">
+<span class="text-xs font-bold">8</span>
+</div>
+</div>
+<div class="flex gap-6 pt-4 border-t border-outline-variant/20">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-[10px] font-bold uppercase tracking-tight">Present</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="text-[10px] font-bold uppercase tracking-tight">Absent / Sick</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="text-[10px] font-bold uppercase tracking-tight">Selected Day</span>
+</div>
+</div>
+</div>
+<!-- Detailed Logs (Right side) -->
+<div class="xl:col-span-5 space-y-8">
+<div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h4 class="text-2xl font-black tracking-tighter">October 5, 2023</h4>
+<p class="text-sm text-on-surface-variant font-medium">Thursday</p>
+</div>
+<button class="bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">
+                                Request Adjustment
+                            </button>
+</div>
+<div class="space-y-10 relative">
+<!-- Vertical Line -->
+<div class="absolute left-[23px] top-2 bottom-2 w-0.5 bg-surface-container-high"></div>
+<!-- Entry 1 -->
+<div class="relative pl-14">
+<div class="absolute left-0 top-0 w-12 h-12 bg-surface-container-lowest border-2 border-primary rounded-full flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-primary" data-icon="login">login</span>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<p class="text-lg font-black tnum">08:52 AM</p>
+<p class="text-sm text-on-surface-variant">Clock-In</p>
+</div>
+<div class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-black uppercase rounded-full">
+                                        Auto-logged
+                                    </div>
+</div>
+<div class="mt-4 p-4 bg-surface rounded-lg flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded flex items-center justify-center overflow-hidden">
+<img alt="Map snippet" class="w-full h-full object-cover opacity-50" data-alt="Satellite map view of urban office park" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBreuMYr0Jd2f_-WlgJ0jUOTkOApYj4hVuib72-f7C0UWyh5zK8Mwl5CE4nUAmHmOv2q3kVqAvlLZIqfBFZsAghX0T-d5hLEZGodOL6efBvOvRyyDZHOUQjN2VaNTpNy5wVqNSxq9vSkfu4ondRznKRnMzN17FHucgA6EYvd4UpYf_MSqTaPhOGSyYvR_rqSH-3c_XX6wr6DixxpWIA8AAzG-UnnqQDyVbFumeDcClQ8yyds0cbRe2pBsveCEAei5LVaTXytzskS8ep"/>
+</div>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase">Method &amp; Location</p>
+<p class="text-sm font-semibold">FaceID • Main Entrance HQ</p>
+</div>
+</div>
+</div>
+<!-- Entry 2 -->
+<div class="relative pl-14 opacity-60 hover:opacity-100 transition-opacity">
+<div class="absolute left-0 top-0 w-12 h-12 bg-surface-container-lowest border-2 border-outline-variant rounded-full flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-outline" data-icon="logout">logout</span>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<p class="text-lg font-black tnum">05:45 PM</p>
+<p class="text-sm text-on-surface-variant">Clock-Out</p>
+</div>
+<div class="px-3 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-black uppercase rounded-full">
+                                        Pending Approval
+                                    </div>
+</div>
+<div class="mt-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<p class="text-xs font-medium italic">Manually logged from Mobile App (Remote)</p>
+</div>
+</div>
+</div>
+<div class="mt-12 pt-8 border-t border-outline-variant/10">
+<div class="bg-surface-container-low p-4 rounded-lg flex justify-between items-center">
+<span class="text-xs font-bold uppercase text-on-surface-variant">Daily Net Duration</span>
+<span class="text-lg font-black tnum text-primary">08h 53m</span>
+</div>
+</div>
+</div>
+<!-- Additional Context/Quick Help -->
+<div class="bg-gradient-to-br from-tertiary-container to-tertiary p-6 rounded-xl text-on-tertiary-container relative overflow-hidden">
+<div class="relative z-10">
+<h5 class="font-bold text-white mb-2">Need a revision?</h5>
+<p class="text-sm opacity-80 mb-4">Forget to clock-out yesterday? Submit an attendance adjustment request to your manager.</p>
+<a class="inline-flex items-center gap-2 text-xs font-black uppercase text-secondary-fixed hover:underline" href="#">
+                                Start Request <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-white/5 text-9xl pointer-events-none" data-icon="history_edu">history_edu</span>
+</div>
+</div>
+</div>
+<!-- Detailed History Table (Asymmetric Layout) -->
+<section class="space-y-6">
+<div class="flex items-end justify-between">
+<div>
+<h3 class="text-2xl font-black tracking-tighter">Activity Stream</h3>
+<p class="text-sm text-on-surface-variant">Detailed historical punch logs for current month</p>
+</div>
+<button class="text-xs font-bold uppercase border-b-2 border-on-surface pb-1">Export PDF</button>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant/10">
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Date</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Status</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Check In</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Check Out</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Duration</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container-high/30 transition-colors">
+<td class="px-6 py-5 font-bold text-sm">Oct 04, 2023</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 bg-secondary-fixed px-2 py-0.5 rounded-full text-[10px] font-bold text-on-secondary-fixed-variant uppercase">
+<span class="w-1 h-1 bg-on-secondary-fixed-variant rounded-full"></span> Confirmed
+                                    </span>
+</td>
+<td class="px-6 py-5 text-sm tnum">09:01 AM</td>
+<td class="px-6 py-5 text-sm tnum">06:12 PM</td>
+<td class="px-6 py-5 text-sm font-semibold tnum">09h 11m</td>
+<td class="px-6 py-5 text-right">
+<button class="material-symbols-outlined text-outline-variant hover:text-primary transition-colors" data-icon="more_horiz">more_horiz</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high/30 transition-colors">
+<td class="px-6 py-5 font-bold text-sm">Oct 03, 2023</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 bg-tertiary-fixed px-2 py-0.5 rounded-full text-[10px] font-bold text-on-tertiary-fixed-variant uppercase">
+<span class="w-1 h-1 bg-on-tertiary-fixed-variant rounded-full"></span> Manual Adjustment
+                                    </span>
+</td>
+<td class="px-6 py-5 text-sm tnum">09:15 AM</td>
+<td class="px-6 py-5 text-sm tnum">06:00 PM</td>
+<td class="px-6 py-5 text-sm font-semibold tnum">08h 45m</td>
+<td class="px-6 py-5 text-right">
+<button class="material-symbols-outlined text-outline-variant hover:text-primary transition-colors" data-icon="more_horiz">more_horiz</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high/30 transition-colors">
+<td class="px-6 py-5 font-bold text-sm">Oct 02, 2023</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 bg-secondary-fixed px-2 py-0.5 rounded-full text-[10px] font-bold text-on-secondary-fixed-variant uppercase">
+<span class="w-1 h-1 bg-on-secondary-fixed-variant rounded-full"></span> Confirmed
+                                    </span>
+</td>
+<td class="px-6 py-5 text-sm tnum">08:58 AM</td>
+<td class="px-6 py-5 text-sm tnum">05:45 PM</td>
+<td class="px-6 py-5 text-sm font-semibold tnum">08h 47m</td>
+<td class="px-6 py-5 text-right">
+<button class="material-symbols-outlined text-outline-variant hover:text-primary transition-colors" data-icon="more_horiz">more_horiz</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest glass-panel flex justify-around items-center h-16 px-4 z-50 border-t border-outline-variant/10">
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] font-bold uppercase">Self</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="event_available" style="font-variation-settings: 'FILL' 1;">event_available</span>
+<span class="text-[10px] font-bold uppercase">Attend</span>
+</button>
+<button class="w-12 h-12 -mt-8 bg-primary rounded-full shadow-lg shadow-primary/40 flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="text-[10px] font-bold uppercase">Payroll</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="settings_suggest">settings_suggest</span>
+<span class="text-[10px] font-bold uppercase">Menu</span>
+</button>
+</nav>
+</body></html>

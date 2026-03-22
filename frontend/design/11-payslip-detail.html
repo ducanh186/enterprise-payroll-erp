@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Payslip Detail - Architectural Ledger</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-fixed": "#dde1ff",
+              "error-container": "#ffdad6",
+              "surface-bright": "#f6fafe",
+              "on-tertiary-container": "#acbcd6",
+              "surface-container-low": "#f0f4f8",
+              "on-secondary-fixed": "#00210a",
+              "on-surface-variant": "#444653",
+              "on-error-container": "#93000a",
+              "background": "#f6fafe",
+              "on-surface": "#171c1f",
+              "secondary-fixed-dim": "#79db8d",
+              "tertiary-fixed-dim": "#b7c8e1",
+              "inverse-on-surface": "#edf1f5",
+              "primary": "#00288e",
+              "surface-tint": "#3755c3",
+              "on-background": "#171c1f",
+              "inverse-primary": "#b8c4ff",
+              "surface-container": "#eaeef2",
+              "outline": "#757684",
+              "tertiary-container": "#3c4c61",
+              "tertiary": "#25354a",
+              "surface-container-high": "#e4e9ed",
+              "on-tertiary-fixed-variant": "#38485d",
+              "surface-dim": "#d6dade",
+              "primary-fixed-dim": "#b8c4ff",
+              "primary-container": "#1e40af",
+              "tertiary-fixed": "#d3e4fe",
+              "on-primary-fixed": "#001453",
+              "error": "#ba1a1a",
+              "surface": "#f6fafe",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-fixed-variant": "#005323",
+              "secondary-fixed": "#95f8a7",
+              "inverse-surface": "#2c3134",
+              "on-tertiary-fixed": "#0b1c30",
+              "on-primary": "#ffffff",
+              "on-primary-fixed-variant": "#173bab",
+              "surface-variant": "#dfe3e7",
+              "outline-variant": "#c4c5d5",
+              "on-error": "#ffffff",
+              "on-primary-container": "#a8b8ff",
+              "surface-container-highest": "#dfe3e7",
+              "on-secondary": "#ffffff",
+              "secondary": "#006d30",
+              "secondary-container": "#92f5a4",
+              "on-secondary-container": "#007233",
+              "on-tertiary": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .print-container { width: 100% !important; margin: 0 !important; padding: 0 !important; border: none !important; }
+            .surface-container-low { background-color: transparent !important; }
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased">
+<!-- Sidebar Navigation Shell -->
+<aside class="hidden md:flex flex-col py-8 px-4 gap-y-2 h-screen w-64 fixed left-0 top-0 bg-slate-50 border-r border-slate-200 no-print">
+<div class="mb-10 px-2">
+<h1 class="text-lg font-black text-blue-900 uppercase tracking-widest">HRM Portal</h1>
+<p class="text-xs font-medium text-slate-500">Employee Self-Service</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-all font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-all font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span>Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-all font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Contracts</span>
+</a>
+<!-- Active State: Payroll -->
+<a class="flex items-center gap-3 px-3 py-2 bg-white text-blue-700 shadow-sm rounded-lg border-l-4 border-blue-800 font-semibold text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span>Payroll</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1 pt-4 border-t border-slate-200/60">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-all font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-200/50 transition-all font-medium text-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-64 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center h-16 px-6 w-full fixed top-0 left-0 md:left-64 md:right-0 z-50 bg-white/85 backdrop-blur-xl border-b border-slate-200/50 shadow-sm no-print">
+<div class="flex items-center gap-2">
+<span class="text-xl font-bold tracking-tighter text-blue-900">Architectural Ledger</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100 transition-colors rounded-full">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-slate-200">
+<img class="w-full h-full object-cover" data-alt="User Profile Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcyCzV7FaH-5MS82ko4ghspWZ-0UqyXIQ3IPsgaRODMjhRUOx6cHnBruh75Ef3nAtO_VdSpnmPD7n8EcTADlSsOSwpFRj2mhLA235gfV9qmB0BhYURgKz7XO0y472jwSF7G_IouIrrxRVy8HMqbZGfv60K4sZYeW3G1DOLHOa1wUt7pAFlUR9_HSMA7Qz2Bsa_S7oCe_V3eOla8kbp5h-94SJlYNl4HEjvP59B3y9zQvtpBFzdj56wOXjEn7Xup9PhRR9aI8VkVDlL"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="pt-24 pb-12 px-6 md:px-10 max-w-5xl mx-auto print-container">
+<!-- Breadcrumb / Actions -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 no-print">
+<div>
+<h2 class="text-2xl font-extrabold tracking-tight text-on-surface">Oct 2023 Payslip</h2>
+<p class="text-sm text-outline font-medium">Payroll / Salary History / OCT-23-4492</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest text-primary border border-outline-variant hover:bg-surface-container-low transition-colors font-semibold rounded-lg text-sm" onclick="window.print()">
+<span class="material-symbols-outlined" data-icon="print">print</span>
+                        Print
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-md hover:opacity-90 transition-opacity font-semibold rounded-lg text-sm">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                        Download All
+                    </button>
+</div>
+</div>
+<!-- Ledger Sheet (The Payslip) -->
+<div class="bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/10 overflow-hidden">
+<!-- Print Header / Logo Area -->
+<div class="p-8 border-b border-outline-variant/20 bg-surface-container-low/30">
+<div class="flex flex-col md:flex-row justify-between gap-8">
+<div class="space-y-4">
+<div class="flex items-center gap-2 mb-6">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-white" data-icon="architecture">architecture</span>
+</div>
+<span class="text-xl font-black text-primary uppercase tracking-widest">Architectural Ledger Ltd.</span>
+</div>
+<div class="grid grid-cols-2 gap-x-12 gap-y-2">
+<div>
+<p class="text-[0.6875rem] font-bold uppercase tracking-wider text-outline">Employee Name</p>
+<p class="text-sm font-semibold text-on-surface">ALEXANDER R. VANCE</p>
+</div>
+<div>
+<p class="text-[0.6875rem] font-bold uppercase tracking-wider text-outline">Employee ID</p>
+<p class="text-sm font-semibold text-on-surface">#EMP-2023-4492</p>
+</div>
+<div>
+<p class="text-[0.6875rem] font-bold uppercase tracking-wider text-outline">Department</p>
+<p class="text-sm font-semibold text-on-surface">Structural Engineering</p>
+</div>
+<div>
+<p class="text-[0.6875rem] font-bold uppercase tracking-wider text-outline">Position</p>
+<p class="text-sm font-semibold text-on-surface">Senior Architect</p>
+</div>
+</div>
+</div>
+<div class="md:text-right space-y-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-[11px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                Confirmed
+                            </div>
+<div class="mt-4">
+<p class="text-[0.6875rem] font-bold uppercase tracking-wider text-outline">Pay Period</p>
+<p class="text-lg font-bold text-on-surface">Oct 1 — Oct 31, 2023</p>
+<p class="text-[0.6875rem] font-medium text-outline-variant">Payment Date: Nov 05, 2023</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Ledger Body: Two Columns -->
+<div class="grid md:grid-cols-2">
+<!-- Column 1: Earnings -->
+<div class="p-8 border-r border-outline-variant/10">
+<h3 class="text-sm font-black uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add_circle">add_circle</span>
+                            Earnings
+                        </h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center py-1 group">
+<span class="text-sm text-on-surface-variant font-medium group-hover:text-on-surface transition-colors">Base Salary</span>
+<span class="text-sm font-bold tabular-nums text-on-surface">$8,500.00</span>
+</div>
+<div class="flex justify-between items-center py-1 group">
+<div class="flex flex-col">
+<span class="text-sm text-on-surface-variant font-medium group-hover:text-on-surface transition-colors">Overtime Hours</span>
+<span class="text-[10px] text-outline">12.5 hrs @ $65.00/hr</span>
+</div>
+<span class="text-sm font-bold tabular-nums text-on-surface">$812.50</span>
+</div>
+<div class="flex justify-between items-center py-1 group">
+<span class="text-sm text-on-surface-variant font-medium group-hover:text-on-surface transition-colors">Performance Bonus</span>
+<span class="text-sm font-bold tabular-nums text-on-surface">$1,200.00</span>
+</div>
+<div class="flex justify-between items-center py-1 group">
+<span class="text-sm text-on-surface-variant font-medium group-hover:text-on-surface transition-colors">Housing Allowance</span>
+<span class="text-sm font-bold tabular-nums text-on-surface">$450.00</span>
+</div>
+</div>
+<div class="mt-8 pt-4 border-t border-dashed border-outline-variant/30 flex justify-between items-center">
+<span class="text-sm font-bold text-on-surface uppercase tracking-tighter">Gross Earnings</span>
+<span class="text-lg font-black tabular-nums text-on-surface">$10,962.50</span>
+</div>
+</div>
+<!-- Column 2: Deductions -->
+<div class="p-8 bg-surface-container-low/10">
+<h3 class="text-sm font-black uppercase tracking-widest text-error mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="remove_circle">remove_circle</span>
+                            Deductions
+                        </h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center py-1 group">
+<span class="text-sm text-on-surface-variant font-medium group-hover:text-on-surface transition-colors">Social Insurance (8%)</span>
+<span class="text-sm font-bold tabular-nums text-on-surface">-$680.00</span>
+</div>
+<div class="flex justify-between items-center py-1 group">
+<span class="text-sm text-on-surface-variant font-medium group-hover:text-on-surface transition-colors">Health Insurance (1.5%)</span>
+<span class="text-sm font-bold tabular-nums text-on-surface">-$127.50</span>
+</div>
+<div class="flex justify-between items-center py-1 group">
+<span class="text-sm text-on-surface-variant font-medium group-hover:text-on-surface transition-colors">Personal Income Tax</span>
+<span class="text-sm font-bold tabular-nums text-on-surface">-$1,442.80</span>
+</div>
+<div class="flex justify-between items-center py-1 group">
+<span class="text-sm text-on-surface-variant font-medium group-hover:text-on-surface transition-colors">Company Charity Fund</span>
+<span class="text-sm font-bold tabular-nums text-on-surface">-$25.00</span>
+</div>
+</div>
+<div class="mt-8 pt-4 border-t border-dashed border-outline-variant/30 flex justify-between items-center">
+<span class="text-sm font-bold text-on-surface uppercase tracking-tighter">Total Deductions</span>
+<span class="text-lg font-black tabular-nums text-on-surface">-$2,275.30</span>
+</div>
+</div>
+</div>
+<!-- Summary: Net Pay -->
+<div class="bg-primary p-8 text-on-primary">
+<div class="flex flex-col md:flex-row items-center justify-between gap-6">
+<div>
+<p class="text-[0.6875rem] font-bold uppercase tracking-widest opacity-70">NET PAYMENT AMOUNT</p>
+<h4 class="text-4xl md:text-5xl font-black tracking-tighter tabular-nums">$8,687.20</h4>
+</div>
+<div class="text-right">
+<p class="text-xs font-medium italic opacity-80 max-w-xs md:ml-auto">Eight thousand, six hundred eighty-seven dollars and twenty cents only.</p>
+</div>
+</div>
+</div>
+<!-- Verification Area -->
+<div class="p-8 border-t border-outline-variant/10">
+<div class="flex flex-col md:flex-row justify-between items-end gap-12">
+<div class="space-y-4 flex-1">
+<div class="p-4 bg-tertiary-fixed/30 rounded-lg border border-tertiary-fixed-dim/20">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-tertiary" data-icon="verified_user">verified_user</span>
+<div>
+<p class="text-xs font-bold text-tertiary uppercase tracking-wide">Blockchain Verification</p>
+<p class="text-[10px] font-mono text-outline leading-tight mt-1 break-all">HASH: 0x8a2f...b3c92e917d4a1f5582990022f163da11</p>
+</div>
+</div>
+</div>
+<p class="text-[10px] text-outline italic">This is a computer-generated document and does not require a physical signature for validity under the Digital Ledger Policy 2023.</p>
+</div>
+<div class="flex flex-col items-center">
+<div class="relative w-40 h-24 mb-2">
+<!-- Digital Signature Placeholders -->
+<div class="absolute inset-0 flex items-center justify-center opacity-10">
+<span class="material-symbols-outlined text-6xl" data-icon="history_edu">history_edu</span>
+</div>
+<div class="absolute bottom-4 left-0 right-0 border-b border-outline-variant/50"></div>
+<div class="relative flex flex-col items-center justify-center h-full">
+<p class="text-[11px] font-bold text-primary font-mono opacity-60">DIGITALLY SIGNED</p>
+<p class="text-[10px] text-outline font-medium">System Administrator</p>
+</div>
+</div>
+<p class="text-[0.6875rem] font-bold uppercase tracking-widest text-outline">Authorised Stamp</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Meta -->
+<div class="mt-8 flex justify-between items-center text-[10px] font-bold text-outline uppercase tracking-widest no-print">
+<span>© 2023 Architectural Ledger Ltd.</span>
+<span>Generated at: 2023-11-05 09:42:12 UTC</span>
+</div>
+</div>
+</main>
+</body></html>

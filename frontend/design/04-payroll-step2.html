@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Payroll Run Wizard - Step 2 | Architect Ledger</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface": "#f6fafe",
+              "on-primary-fixed-variant": "#173bab",
+              "on-secondary-container": "#007233",
+              "tertiary-container": "#3c4c61",
+              "on-surface": "#171c1f",
+              "surface-container-lowest": "#ffffff",
+              "inverse-primary": "#b8c4ff",
+              "surface-variant": "#dfe3e7",
+              "surface-container-high": "#e4e9ed",
+              "primary": "#00288e",
+              "on-tertiary-fixed-variant": "#38485d",
+              "on-secondary-fixed-variant": "#005323",
+              "surface-container": "#eaeef2",
+              "secondary-fixed-dim": "#79db8d",
+              "primary-fixed": "#dde1ff",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#b8c4ff",
+              "primary-container": "#1e40af",
+              "on-error-container": "#93000a",
+              "secondary-container": "#92f5a4",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#444653",
+              "error": "#ba1a1a",
+              "on-primary-container": "#a8b8ff",
+              "on-background": "#171c1f",
+              "tertiary": "#25354a",
+              "on-secondary-fixed": "#00210a",
+              "background": "#f6fafe",
+              "secondary": "#006d30",
+              "tertiary-fixed": "#d3e4fe",
+              "outline": "#757684",
+              "outline-variant": "#c4c5d5",
+              "on-error": "#ffffff",
+              "surface-bright": "#f6fafe",
+              "surface-container-low": "#f0f4f8",
+              "inverse-surface": "#2c3134",
+              "surface-dim": "#d6dade",
+              "surface-tint": "#3755c3",
+              "on-tertiary-container": "#acbcd6",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#b7c8e1",
+              "inverse-on-surface": "#edf1f5",
+              "on-tertiary-fixed": "#0b1c30",
+              "secondary-fixed": "#95f8a7",
+              "surface-container-highest": "#dfe3e7",
+              "on-primary-fixed": "#001453"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .tnum { font-variant-numeric: tabular-nums; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dfe3e7; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c4c5d5; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased flex overflow-hidden h-screen">
+<!-- SideNavBar (Authority: JSON & Design System) -->
+<aside class="hidden md:flex flex-col h-screen p-4 gap-2 bg-[#f0f4f8] dark:bg-slate-900 docked left-0 h-full w-64">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h1 class="text-lg font-bold text-blue-950 dark:text-white leading-tight">The Ledger</h1>
+<p class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Enterprise HRM</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 font-['Inter'] text-sm font-medium hover:bg-white/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">person</span> Self-Service
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 font-['Inter'] text-sm font-medium hover:bg-white/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">description</span> Contracts
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 font-['Inter'] text-sm font-medium hover:bg-white/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">event_available</span> Attendance
+            </a>
+<a class="bg-white dark:bg-slate-800 text-blue-900 dark:text-blue-300 shadow-sm rounded-lg flex items-center gap-3 px-3 py-2 font-['Inter'] text-sm font-medium" href="#">
+<span class="material-symbols-outlined">payments</span> Payroll
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 font-['Inter'] text-sm font-medium hover:bg-white/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">assessment</span> Reports
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 font-['Inter'] text-sm font-medium hover:bg-white/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">settings_suggest</span> Admin
+            </a>
+</nav>
+<button class="mt-auto mb-4 bg-primary text-on-primary px-4 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">add</span> New Entry
+        </button>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<!-- TopAppBar (Authority: JSON & Design System) -->
+<header class="flex justify-between items-center w-full px-6 h-16 bg-[#f6fafe] dark:bg-slate-950 font-['Inter'] antialiased tracking-tight">
+<div class="flex items-center gap-4">
+<div class="md:hidden">
+<span class="material-symbols-outlined text-blue-900">menu</span>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-full">
+<span class="material-symbols-outlined text-slate-500 text-sm">search</span>
+<input class="bg-transparent border-none text-sm focus:ring-0 w-48 text-on-surface" placeholder="Search entries..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-slate-500 hover:bg-slate-100 p-2 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-slate-500 hover:bg-slate-100 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">swap_horiz</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/30"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-blue-900">Alexander Sterling</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">Finance Director</p>
+</div>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" data-alt="Close-up headshot of professional man in formal wear" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3_UxWx62TFVCU86OlQUPmOcQ4us1M9NC0hCN-nfQ6NrFBsp908dwU9Bozf1fTupaHq1Huyyic1gZPaB8_qyy6RiDYHav07cRboKczwsLAGx45WXX0mAeWXjYSxPWGZCfH9HnN0qoJPfHSaLlEU5X2oBiya_c91Yv1N-ibCI91t9yHN2XrqSXSX43q24YCA0FjKLqQLvKdFxVUlLtXoxX9viYeK_JwBYhkC8G7er1hmbq8B77WczbPsdBtR173TYbiY9iR2ZxlyfrQ"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="flex-1 overflow-y-auto bg-surface-container-low p-6 lg:p-10 space-y-8">
+<!-- Wizard Header -->
+<section class="max-w-6xl mx-auto">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+<div>
+<h2 class="text-3xl font-black text-on-surface tracking-tight mb-2">Run Monthly Payroll</h2>
+<p class="text-on-surface-variant max-w-lg">Verify and adjust earnings, bonuses, and deductions for the current cycle. Precision is paramount for this ledger entry.</p>
+</div>
+<!-- Wizard Progress Stepper -->
+<nav class="flex items-center gap-2 p-1 bg-surface-container-high rounded-xl">
+<div class="flex items-center gap-2 px-4 py-2 opacity-50">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary text-[10px] flex items-center justify-center font-bold">1</span>
+<span class="text-xs font-bold uppercase tracking-wider">Select Employees</span>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-2 px-6 py-2 bg-white rounded-lg shadow-sm">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary text-[10px] flex items-center justify-center font-bold">2</span>
+<span class="text-xs font-bold uppercase tracking-wider text-primary">Inputs &amp; Adjustments</span>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-2 px-4 py-2 opacity-50">
+<span class="w-6 h-6 rounded-full bg-slate-400 text-white text-[10px] flex items-center justify-center font-bold">3</span>
+<span class="text-xs font-bold uppercase tracking-wider">Final Preview</span>
+</div>
+</nav>
+</div>
+<!-- Filters & Controls -->
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+<div class="flex items-center gap-3">
+<div class="relative">
+<select class="appearance-none bg-surface-container-lowest border-none pl-4 pr-10 py-2.5 rounded-lg text-sm font-medium shadow-sm focus:ring-2 focus:ring-primary/20">
+<option>All Departments</option>
+<option>Engineering</option>
+<option>Architecture</option>
+<option>Operations</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-lg">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none bg-surface-container-lowest border-none pl-4 pr-10 py-2.5 rounded-lg text-sm font-medium shadow-sm focus:ring-2 focus:ring-primary/20">
+<option>All Status</option>
+<option>Pending</option>
+<option>Adjusted</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-lg">filter_list</span>
+</div>
+</div>
+<div class="flex items-center gap-3 text-sm font-bold text-on-surface-variant bg-surface-container px-4 py-2 rounded-lg">
+<span class="material-symbols-outlined text-primary">group</span>
+                        42 Employees Listed
+                    </div>
+</div>
+<!-- Data Dense Ledger Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container uppercase text-[10px] tracking-widest font-black text-on-surface-variant border-b border-outline-variant/10">
+<th class="px-6 py-4">Employee</th>
+<th class="px-6 py-4">Base Salary</th>
+<th class="px-6 py-4">Overtime (Hrs)</th>
+<th class="px-6 py-4">Bonuses</th>
+<th class="px-6 py-4">Deductions</th>
+<th class="px-6 py-4 text-right">Net Total</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4 text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center text-[10px] font-bold">JD</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Julianne Davenport</p>
+<p class="text-[10px] text-slate-500">Senior Architect</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-on-surface">$8,450.00</td>
+<td class="px-6 py-4 text-sm font-medium tnum">12.5</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-secondary">+$1,200.00</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-error">-$420.00</td>
+<td class="px-6 py-4 text-sm font-bold tnum text-right">$9,230.00</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-secondary-fixed text-on-secondary-fixed-variant flex items-center gap-1 w-fit">
+<span class="w-1 h-1 rounded-full bg-secondary"></span> Adjusted
+                                        </span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">edit_note</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center text-[10px] font-bold">MK</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Marcus Kray</p>
+<p class="text-[10px] text-slate-500">Drafting Lead</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-on-surface">$6,200.00</td>
+<td class="px-6 py-4 text-sm font-medium tnum">0.0</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-slate-400">$0.00</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-error">-$150.00</td>
+<td class="px-6 py-4 text-sm font-bold tnum text-right">$6,050.00</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-surface-variant text-on-surface-variant flex items-center gap-1 w-fit">
+<span class="w-1 h-1 rounded-full bg-slate-500"></span> Pending
+                                        </span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">edit_note</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center text-[10px] font-bold">EH</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Elena Harsent</p>
+<p class="text-[10px] text-slate-500">Structural Engineer</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-on-surface">$7,800.00</td>
+<td class="px-6 py-4 text-sm font-medium tnum">4.0</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-secondary">+$450.00</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-error">-$220.00</td>
+<td class="px-6 py-4 text-sm font-bold tnum text-right">$8,030.00</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-secondary-fixed text-on-secondary-fixed-variant flex items-center gap-1 w-fit">
+<span class="w-1 h-1 rounded-full bg-secondary"></span> Adjusted
+                                        </span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">edit_note</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center text-[10px] font-bold">TL</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Tobias Ling</p>
+<p class="text-[10px] text-slate-500">Project Manager</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-on-surface">$9,100.00</td>
+<td class="px-6 py-4 text-sm font-medium tnum">0.0</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-secondary">+$2,500.00</td>
+<td class="px-6 py-4 text-sm font-medium tnum text-error">-$1,100.00</td>
+<td class="px-6 py-4 text-sm font-bold tnum text-right">$10,500.00</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-surface-variant text-on-surface-variant flex items-center gap-1 w-fit">
+<span class="w-1 h-1 rounded-full bg-slate-500"></span> Pending
+                                        </span>
+</td>
+<td class="px-6 py-4 text-center">
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">edit_note</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer Info -->
+<div class="px-6 py-4 bg-surface-container-low flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+<span>Showing 4 of 42 Employees</span>
+<div class="flex items-center gap-4">
+<span class="text-secondary">Total Processed: $33,810.00</span>
+<span class="text-slate-400">|</span>
+<span class="text-error">Total Deductions: $1,890.00</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Sticky Action Bar -->
+<footer class="bg-white border-t border-outline-variant/10 px-8 py-5 flex justify-between items-center shadow-[0_-4px_24px_rgba(0,0,0,0.03)]">
+<button class="flex items-center gap-2 text-on-surface-variant font-bold text-sm hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+                Back to Selection
+            </button>
+<div class="flex items-center gap-6">
+<div class="text-right">
+<p class="text-[10px] uppercase font-bold text-slate-500 tracking-tighter">Running Total</p>
+<p class="text-xl font-black text-primary tnum leading-tight">$314,920.00</p>
+</div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-3 rounded-lg font-bold text-sm flex items-center gap-3 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                    Proceed to Preview
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</footer>
+</main>
+</body></html>

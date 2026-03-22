@@ -1,0 +1,74 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: payroll-backend
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8001
+      - DB_CONNECTION=sqlsrv
+      - DB_HOST=sqlserver
+      - DB_PORT=1433
+      - DB_DATABASE=enterprise_payroll_erp
+      - DB_USERNAME=sa
+      - DB_PASSWORD=${DB_PASSWORD:-YourStrong!Passw0rd}
+      - FRONTEND_URL=http://localhost:5173
+      - SESSION_DRIVER=file
+      - CACHE_STORE=file
+    command: sh -lc "php artisan optimize:clear && php artisan serve --host=0.0.0.0 --port=8000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - payroll-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: payroll-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8001/api
+    networks:
+      - payroll-net
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: payroll-sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD:-YourStrong!Passw0rd}
+      - MSSQL_PID=Developer
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - payroll-net
+
+volumes:
+  sqlserver-data:
+    driver: local
+
+networks:
+  payroll-net:
+    driver: bridge

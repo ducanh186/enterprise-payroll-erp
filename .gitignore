@@ -1,0 +1,38 @@
+# Dependencies
+backend/vendor/
+frontend/node_modules/
+
+# Environment
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Build artifacts
+frontend/dist/
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/logs/*.log
+backend/bootstrap/cache/*.php
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+docker/data/
+
+# Claude Code (local config)
+.claude/
+
+# Temp / session files
+ses.txt
+
+# OS
+*.orig

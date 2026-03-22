@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Architect Ledger | User Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00288e",
+              "secondary-container": "#92f5a4",
+              "on-secondary-fixed": "#00210a",
+              "inverse-surface": "#2c3134",
+              "tertiary": "#25354a",
+              "secondary": "#006d30",
+              "background": "#f6fafe",
+              "error": "#ba1a1a",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#444653",
+              "on-primary-container": "#a8b8ff",
+              "on-background": "#171c1f",
+              "primary-container": "#1e40af",
+              "surface-container-highest": "#dfe3e7",
+              "primary-fixed": "#dde1ff",
+              "on-secondary-container": "#007233",
+              "on-secondary-fixed-variant": "#005323",
+              "surface-tint": "#3755c3",
+              "on-primary-fixed": "#001453",
+              "surface-container-lowest": "#ffffff",
+              "secondary-fixed-dim": "#79db8d",
+              "on-tertiary-container": "#acbcd6",
+              "secondary-fixed": "#95f8a7",
+              "surface-container-low": "#f0f4f8",
+              "on-tertiary-fixed": "#0b1c30",
+              "on-error-container": "#93000a",
+              "inverse-on-surface": "#edf1f5",
+              "on-primary": "#ffffff",
+              "surface-container": "#eaeef2",
+              "on-surface": "#171c1f",
+              "primary-fixed-dim": "#b8c4ff",
+              "on-error": "#ffffff",
+              "tertiary-fixed-dim": "#b7c8e1",
+              "outline-variant": "#c4c5d5",
+              "inverse-primary": "#b8c4ff",
+              "tertiary-container": "#3c4c61",
+              "on-tertiary-fixed-variant": "#38485d",
+              "tertiary-fixed": "#d3e4fe",
+              "surface-dim": "#d6dade",
+              "outline": "#757684",
+              "surface": "#f6fafe",
+              "on-primary-fixed-variant": "#173bab",
+              "surface-container-high": "#e4e9ed",
+              "surface-bright": "#f6fafe",
+              "on-secondary": "#ffffff",
+              "error-container": "#ffdad6",
+              "surface-variant": "#dfe3e7"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .tnum { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-fixed-dim">
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="h-screen sticky left-0 top-0 w-64 border-r-0 bg-slate-50 dark:bg-slate-950 flex flex-col p-4 gap-2 font-['Inter'] text-sm font-medium transition-all duration-300 ease-in-out">
+<div class="mb-8 px-2">
+<div class="text-lg font-black tracking-widest uppercase text-blue-900 dark:text-blue-100">The Ledger</div>
+<div class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">Enterprise HRM</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Employees</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span>Payroll</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-blue-700 dark:text-blue-400 bg-white dark:bg-slate-900 rounded-lg shadow-sm font-semibold transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span>Admin</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Documents</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 duration-200 shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                    New Request
+                </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl flex justify-between items-center px-8 py-3 font-['Inter'] antialiased tracking-tight border-b border-slate-100/15 dark:border-slate-800/15">
+<div class="flex items-center gap-6">
+<h1 class="text-xl font-bold tracking-tighter text-slate-900 dark:text-slate-50">Architect Ledger</h1>
+<div class="hidden md:flex bg-surface-container-low rounded-full px-4 py-1.5 items-center gap-2 w-72">
+<span class="material-symbols-outlined text-slate-400 text-lg" data-icon="search">search</span>
+<input class="bg-transparent border-none text-sm focus:ring-0 placeholder:text-slate-400 w-full" placeholder="Global system search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative active:scale-95">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1"></div>
+<div class="flex items-center gap-3 pl-2">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-on-background">Administrator</p>
+<p class="text-[10px] text-slate-500 font-medium">System Root</p>
+</div>
+<img alt="Administrator Profile" class="w-9 h-9 rounded-full object-cover ring-2 ring-primary/10" data-alt="Close up portrait of male system administrator" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU5LILaQ4L65CkF_3CDJdi_OVRp8yVOYLdaaJwXa6SXuPzzUKdHRrz7cM1o5ehSKrskW2ae9bB_QrELz23G2fMaAU27ImrgMAP8YfjSpyaQ6UQ5kbB_kwSHAQhDvTNDW0mgL9bQ1YGpcW8Pg3cfwxs25cvprwhNsZkRPcTalKVnpj2CSEKahxlD4KREpXXKtcI_RldjZqhzusHRP9fOaYWidwGTMammVoRvehf-m7PAkFzh27qdAIrEJ0Qgh1ATzH5jQUCH-JZq-k6"/>
+</div>
+</div>
+</header>
+<!-- Main Page Section -->
+<div class="p-8 space-y-8">
+<!-- Page Header with Primary Action -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="space-y-1">
+<p class="text-[10px] font-bold text-primary tracking-widest uppercase">Administration</p>
+<h2 class="text-3xl font-extrabold text-on-surface tracking-tight">User Management Directory</h2>
+<p class="text-on-surface-variant text-sm max-w-2xl">Manage system permissions, roles, and security protocols for all personnel within the Architect Ledger ecosystem.</p>
+</div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-3 rounded-lg font-bold text-sm flex items-center gap-2 hover:shadow-xl hover:shadow-primary/20 transition-all active:scale-95 self-start md:self-auto">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+                        Add New User
+                    </button>
+</div>
+<!-- Filters & Controls -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/10 flex flex-wrap items-center gap-4">
+<div class="flex-1 min-w-[300px] relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-12 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Filter by name, email, or employee ID..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative group">
+<select class="appearance-none bg-surface-container-low border-none rounded-lg pl-4 pr-10 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 font-medium text-on-surface-variant cursor-pointer">
+<option>All Roles</option>
+<option>System Admin</option>
+<option>HR Manager</option>
+<option>Payroll Officer</option>
+<option>Standard Employee</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" data-icon="expand_more">expand_more</span>
+</div>
+<div class="relative group">
+<select class="appearance-none bg-surface-container-low border-none rounded-lg pl-4 pr-10 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 font-medium text-on-surface-variant cursor-pointer">
+<option>Status: All</option>
+<option>Active</option>
+<option>Inactive</option>
+<option>Suspended</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" data-icon="filter_list">filter_list</span>
+</div>
+<button class="p-2.5 rounded-lg border border-outline-variant/30 text-slate-500 hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="file_download">file_download</span>
+</button>
+</div>
+</div>
+<!-- Main Data Table Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/10">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">User Details</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">System Role</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Last Activity</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Access Status</th>
+<th class="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100/10">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<img alt="User" class="w-10 h-10 rounded-lg object-cover bg-slate-200" data-alt="Professional headshot of a business executive" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjheNzt-2alfLWQrz5oZ3hENtQQbJSVzbHTLgovNzSkSj3AVEDUY-HIz3F5LoM2nEBB0TAHpMgACk-r9k47wUC-yAURANmw6IOZZGAV9AcNnGYD3nmlMH7pjijRuGISTZPn3NXr9JnSbFEzS508lFKxOcAMIqOAF7EAgbJAqbr5Xd5sBHKcBgga13K13Q3HgFPHlsoWt2QwDBo0Kqgouku1j-6T942DRqB433Y_VBc39Wb8RqazP1m4bNnNfLGHd6Ws2M2_721aaui"/>
+<div>
+<p class="font-bold text-sm text-on-surface">Alexander Sterling</p>
+<p class="text-xs text-on-surface-variant">a.sterling@architectledger.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-xs font-semibold px-2.5 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full flex items-center gap-1.5 w-fit">
+<span class="material-symbols-outlined text-[14px]" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+                                        System Admin
+                                    </span>
+</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant tnum">2 mins ago</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-fixed text-on-secondary-fixed-variant">
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:text-primary transition-colors" title="Edit User">
+<span class="material-symbols-outlined text-xl" data-icon="edit_note">edit_note</span>
+</button>
+<button class="p-1.5 hover:text-primary transition-colors" title="Reset Password">
+<span class="material-symbols-outlined text-xl" data-icon="lock_reset">lock_reset</span>
+</button>
+<button class="p-1.5 hover:text-error transition-colors" title="Deactivate">
+<span class="material-symbols-outlined text-xl" data-icon="no_accounts">no_accounts</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<img alt="User" class="w-10 h-10 rounded-lg object-cover bg-slate-200" data-alt="Portrait of a female professional in business attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBH6XXybANnskdG14XkGw_US3lyeVIiPVJZbLyO3kRiGZPo1hml_2XMLVyMnPqOMzTA7yrPF8l56-q3iB-Ig9q7QZeT_6wtaH6PTZDUHln7Ti8jM0skVb-2LKowCYEXD5954Lo9zJ_WXU-E0cpMc2a31-LQQkBI-ghU28jJsvH6xPt59lpMdkUdxm9KTkGXbPeeOv2BQxc5rJtfwalSPFDEqyTGsS1Cls2c3ezKONdJc7QvapS_LGE5I9K9jB9xpVaxEy3YnfWN3k2x"/>
+<div>
+<p class="font-bold text-sm text-on-surface">Sarah Chen</p>
+<p class="text-xs text-on-surface-variant">s.chen@architectledger.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-xs font-semibold px-2.5 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full flex items-center gap-1.5 w-fit">
+<span class="material-symbols-outlined text-[14px]" data-icon="badge">badge</span>
+                                        HR Manager
+                                    </span>
+</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant tnum">4 hours ago</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-fixed text-on-secondary-fixed-variant">
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:text-primary transition-colors" title="Edit User">
+<span class="material-symbols-outlined text-xl" data-icon="edit_note">edit_note</span>
+</button>
+<button class="p-1.5 hover:text-primary transition-colors" title="Reset Password">
+<span class="material-symbols-outlined text-xl" data-icon="lock_reset">lock_reset</span>
+</button>
+<button class="p-1.5 hover:text-error transition-colors" title="Deactivate">
+<span class="material-symbols-outlined text-xl" data-icon="no_accounts">no_accounts</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<img alt="User" class="w-10 h-10 rounded-lg object-cover bg-slate-200" data-alt="Professional portrait of a male employee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhA3PbxBgsaDyJMHrE93BtgUYw-qr4c_bs8xIeht8chxJhXK-dKGbvagr2XIZqaax25ayPCptWS2RO6jr36aclVNZpGDnwN3809J4-ZOZIvQPYkzFaKA4aQfUTOJmKbF3BkmNsmknVzKm0xrU74sQmwTlXXIb1TAf-2qqyPawEDTcR33iSpZAGVcMSwcF-95PJdqr5_N9yKpf4U4cEhwFtcgKCDrGgiDHBpYzS2fHHoCX2CriCYTCqAUSrHibwh6Y_DTpMEaQGZBab"/>
+<div>
+<p class="font-bold text-sm text-on-surface">Marcus Thorne</p>
+<p class="text-xs text-on-surface-variant">m.thorne@architectledger.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-xs font-semibold px-2.5 py-1 bg-surface-variant text-on-surface-variant rounded-full flex items-center gap-1.5 w-fit">
+<span class="material-symbols-outlined text-[14px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+                                        Payroll
+                                    </span>
+</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant tnum">Oct 24, 2023</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-container-highest text-on-surface-variant">
+                                        Inactive
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:text-primary transition-colors" title="Edit User">
+<span class="material-symbols-outlined text-xl" data-icon="edit_note">edit_note</span>
+</button>
+<button class="p-1.5 hover:text-primary transition-colors" title="Reset Password">
+<span class="material-symbols-outlined text-xl" data-icon="lock_reset">lock_reset</span>
+</button>
+<button class="p-1.5 hover:text-error transition-colors" title="Deactivate">
+<span class="material-symbols-outlined text-xl" data-icon="no_accounts">no_accounts</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group border-l-4 border-l-error">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<img alt="User" class="w-10 h-10 rounded-lg object-cover bg-slate-200" data-alt="Female employee headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH231sVb2g_9loJUBUwbjKapuxyIhcUOjhLZm7Uo9M891kUOjBSCFxa9fph_4LZ4nltSKBQkaC1ZmisJdnpLQtOL_B_U4cJR92m25vPlGGPMyw_2pjfO8yp2qUpVoO8kE5DyifoCjU8yqh-zlXq2UKvTd0fRU2qpMUzoSmG3ix_VCqAJ5pAl_TV6gAyRNTj-1dScB44-hx3u4NvVvlNNe12uhHQYPXAuINS307EYW3BOykspzgeb6TYvxr0jhG0ccPosAHbFAYQH3s"/>
+<div>
+<p class="font-bold text-sm text-on-surface">Lydia Vance</p>
+<p class="text-xs text-on-surface-variant">l.vance@architectledger.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-xs font-semibold px-2.5 py-1 bg-surface-variant text-on-surface-variant rounded-full flex items-center gap-1.5 w-fit">
+<span class="material-symbols-outlined text-[14px]" data-icon="person">person</span>
+                                        Employee
+                                    </span>
+</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant tnum">Aug 12, 2023</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-error-container text-on-error-container">
+                                        Suspended
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:text-primary transition-colors" title="Edit User">
+<span class="material-symbols-outlined text-xl" data-icon="edit_note">edit_note</span>
+</button>
+<button class="p-1.5 hover:text-primary transition-colors" title="Reset Password">
+<span class="material-symbols-outlined text-xl" data-icon="lock_reset">lock_reset</span>
+</button>
+<button class="p-1.5 hover:text-error transition-colors" title="Deactivate">
+<span class="material-symbols-outlined text-xl" data-icon="no_accounts">no_accounts</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Table Footer / Pagination -->
+<div class="px-6 py-4 bg-surface-container-low/30 border-t border-slate-100/10 flex items-center justify-between">
+<p class="text-xs text-on-surface-variant">Showing <span class="font-bold text-on-surface">4</span> of <span class="font-bold text-on-surface">128</span> entries</p>
+<div class="flex items-center gap-1">
+<button class="p-1.5 rounded-lg hover:bg-surface-container-low text-slate-400 disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-primary text-on-primary text-xs font-bold">1</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-low text-xs font-bold text-on-surface-variant">2</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-low text-xs font-bold text-on-surface-variant">3</button>
+<span class="px-1 text-slate-400">...</span>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-low text-xs font-bold text-on-surface-variant">12</button>
+<button class="p-1.5 rounded-lg hover:bg-surface-container-low text-slate-400">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bento Info Grid (Footer Insights) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-primary/5 rounded-xl p-6 border border-primary/10">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="security" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">System Integrity</h4>
+<p class="text-xs text-on-surface-variant">2-Factor Authentication is active for 98% of users.</p>
+</div>
+</div>
+</div>
+<div class="bg-secondary/5 rounded-xl p-6 border border-secondary/10">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-2xl" data-icon="how_to_reg" style="font-variation-settings: 'FILL' 1;">how_to_reg</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Pending Approval</h4>
+<p class="text-xs text-on-surface-variant">3 new user requests are waiting for HR verification.</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-highest rounded-xl p-6 border border-outline-variant/20">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl" data-icon="history">history</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Audit Logs</h4>
+<p class="text-xs text-on-surface-variant">Review recent administrative access and changes.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

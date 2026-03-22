@@ -1,0 +1,180 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class RolePermissionSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // Truncate in correct order (child tables first)
+        DB::table('role_permissions')->delete();
+        DB::table('user_roles')->delete();
+        DB::table('permissions')->delete();
+        DB::table('roles')->delete();
+
+        // ---------------------------------------------------------------
+        // Roles
+        // ---------------------------------------------------------------
+        $now = now();
+
+        $roles = [
+            ['id' => 1, 'code' => 'system_admin',  'name' => 'System Admin',  'created_at' => $now, 'updated_at' => $now],
+            ['id' => 2, 'code' => 'hr_staff',       'name' => 'HR Staff',      'created_at' => $now, 'updated_at' => $now],
+            ['id' => 3, 'code' => 'accountant',     'name' => 'Accountant',    'created_at' => $now, 'updated_at' => $now],
+            ['id' => 4, 'code' => 'management',     'name' => 'Management',    'created_at' => $now, 'updated_at' => $now],
+            ['id' => 5, 'code' => 'employee',       'name' => 'Employee',      'created_at' => $now, 'updated_at' => $now],
+        ];
+
+        DB::table('roles')->insert($roles);
+
+        // ---------------------------------------------------------------
+        // Permissions (module.action format)
+        // ---------------------------------------------------------------
+        $permissionDefs = [
+            // Auth module
+            ['auth.login',          'Login',                            'auth'],
+            ['auth.logout',         'Logout',                           'auth'],
+            ['auth.profile',        'View Profile',                     'auth'],
+            ['auth.change_password','Change Password',                  'auth'],
+
+            // Reference module
+            ['reference.view',      'View Reference Data',              'reference'],
+            ['reference.manage',    'Manage Reference Data',            'reference'],
+
+            // Employee module
+            ['employee.view',       'View Employees',                   'employee'],
+            ['employee.create',     'Create Employee',                  'employee'],
+            ['employee.update',     'Update Employee',                  'employee'],
+            ['employee.delete',     'Delete Employee',                  'employee'],
+
+            // Contract module
+            ['contract.view',       'View Contracts',                   'contract'],
+            ['contract.create',     'Create Contract',                  'contract'],
+
+            // Attendance module
+            ['attendance.view',           'View Attendance',            'attendance'],
+            ['attendance.manage_period',  'Manage Attendance Periods',  'attendance'],
+            ['attendance.import_logs',    'Import Time Logs',           'attendance'],
+            ['attendance.calculate',      'Calculate Attendance',       'attendance'],
+            ['attendance.manage_request', 'Manage Attendance Requests', 'attendance'],
+            ['attendance.confirm',        'Confirm Attendance',         'attendance'],
+
+            // Payroll module
+            ['payroll.view',         'View Payroll',                    'payroll'],
+            ['payroll.manage_param', 'Manage Payroll Parameters',      'payroll'],
+            ['payroll.run',          'Run Payroll',                     'payroll'],
+            ['payroll.finalize',     'Finalize Payroll',                'payroll'],
+            ['payroll.lock',         'Lock Payroll',                    'payroll'],
+
+            // Reports module
+            ['reports.view',         'View Reports',                   'reports'],
+            ['reports.export',       'Export Reports',                  'reports'],
+
+            // Admin module
+            ['admin.users',          'Manage Users',                   'admin'],
+            ['admin.roles',          'Manage Roles',                   'admin'],
+            ['admin.config',         'Manage System Config',           'admin'],
+            ['admin.audit',          'View Audit Logs',                'admin'],
+        ];
+
+        $permissions = [];
+        foreach ($permissionDefs as $idx => $def) {
+            $permissions[] = [
+                'id'         => $idx + 1,
+                'code'       => $def[0],
+                'name'       => $def[1],
+                'module'     => $def[2],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        DB::table('permissions')->insert($permissions);
+
+        // ---------------------------------------------------------------
+        // Role-Permission matrix
+        // ---------------------------------------------------------------
+        // Build a code-to-id map
+        $permMap = collect($permissions)->pluck('id', 'code');
+
+        // system_admin gets ALL permissions
+        $allPermIds = $permMap->values()->toArray();
+
+        // hr_staff permissions
+        $hrPermCodes = [
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'reference.view',
+            'employee.view', 'employee.create', 'employee.update',
+            'contract.view', 'contract.create',
+            'attendance.view', 'attendance.manage_period', 'attendance.import_logs',
+            'attendance.calculate', 'attendance.manage_request', 'attendance.confirm',
+            'reports.view', 'reports.export',
+        ];
+
+        // accountant permissions
+        $accountantPermCodes = [
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'reference.view',
+            'employee.view',
+            'contract.view',
+            'attendance.view',
+            'payroll.view', 'payroll.manage_param', 'payroll.run', 'payroll.finalize', 'payroll.lock',
+            'reports.view', 'reports.export',
+        ];
+
+        // management permissions
+        $managementPermCodes = [
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'reference.view',
+            'employee.view',
+            'contract.view',
+            'attendance.view',
+            'payroll.view',
+            'reports.view', 'reports.export',
+        ];
+
+        // employee permissions
+        $employeePermCodes = [
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'attendance.view',
+            'payroll.view',
+        ];
+
+        $rolePermissions = [];
+        $rpId = 1;
+
+        // system_admin (role_id=1) => all
+        foreach ($allPermIds as $pid) {
+            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 1, 'permission_id' => $pid];
+        }
+
+        // hr_staff (role_id=2)
+        foreach ($hrPermCodes as $code) {
+            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 2, 'permission_id' => $permMap[$code]];
+        }
+
+        // accountant (role_id=3)
+        foreach ($accountantPermCodes as $code) {
+            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 3, 'permission_id' => $permMap[$code]];
+        }
+
+        // management (role_id=4)
+        foreach ($managementPermCodes as $code) {
+            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 4, 'permission_id' => $permMap[$code]];
+        }
+
+        // employee (role_id=5)
+        foreach ($employeePermCodes as $code) {
+            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 5, 'permission_id' => $permMap[$code]];
+        }
+
+        // Insert in chunks to avoid parameter limit
+        foreach (array_chunk($rolePermissions, 100) as $chunk) {
+            DB::table('role_permissions')->insert($chunk);
+        }
+    }
+}
+

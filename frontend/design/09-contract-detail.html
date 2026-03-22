@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface": "#f6fafe",
+              "on-secondary-container": "#007233",
+              "on-primary-fixed-variant": "#173bab",
+              "tertiary-container": "#3c4c61",
+              "on-surface": "#171c1f",
+              "surface-container-lowest": "#ffffff",
+              "inverse-primary": "#b8c4ff",
+              "surface-container-high": "#e4e9ed",
+              "primary": "#00288e",
+              "on-tertiary-fixed-variant": "#38485d",
+              "surface-variant": "#dfe3e7",
+              "on-secondary-fixed-variant": "#005323",
+              "secondary-fixed-dim": "#79db8d",
+              "surface-container": "#eaeef2",
+              "primary-fixed-dim": "#b8c4ff",
+              "primary-container": "#1e40af",
+              "primary-fixed": "#dde1ff",
+              "on-secondary": "#ffffff",
+              "on-error-container": "#93000a",
+              "secondary-container": "#92f5a4",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#444653",
+              "error": "#ba1a1a",
+              "on-primary-container": "#a8b8ff",
+              "tertiary": "#25354a",
+              "on-secondary-fixed": "#00210a",
+              "background": "#f6fafe",
+              "on-background": "#171c1f",
+              "tertiary-fixed": "#d3e4fe",
+              "outline": "#757684",
+              "secondary": "#006d30",
+              "outline-variant": "#c4c5d5",
+              "on-error": "#ffffff",
+              "surface-bright": "#f6fafe",
+              "surface-container-low": "#f0f4f8",
+              "inverse-surface": "#2c3134",
+              "surface-dim": "#d6dade",
+              "surface-tint": "#3755c3",
+              "error-container": "#ffdad6",
+              "on-tertiary-container": "#acbcd6",
+              "on-primary": "#ffffff",
+              "tertiary-fixed-dim": "#b7c8e1",
+              "inverse-on-surface": "#edf1f5",
+              "on-tertiary-fixed": "#0b1c30",
+              "secondary-fixed": "#95f8a7",
+              "on-primary-fixed": "#001453",
+              "surface-container-highest": "#dfe3e7"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .tnum { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed left-0 top-0 h-full z-40 flex flex-col h-screen w-64 border-r-0 bg-slate-50 dark:bg-slate-950 font-['Inter'] antialiased text-sm tracking-tight">
+<div class="p-6">
+<div class="text-lg font-bold tracking-tighter text-blue-900 dark:text-blue-100 mb-8">The Ledger</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 ease-in-out hover:bg-white/50 dark:hover:bg-slate-800/50 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-blue-900 dark:text-blue-100 font-semibold bg-white dark:bg-slate-800 rounded-l-lg ml-2 shadow-sm transition-colors duration-200 ease-in-out active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">description</span> Contracts
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 ease-in-out hover:bg-white/50 dark:hover:bg-slate-800/50 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">group</span> Employees
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 ease-in-out hover:bg-white/50 dark:hover:bg-slate-800/50 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">payments</span> Payroll
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200 ease-in-out hover:bg-white/50 dark:hover:bg-slate-800/50 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+                </a>
+</nav>
+</div>
+<div class="mt-auto p-6 border-t border-slate-200/50">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">OA</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Organization Logo</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest">HR Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen">
+<!-- TopNavBar (Authority: JSON) -->
+<header class="flex items-center justify-between px-8 w-full sticky top-0 z-30 w-full h-16 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b border-slate-100/15 dark:border-slate-800/15 shadow-sm dark:shadow-none font-['Inter'] text-sm tabular-nums">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative w-96 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500/20 text-sm transition-all" placeholder="Search contracts..." type="text"/>
+</div>
+<div class="text-on-surface-variant font-medium">Contract Management</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-outline hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-outline hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img alt="User Profile" data-alt="Small round user profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhXICXSqKag19KKPD4y872iJoURObjOziZ8QOOwdKOUaN-rpms2JbbNqfqAnc6AM9-te_L7cfoKIAkhiX-W8DSPwD-b4RkeQknMBsJMRWXrAspxwTQCNino9fdtLP4OjEdaq5hxliiUL2kB8zM6FAuaKDaFJclZjGQQdJuV_UQrBlptQe8Rnrm5ds9hOj1T9jtP4_gP3yzM5pII2w4oD3-JQFIZxfbvCxXe3cO3kKLRu830awU_1FIvkNZlX7A31EX70-snzxZ3sdU"/>
+</div>
+</div>
+</header>
+<!-- View Content -->
+<div class="p-10 space-y-8 max-w-7xl mx-auto">
+<!-- Header & Action Bar -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-outline text-xs font-bold uppercase tracking-widest mb-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<a class="hover:text-primary transition-colors" href="#">Back to list</a>
+</div>
+<h1 class="text-3xl font-extrabold tracking-tight text-on-surface">Contract Details - Julianne Davenport <span class="text-outline font-normal">(EMP-90231)</span></h1>
+<p class="text-on-surface-variant">Reviewing employment terms and history for Senior Product Architect</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-outline hover:text-on-surface transition-all bg-surface-container-lowest rounded-lg border border-outline-variant/30 active:scale-95">
+<span class="material-symbols-outlined">download</span> Download PDF
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-outline hover:text-on-surface transition-all bg-surface-container-lowest rounded-lg border border-outline-variant/30 active:scale-95">
+<span class="material-symbols-outlined">edit</span> Edit Contract
+                    </button>
+<button class="flex items-center gap-2 px-6 py-2 text-sm font-bold text-on-primary rounded-lg bg-gradient-to-br from-primary to-primary-container shadow-md active:scale-95 transition-all">
+                        Renew Contract
+                    </button>
+</div>
+</div>
+<!-- Bento Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: Summary & Dates -->
+<div class="col-span-12 lg:col-span-7 space-y-6">
+<!-- Summary Card -->
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-sm border-l-4 border-secondary">
+<h2 class="text-xs font-bold text-outline uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-base">info</span> Summary
+                        </h2>
+<div class="grid grid-cols-2 gap-y-8 gap-x-4">
+<div>
+<label class="block text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Contract Type</label>
+<p class="text-lg font-semibold text-on-surface">Permanent Full-Time</p>
+</div>
+<div>
+<label class="block text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Status</label>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-secondary-fixed text-on-secondary-fixed-variant">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span> Confirmed
+                                </span>
+</div>
+<div>
+<label class="block text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Annual Salary</label>
+<p class="text-2xl font-extrabold text-on-surface tnum">$164,500.00 <span class="text-sm font-normal text-outline">USD / yr</span></p>
+</div>
+<div>
+<label class="block text-[10px] font-bold text-outline uppercase tracking-wider mb-1">Contract Term</label>
+<p class="text-lg font-semibold text-on-surface">Indefinite</p>
+</div>
+</div>
+</section>
+<!-- Key Dates Card -->
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<h2 class="text-xs font-bold text-outline uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-base">calendar_today</span> Key Dates
+                        </h2>
+<div class="flex flex-col md:flex-row items-center gap-8">
+<div class="flex-1 w-full p-4 bg-surface-container-low rounded-lg border-b-2 border-primary">
+<div class="flex items-start justify-between">
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Probation End</p>
+<p class="text-xl font-bold text-on-surface tnum">Oct 12, 2023</p>
+</div>
+<span class="material-symbols-outlined text-primary-fixed-dim">verified_user</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-2">Completed successfully</p>
+</div>
+<div class="flex-1 w-full p-4 bg-surface-container-low rounded-lg border-b-2 border-secondary">
+<div class="flex items-start justify-between">
+<div>
+<p class="text-[10px] font-bold text-secondary uppercase tracking-wider mb-1">Renewal Notice</p>
+<p class="text-xl font-bold text-on-surface tnum">Jan 05, 2025</p>
+</div>
+<span class="material-symbols-outlined text-secondary-fixed-dim">event_repeat</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-2">90 days prior to term</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Documents & History -->
+<div class="col-span-12 lg:col-span-5 space-y-6">
+<!-- Documents List -->
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<h2 class="text-xs font-bold text-outline uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-base">folder_shared</span> Documents
+                        </h2>
+<div class="space-y-3">
+<div class="group flex items-center justify-between p-4 rounded-lg bg-surface border border-transparent hover:border-primary-container/20 hover:bg-surface-container-low transition-all cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-red-50 flex items-center justify-center text-red-600">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Signed_Contract_JD_2023.pdf</p>
+<p class="text-[10px] text-outline">Oct 12, 2023 • 2.4 MB</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">download</span>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-lg bg-surface border border-transparent hover:border-primary-container/20 hover:bg-surface-container-low transition-all cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-red-50 flex items-center justify-center text-red-600">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Confidentiality_NDA.pdf</p>
+<p class="text-[10px] text-outline">Oct 12, 2023 • 1.1 MB</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">download</span>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-lg bg-surface border border-transparent hover:border-primary-container/20 hover:bg-surface-container-low transition-all cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Benefits_Summary_v2.docx</p>
+<p class="text-[10px] text-outline">Jan 15, 2024 • 840 KB</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">download</span>
+</div>
+</div>
+</section>
+<!-- History Timeline -->
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<h2 class="text-xs font-bold text-outline uppercase tracking-widest mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-base">history</span> History
+                        </h2>
+<div class="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-outline-variant/30 before:via-outline-variant/30 before:to-transparent">
+<div class="relative flex items-center gap-4">
+<div class="z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-primary">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div>
+<div class="text-[10px] font-bold text-outline uppercase tracking-wider mb-0.5">Feb 20, 2024</div>
+<p class="text-sm font-bold text-on-surface">Promotion: Senior Architect</p>
+<p class="text-xs text-on-surface-variant">Salary adjustment +12% applied.</p>
+</div>
+</div>
+<div class="relative flex items-center gap-4">
+<div class="z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-secondary">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">assignment_turned_in</span>
+</div>
+<div>
+<div class="text-[10px] font-bold text-outline uppercase tracking-wider mb-0.5">Oct 12, 2023</div>
+<p class="text-sm font-bold text-on-surface">Contract Commencement</p>
+<p class="text-xs text-on-surface-variant">Signed &amp; onboarded by Sarah Jenkins.</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer Meta -->
+<div class="flex items-center justify-between pt-8 border-t border-outline-variant/10 text-[10px] text-outline font-medium uppercase tracking-widest">
+<div class="flex gap-4">
+<span>Audit ID: 8829-XL-23</span>
+<span>Last modified: 4 days ago by Admin</span>
+</div>
+<div class="flex gap-4">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Security Standards</a>
+</div>
+</div>
+</div>
+</main>
+</body></html>

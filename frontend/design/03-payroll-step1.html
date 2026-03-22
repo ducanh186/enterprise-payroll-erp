@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Architect Ledger - Payroll Run Wizard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#dfe3e7",
+              "on-secondary": "#ffffff",
+              "error-container": "#ffdad6",
+              "outline": "#757684",
+              "on-primary-fixed-variant": "#173bab",
+              "surface": "#f6fafe",
+              "surface-bright": "#f6fafe",
+              "surface-container-high": "#e4e9ed",
+              "surface-dim": "#d6dade",
+              "tertiary-fixed": "#d3e4fe",
+              "on-tertiary-fixed-variant": "#38485d",
+              "tertiary-fixed-dim": "#b7c8e1",
+              "outline-variant": "#c4c5d5",
+              "inverse-primary": "#b8c4ff",
+              "tertiary-container": "#3c4c61",
+              "on-error": "#ffffff",
+              "surface-container": "#eaeef2",
+              "on-surface": "#171c1f",
+              "primary-fixed-dim": "#b8c4ff",
+              "secondary-fixed": "#95f8a7",
+              "on-tertiary-fixed": "#0b1c30",
+              "on-error-container": "#93000a",
+              "surface-container-low": "#f0f4f8",
+              "inverse-on-surface": "#edf1f5",
+              "on-primary": "#ffffff",
+              "on-secondary-fixed-variant": "#005323",
+              "surface-tint": "#3755c3",
+              "on-primary-fixed": "#001453",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#acbcd6",
+              "secondary-fixed-dim": "#79db8d",
+              "primary-container": "#1e40af",
+              "surface-container-highest": "#dfe3e7",
+              "primary-fixed": "#dde1ff",
+              "on-secondary-container": "#007233",
+              "background": "#f6fafe",
+              "error": "#ba1a1a",
+              "on-primary-container": "#a8b8ff",
+              "on-surface-variant": "#444653",
+              "on-tertiary": "#ffffff",
+              "on-background": "#171c1f",
+              "inverse-surface": "#2c3134",
+              "secondary": "#006d30",
+              "tertiary": "#25354a",
+              "primary": "#00288e",
+              "secondary-container": "#92f5a4",
+              "on-secondary-fixed": "#00210a"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
+        .input-bottom-line {
+            border: none;
+            border-bottom: 2px solid #c4c5d5;
+            background: #dfe3e7;
+            border-radius: 0.5rem 0.5rem 0 0;
+            transition: all 0.2s ease;
+        }
+        .input-bottom-line:focus {
+            outline: none;
+            border-bottom-color: #00288e;
+            box-shadow: none;
+        }
+        .tnum { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased">
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen p-4 gap-2 bg-[#f0f4f8] dark:bg-slate-900 docked left-0 h-full w-64">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="architecture">architecture</span>
+</div>
+<div>
+<h1 class="text-lg font-bold text-blue-950 dark:text-white leading-tight">The Ledger</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500">Enterprise HRM</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-['Inter'] text-sm font-medium">Self-Service</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-['Inter'] text-sm font-medium">Contracts</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span class="font-['Inter'] text-sm font-medium">Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-blue-900 dark:text-blue-300 shadow-sm rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-['Inter'] text-sm font-medium">Payroll</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="font-['Inter'] text-sm font-medium">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings_suggest">settings_suggest</span>
+<span class="font-['Inter'] text-sm font-medium">Admin</span>
+</a>
+</nav>
+<div class="mt-auto pt-4">
+<button class="w-full flex items-center justify-center gap-2 bg-white text-blue-900 border border-outline-variant py-3 rounded-lg font-bold hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span>New Entry</span>
+</button>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-6 h-16 bg-[#f6fafe] dark:bg-slate-950 font-['Inter'] antialiased tracking-tight">
+<div class="flex items-center gap-4">
+<span class="text-xl font-black text-blue-900 dark:text-blue-100">Architect Ledger</span>
+<div class="h-6 w-px bg-outline-variant opacity-30"></div>
+<div class="flex items-center bg-surface-container-low rounded-full px-4 py-1.5 gap-2">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 text-on-surface" placeholder="Search architecture..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+</button>
+<img alt="User profile avatar" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="Corporate headshot of a male executive" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCka1E3x0-_xTUHrxnxp_Hw1DHsjxwSlAP2yHheE0tdbipP-7lHED5gc3KD4pD2UHamUUfaGPt09mMRsRctp1ubRRACa6bsp_0TyGwL8UCRGp8PM0IrcII-8CNN2C1ldmXQXVroCbdWEzOOzow14e2kYaNuz3igF61WLREMtsiRRJyw8p9S53yiHFZU6djNqrwxxN_SyC9fSHlyNC2Bwkd0l4Y3imQbjJApYpsuLcp1xp3LGvFd8cOdvCurPl1sxog-PVAf6zN7rh5H"/>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-10 bg-surface">
+<div class="max-w-5xl mx-auto space-y-12">
+<!-- Header & Stepper -->
+<div class="space-y-8">
+<div>
+<h2 class="text-3xl font-black tracking-tight text-primary">Payroll Run Wizard</h2>
+<p class="text-on-surface-variant mt-1">Initialize the architectural framework for this period's disbursements.</p>
+</div>
+<!-- Stepper Component -->
+<div class="grid grid-cols-3 gap-4">
+<!-- Step 1 (Active) -->
+<div class="relative pt-4 border-t-4 border-primary">
+<span class="absolute -top-3 left-0 text-[10px] font-bold tracking-widest uppercase text-primary">Active</span>
+<div class="flex items-center gap-3">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-[10px] font-bold">1</span>
+<p class="font-bold text-sm">Setup</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="relative pt-4 border-t-4 border-outline-variant">
+<div class="flex items-center gap-3 opacity-50">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-outline-variant text-on-surface text-[10px] font-bold">2</span>
+<p class="font-medium text-sm">Inputs &amp; Adjustments</p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="relative pt-4 border-t-4 border-outline-variant">
+<div class="flex items-center gap-3 opacity-50">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-outline-variant text-on-surface text-[10px] font-bold">3</span>
+<p class="font-medium text-sm">Preview &amp; Finalize</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Form Area -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+<!-- Left: Selection Form -->
+<div class="lg:col-span-2 space-y-8">
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-sm space-y-8">
+<h3 class="label-sm text-[11px] font-bold tracking-[0.05em] uppercase text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="settings">settings</span>
+                                    Execution Parameters
+                                </h3>
+<div class="grid grid-cols-2 gap-8">
+<!-- Month/Year -->
+<div class="space-y-2">
+<label class="text-[12px] font-bold text-on-surface-variant ml-1">Payroll Month/Year</label>
+<div class="relative">
+<input class="w-full input-bottom-line px-4 h-12 text-sm font-medium" type="month" value="2023-11"/>
+</div>
+</div>
+<!-- Payroll Type -->
+<div class="space-y-2">
+<label class="text-[12px] font-bold text-on-surface-variant ml-1">Payroll Type</label>
+<div class="grid grid-cols-2 gap-px bg-outline-variant rounded-lg overflow-hidden border border-outline-variant">
+<button class="bg-white py-2 text-xs font-bold text-primary">Full Monthly</button>
+<button class="bg-surface-container-low py-2 text-xs font-medium text-on-surface-variant hover:bg-surface-container-high transition-colors">Mid-Month</button>
+</div>
+</div>
+<!-- Department Filter -->
+<div class="col-span-2 space-y-2">
+<label class="text-[12px] font-bold text-on-surface-variant ml-1">Department Scope</label>
+<div class="flex flex-wrap gap-2">
+<span class="bg-primary text-on-primary px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                                                All Departments
+                                                <button><span class="material-symbols-outlined text-xs" data-icon="close">close</span></button>
+</span>
+<button class="border border-dashed border-outline-variant px-3 py-1 rounded-full text-xs font-medium text-on-surface-variant hover:bg-surface-container-low">
+                                                + Add Filter
+                                            </button>
+</div>
+</div>
+</div>
+<!-- Employee Alert -->
+<div class="bg-secondary-container/20 border-l-4 border-secondary p-4 rounded flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="groups">groups</span>
+<div>
+<p class="text-sm font-bold text-on-secondary-container">142 Employees Identified</p>
+<p class="text-[12px] text-on-secondary-container opacity-80">The system has located 142 active employee records matching the "Full Monthly" criteria for all departments.</p>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center justify-between pt-4">
+<button class="text-sm font-bold text-on-surface-variant hover:underline">
+                                    Save as Draft &amp; Exit
+                                </button>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-3 rounded-lg font-bold text-sm shadow-sm hover:opacity-90 transition-opacity">
+                                    Proceed to Next Step
+                                </button>
+</div>
+</div>
+<!-- Right: Reference Summary -->
+<div class="space-y-6">
+<div class="bg-surface-container-low p-6 rounded-lg border-l-4 border-secondary">
+<h3 class="label-sm text-[11px] font-bold tracking-[0.05em] uppercase text-on-surface-variant mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+                                    Previous Month Reference
+                                </h3>
+<div class="space-y-6">
+<div class="flex justify-between items-end border-b border-outline-variant/10 pb-4">
+<div>
+<p class="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider">Total Net Pay</p>
+<p class="text-xl font-black text-on-surface tnum">$842,500.00</p>
+</div>
+<div class="text-right">
+<span class="bg-secondary-fixed text-on-secondary-fixed-variant px-2 py-0.5 rounded-full text-[10px] font-bold">CONFIRMED</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-3 bg-surface-container-lowest rounded border border-outline-variant/10">
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">Additions</p>
+<p class="text-sm font-bold text-secondary tnum">+$12,450</p>
+</div>
+<div class="p-3 bg-surface-container-lowest rounded border border-outline-variant/10">
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">Deductions</p>
+<p class="text-sm font-bold text-error tnum">-$4,210</p>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">Tax Liability</span>
+<span class="font-bold tnum">$154,200</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">Social Security</span>
+<span class="font-bold tnum">$42,150</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-highest/30 p-6 rounded-lg border border-dashed border-outline-variant">
+<h4 class="text-xs font-bold mb-2">Architect's Note</h4>
+<p class="text-[11px] text-on-surface-variant leading-relaxed italic">
+                                    "Ensure all attendance sheets are approved before proceeding to Step 2. Unapproved hours will default to basic contract values."
+                                </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation Shell -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant/20 h-16 flex items-center justify-around px-6 z-50">
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="payments" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="text-[10px] font-bold">Payroll</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="text-[10px] font-medium">Reports</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</button>
+</nav>
+</body></html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Payslips - Architectural Ledger</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-fixed": "#dde1ff",
+              "error-container": "#ffdad6",
+              "surface-bright": "#f6fafe",
+              "on-tertiary-container": "#acbcd6",
+              "surface-container-low": "#f0f4f8",
+              "on-secondary-fixed": "#00210a",
+              "on-surface-variant": "#444653",
+              "on-error-container": "#93000a",
+              "background": "#f6fafe",
+              "on-surface": "#171c1f",
+              "secondary-fixed-dim": "#79db8d",
+              "tertiary-fixed-dim": "#b7c8e1",
+              "inverse-on-surface": "#edf1f5",
+              "primary": "#00288e",
+              "surface-tint": "#3755c3",
+              "on-background": "#171c1f",
+              "inverse-primary": "#b8c4ff",
+              "surface-container": "#eaeef2",
+              "outline": "#757684",
+              "tertiary-container": "#3c4c61",
+              "tertiary": "#25354a",
+              "surface-container-high": "#e4e9ed",
+              "on-tertiary-fixed-variant": "#38485d",
+              "surface-dim": "#d6dade",
+              "primary-fixed-dim": "#b8c4ff",
+              "primary-container": "#1e40af",
+              "tertiary-fixed": "#d3e4fe",
+              "on-primary-fixed": "#001453",
+              "error": "#ba1a1a",
+              "surface": "#f6fafe",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-fixed-variant": "#005323",
+              "secondary-fixed": "#95f8a7",
+              "inverse-surface": "#2c3134",
+              "on-tertiary-fixed": "#0b1c30",
+              "on-primary": "#ffffff",
+              "on-primary-fixed-variant": "#173bab",
+              "surface-variant": "#dfe3e7",
+              "outline-variant": "#c4c5d5",
+              "on-error": "#ffffff",
+              "on-primary-container": "#a8b8ff",
+              "surface-container-highest": "#dfe3e7",
+              "on-secondary": "#ffffff",
+              "secondary": "#006d30",
+              "secondary-container": "#92f5a4",
+              "on-secondary-container": "#007233",
+              "on-tertiary": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tnum { font-variant-numeric: tabular-nums; }
+        .ledger-gradient { background: linear-gradient(135deg, #00288e 0%, #1e40af 100%); }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200 bg-slate-50 flex flex-col py-8 px-4 gap-y-2 z-40">
+<div class="px-4 mb-8">
+<h1 class="text-lg font-black text-blue-900 uppercase tracking-widest">HRM Portal</h1>
+<p class="text-xs text-slate-500 font-medium">Employee Self-Service</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 transition-all rounded-lg group active:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 transition-all rounded-lg group active:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-medium text-sm">Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 transition-all rounded-lg group active:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-medium text-sm">Contracts</span>
+</a>
+<!-- Active Tab: Payroll -->
+<a class="flex items-center gap-3 px-4 py-3 bg-white text-blue-700 shadow-sm rounded-lg border-l-4 border-blue-800 transition-all active:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-medium text-sm">Payroll</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-slate-200 pt-6 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-medium text-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-medium text-sm">Logout</span>
+</a>
+<button class="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 border border-blue-800 text-blue-800 rounded-lg font-semibold text-sm hover:bg-blue-50 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="help">help</span>
+                Support
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-white/85 backdrop-blur-xl border-b border-slate-200/50 flex justify-between items-center px-8 z-30">
+<div class="flex items-center gap-2">
+<span class="font-headline font-extrabold text-xl tracking-tighter text-blue-900">Architectural Ledger</span>
+<span class="text-slate-300 mx-2">/</span>
+<span class="text-sm font-semibold text-blue-700">My Payslips</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2">
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-slate-200"></div>
+<button class="flex items-center gap-3 hover:bg-slate-50 p-1 pr-3 rounded-full transition-colors">
+<img class="h-8 w-8 rounded-full object-cover" data-alt="User Profile Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYHus-ZV_i0aUiqq-PkDzA08jkh06uHa9pdt_UmIZhD9uh5BEfCwtEWHpiaqoFmWJBsMXVqnOMv7nWv9I8mXMTn-ibtxum_oyVvJV4CVa80YLtHWeCi_8YxP5HZgk7YECf3gZzIuKXawERFQ4Zoi4HJepRZ45ld22riyNDznENmtsERXhWFd-lC1g5u8SRMrSSc58be9Y95WOHLhViOYqWoOdBbGT0XSu_tUUOmvh0OWApYGaKr3949N1qnl37ohL38r8QPe5Qv-b2"/>
+<span class="text-sm font-semibold text-slate-700">Marcus Sterling</span>
+</button>
+</div>
+</header>
+<!-- Page Content -->
+<div class="pt-24 px-10 pb-12 max-w-7xl mx-auto">
+<!-- Page Header Section -->
+<section class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="font-headline text-3xl font-extrabold tracking-tight text-on-surface mb-2">Payroll History</h2>
+<p class="text-slate-500 text-sm">Review and download your monthly financial statements.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<select class="appearance-none bg-surface-container-low border-none rounded-lg py-2.5 pl-4 pr-10 text-sm font-semibold text-on-surface-variant focus:ring-2 focus:ring-primary/20 cursor-pointer">
+<option>Fiscal Year 2024</option>
+<option selected="">Fiscal Year 2023</option>
+<option>Fiscal Year 2022</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" data-icon="expand_more">expand_more</span>
+</div>
+<button class="ledger-gradient text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity active:scale-95">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+                        Export All
+                    </button>
+</div>
+</section>
+<!-- Ledger Layout (Asymmetric/Bento style dashboard feel) -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Quick Summary Card (Pinned) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-l-4 border-secondary relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-[0.6875rem] font-bold tracking-widest text-secondary uppercase mb-4">Latest Period</p>
+<h3 class="text-2xl font-black text-on-surface mb-1 tracking-tight">December 2023</h3>
+<p class="text-sm text-slate-500 mb-6">Confirmed on Dec 28, 2023</p>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-[0.6875rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Net Pay</p>
+<p class="text-3xl font-headline font-black text-blue-900 tnum">$8,450.00</p>
+</div>
+<button class="p-3 bg-surface-container-low text-primary rounded-lg hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<!-- Abstract Decorative Element -->
+<div class="absolute -right-8 -bottom-8 w-32 h-32 bg-secondary/5 rounded-full"></div>
+</div>
+<div class="bg-primary-container p-6 rounded-xl text-white shadow-sm overflow-hidden relative">
+<div class="relative z-10">
+<h4 class="font-bold mb-2">Need a specialized report?</h4>
+<p class="text-sm text-blue-100 mb-4 leading-relaxed">Request year-end summaries or tax documentation directly from HR.</p>
+<button class="bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg text-xs font-bold transition-all">
+                                Request Documents
+                            </button>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl text-white/5" data-icon="receipt_long">receipt_long</span>
+</div>
+</div>
+<!-- Main Data Ledger -->
+<div class="col-span-12 lg:col-span-8">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-slate-200/50">
+<div class="p-6 border-b border-slate-50 flex justify-between items-center">
+<h3 class="font-bold text-on-surface">Monthly Statements</h3>
+<div class="flex gap-4">
+<div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container-low rounded-full">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Confirmed</span>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container-low rounded-full">
+<div class="w-2 h-2 rounded-full bg-slate-300"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Draft</span>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-6 py-4 text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest">Month/Year</th>
+<th class="px-6 py-4 text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest">Period</th>
+<th class="px-6 py-4 text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+<th class="px-6 py-4 text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest text-right">Net Pay</th>
+<th class="px-6 py-4 text-[0.6875rem] font-bold text-slate-500 uppercase tracking-widest text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface">December 2023</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600">01 Dec - 31 Dec</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-[10px] font-black uppercase tracking-wider">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                                Confirmed
+                                            </span>
+</td>
+<td class="px-6 py-5 text-right font-bold text-on-surface tnum">$8,450.00</td>
+<td class="px-6 py-5 text-center">
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-lg transition-all active:scale-95" title="Download PDF">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface">November 2023</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600">01 Nov - 30 Nov</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-[10px] font-black uppercase tracking-wider">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                                Confirmed
+                                            </span>
+</td>
+<td class="px-6 py-5 text-right font-bold text-on-surface tnum">$8,450.00</td>
+<td class="px-6 py-5 text-center">
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-lg transition-all active:scale-95" title="Download PDF">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 (Draft) -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group bg-surface-container-low/20">
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface-variant italic">January 2024</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-500 italic">01 Jan - 31 Jan</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-variant text-on-surface-variant rounded-full text-[10px] font-black uppercase tracking-wider">
+<span class="material-symbols-outlined text-[12px]" data-icon="edit">edit</span>
+                                                Draft
+                                            </span>
+</td>
+<td class="px-6 py-5 text-right font-bold text-slate-400 tnum">$8,450.00</td>
+<td class="px-6 py-5 text-center">
+<span class="material-symbols-outlined text-slate-300 cursor-not-allowed" data-icon="lock">lock</span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface">October 2023</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600">01 Oct - 31 Oct</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-[10px] font-black uppercase tracking-wider">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                                Confirmed
+                                            </span>
+</td>
+<td class="px-6 py-5 text-right font-bold text-on-surface tnum">$8,450.00</td>
+<td class="px-6 py-5 text-center">
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-lg transition-all active:scale-95" title="Download PDF">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-6 py-5">
+<div class="font-bold text-on-surface">September 2023</div>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600">01 Sep - 30 Sep</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-[10px] font-black uppercase tracking-wider">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                                Confirmed
+                                            </span>
+</td>
+<td class="px-6 py-5 text-right font-bold text-on-surface tnum">$8,120.00</td>
+<td class="px-6 py-5 text-center">
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-lg transition-all active:scale-95" title="Download PDF">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 bg-slate-50 flex items-center justify-between border-t border-slate-200/50">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Showing 1-5 of 12 Monthly Statements</span>
+<div class="flex gap-2">
+<button class="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 cursor-not-allowed">
+<span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="p-2 bg-white border border-slate-200 rounded-lg text-primary hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer / Bottom Branding -->
+<footer class="mt-20 flex justify-between items-center opacity-40">
+<div class="flex items-center gap-4">
+<span class="font-headline font-black text-xs tracking-widest text-blue-900 uppercase">The Ledger System</span>
+<div class="w-8 h-[1px] bg-blue-900"></div>
+<span class="text-[10px] font-bold">Encrypted &amp; Secure</span>
+</div>
+<p class="text-[10px] font-bold">© 2024 Architectural Ledger. All rights reserved.</p>
+</footer>
+</div>
+</main>
+</body></html>

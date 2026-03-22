@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reports Center - Architectural Ledger</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00288e",
+                        "on-tertiary-container": "#acbcd6",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f0f4f8",
+                        "on-primary-fixed": "#001453",
+                        "inverse-surface": "#2c3134",
+                        "secondary": "#006d30",
+                        "on-background": "#171c1f",
+                        "inverse-primary": "#b8c4ff",
+                        "primary-fixed": "#dde1ff",
+                        "primary-container": "#1e40af",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "surface-variant": "#dfe3e7",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#edf1f5",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#173bab",
+                        "on-primary-container": "#a8b8ff",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#3c4c61",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#c4c5d5",
+                        "background": "#f6fafe",
+                        "surface-tint": "#3755c3",
+                        "surface-bright": "#f6fafe",
+                        "on-secondary-container": "#007233",
+                        "tertiary": "#25354a",
+                        "surface-dim": "#d6dade",
+                        "secondary-fixed-dim": "#79db8d",
+                        "on-surface-variant": "#444653",
+                        "outline": "#757684",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "surface-container-high": "#e4e9ed",
+                        "surface-container": "#eaeef2",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "on-primary": "#ffffff",
+                        "surface": "#f6fafe",
+                        "secondary-fixed": "#95f8a7",
+                        "secondary-container": "#92f5a4",
+                        "on-secondary-fixed-variant": "#005323",
+                        "surface-container-highest": "#dfe3e7",
+                        "on-secondary-fixed": "#00210a",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-surface": "#171c1f",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .ledger-scrollbar::-webkit-scrollbar { width: 4px; }
+        .ledger-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .ledger-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased flex">
+<!-- SideNavBar (Authority: JSON & Design System) -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 dark:bg-slate-950 border-r border-slate-200/50 dark:border-slate-800/50 flex flex-col py-6 px-4 gap-2 z-40">
+<div class="mb-8 px-2">
+<h1 class="text-lg font-black text-blue-900 dark:text-white leading-tight">Management</h1>
+<p class="text-xs font-medium text-slate-500 tracking-wider uppercase">Enterprise Suite</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-900" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-inter text-sm font-medium tracking-normal">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-900" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-inter text-sm font-medium tracking-normal">Team</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-900" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-inter text-sm font-medium tracking-normal">Payroll</span>
+</a>
+<!-- Active State: Reports -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 ease-in-out text-blue-900 dark:text-blue-200 border-r-4 border-blue-900 dark:border-blue-500 bg-white/50 dark:bg-slate-900/50" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-inter text-sm font-medium tracking-normal">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-900" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span class="font-inter text-sm font-medium tracking-normal">Compliance</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/50 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-100" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-inter text-sm font-medium tracking-normal">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 ease-in-out text-slate-600 dark:text-slate-400 hover:bg-slate-100" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-inter text-sm font-medium tracking-normal">Logout</span>
+</a>
+</div>
+</aside>
+<main class="ml-64 w-full min-h-screen">
+<!-- TopAppBar (Authority: JSON & Design System) -->
+<header class="w-full h-16 sticky top-0 z-50 bg-white dark:bg-slate-900 flex justify-between items-center px-8">
+<div class="flex items-center gap-4">
+<span class="text-xl font-bold tracking-tight text-blue-900 dark:text-blue-100">Architectural Ledger</span>
+<div class="hidden md:flex bg-slate-50 dark:bg-slate-800/50 rounded-lg px-3 py-1.5 items-center gap-2 border border-outline-variant/10">
+<span class="material-symbols-outlined text-slate-400 text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none text-sm focus:ring-0 placeholder-slate-400 w-64" placeholder="Search reports..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<button class="text-slate-500 hover:bg-slate-100 p-2 rounded-full transition-colors"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="text-slate-500 hover:bg-slate-100 p-2 rounded-full transition-colors"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+</div>
+<div class="flex items-center gap-3 border-l border-slate-200 pl-6">
+<div class="text-right">
+<p class="text-sm font-semibold text-on-surface">Manager Profile</p>
+<p class="text-[10px] uppercase tracking-wider text-slate-400">Administrator</p>
+</div>
+<img class="w-8 h-8 rounded-full bg-slate-200" data-alt="Manager profile avatar photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2iRKeHYHByAZ9wlHh3ZZLn-Rfej9A9Do0QwD3TiYl7NEICXUh_7FBXAT0vpoGNoMt_Zr8CJ0bX1CZVJ9WlTrQLi4VjXpm-IMsfUpMg2qiauyj7tr1tbLG87Al8idgUJafuWj4PX5zfnUT8lzXv6igOhk1hegp6VUy4FY9ToALrK4hBGKoVGgwOzhYyGjkZztK64vHtExGk-XHZd1m-E8x7c3QkWYk6VQyDhtNMjApDJAqKglNHo5U_VQpTHoJgjAc_xKmJ1tkmUbC"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<div class="p-10 space-y-10">
+<!-- Header & Filter Bar -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface">Reports Center</h2>
+<p class="text-on-surface-variant text-sm mt-1">Strategic insights and historical ledger data.</p>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low p-1.5 rounded-lg border border-outline-variant/10">
+<div class="px-4 py-2 bg-surface-container-lowest rounded shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="calendar_today">calendar_today</span>
+<span class="text-sm font-medium">Jan 2024 - Jun 2024</span>
+</div>
+<div class="px-4 py-2 bg-surface-container-lowest rounded shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="filter_list">filter_list</span>
+<span class="text-sm font-medium">All Departments</span>
+</div>
+<button class="bg-primary text-white px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
+                        Apply Filters
+                    </button>
+</div>
+</div>
+<!-- Executive Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Headcount -->
+<div class="bg-surface-container-lowest p-6 rounded-lg border-l-4 border-primary shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">Total Headcount</span>
+<span class="material-symbols-outlined text-primary" data-icon="groups">groups</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-black text-on-surface">1,284</h3>
+<span class="text-xs font-bold text-secondary flex items-center">+2.4%</span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1 uppercase">Active global employees</p>
+</div>
+<!-- Payroll Cost -->
+<div class="bg-surface-container-lowest p-6 rounded-lg border-l-4 border-primary shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">Total Payroll Cost</span>
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-black text-on-surface">$4.2M</h3>
+<span class="text-xs font-bold text-error flex items-center">+0.8%</span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1 uppercase">Current month aggregate</p>
+</div>
+<!-- Avg Salary -->
+<div class="bg-surface-container-lowest p-6 rounded-lg border-l-4 border-secondary shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">Average Salary</span>
+<span class="material-symbols-outlined text-secondary" data-icon="leaderboard">leaderboard</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-black text-on-surface">$82.4k</h3>
+<span class="text-xs font-bold text-slate-400 flex items-center">stable</span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1 uppercase">Annual weighted average</p>
+</div>
+<!-- Turnover -->
+<div class="bg-surface-container-lowest p-6 rounded-lg border-l-4 border-secondary shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-slate-400">Turnover Rate</span>
+<span class="material-symbols-outlined text-secondary" data-icon="rebase_edit">rebase_edit</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-black text-on-surface">4.1%</h3>
+<span class="text-xs font-bold text-secondary flex items-center">-1.2%</span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1 uppercase">Last 12 months rolling</p>
+</div>
+</div>
+<!-- Bento Data Visualizations -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Monthly Payroll Trend (Line Chart Concept) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-8 rounded-lg shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h4 class="text-lg font-bold text-on-surface">Monthly Payroll Trend</h4>
+<p class="text-xs text-slate-400 uppercase tracking-tight">Financial expenditure over time</p>
+</div>
+<div class="flex gap-2">
+<span class="flex items-center gap-1.5 text-xs font-bold text-primary"><div class="w-2 h-2 rounded-full bg-primary"></div> Budget</span>
+<span class="flex items-center gap-1.5 text-xs font-bold text-secondary"><div class="w-2 h-2 rounded-full bg-secondary"></div> Actual</span>
+</div>
+</div>
+<!-- Chart Placeholder -->
+<div class="h-64 flex items-end justify-between gap-4 px-2">
+<div class="relative w-full h-full flex items-end">
+<div class="absolute inset-0 flex flex-col justify-between py-2">
+<div class="border-t border-slate-100 w-full"></div>
+<div class="border-t border-slate-100 w-full"></div>
+<div class="border-t border-slate-100 w-full"></div>
+<div class="border-t border-slate-100 w-full"></div>
+<div class="border-t border-slate-100 w-full"></div>
+</div>
+<div class="z-10 w-full h-full flex items-end justify-around pb-6">
+<!-- Bars to simulate a line trend -->
+<div class="group relative flex flex-col items-center gap-1">
+<div class="w-4 bg-primary/20 rounded-t h-32"></div>
+<div class="w-4 bg-primary absolute bottom-6 h-28 rounded-t"></div>
+<span class="text-[10px] text-slate-400 font-bold">JAN</span>
+</div>
+<div class="group relative flex flex-col items-center gap-1">
+<div class="w-4 bg-primary/20 rounded-t h-36"></div>
+<div class="w-4 bg-primary absolute bottom-6 h-34 rounded-t"></div>
+<span class="text-[10px] text-slate-400 font-bold">FEB</span>
+</div>
+<div class="group relative flex flex-col items-center gap-1">
+<div class="w-4 bg-primary/20 rounded-t h-40"></div>
+<div class="w-4 bg-primary absolute bottom-6 h-42 rounded-t"></div>
+<span class="text-[10px] text-slate-400 font-bold">MAR</span>
+</div>
+<div class="group relative flex flex-col items-center gap-1">
+<div class="w-4 bg-primary/20 rounded-t h-32"></div>
+<div class="w-4 bg-primary absolute bottom-6 h-30 rounded-t"></div>
+<span class="text-[10px] text-slate-400 font-bold">APR</span>
+</div>
+<div class="group relative flex flex-col items-center gap-1">
+<div class="w-4 bg-primary/20 rounded-t h-44"></div>
+<div class="w-4 bg-primary absolute bottom-6 h-48 rounded-t"></div>
+<span class="text-[10px] text-slate-400 font-bold">MAY</span>
+</div>
+<div class="group relative flex flex-col items-center gap-1">
+<div class="w-4 bg-primary/20 rounded-t h-48"></div>
+<div class="w-4 bg-primary absolute bottom-6 h-52 rounded-t"></div>
+<span class="text-[10px] text-slate-400 font-bold">JUN</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Dept Allocation (Donut Chart Concept) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest p-8 rounded-lg shadow-sm">
+<h4 class="text-lg font-bold text-on-surface mb-1">Department Budget</h4>
+<p class="text-xs text-slate-400 uppercase tracking-tight mb-8">Resource distribution</p>
+<div class="relative flex justify-center mb-8">
+<svg class="w-48 h-48 transform -rotate-90">
+<circle class="text-slate-100" cx="96" cy="96" fill="transparent" r="70" stroke="currentColor" stroke-width="24"></circle>
+<circle class="text-primary" cx="96" cy="96" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="110" stroke-width="24"></circle>
+<circle class="text-secondary" cx="96" cy="96" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="380" stroke-width="24"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-black text-on-surface">$4.2M</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase">Total</span>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-sm bg-primary"></div>
+<span class="text-sm font-medium">Engineering</span>
+</div>
+<span class="text-sm font-bold">42%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-sm bg-secondary"></div>
+<span class="text-sm font-medium">Operations</span>
+</div>
+<span class="text-sm font-bold">28%</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-sm bg-slate-200"></div>
+<span class="text-sm font-medium">Others</span>
+</div>
+<span class="text-sm font-bold">30%</span>
+</div>
+</div>
+</div>
+<!-- Performance Overview (Bar Chart Concept) -->
+<div class="col-span-12 bg-surface-container-lowest p-8 rounded-lg shadow-sm">
+<h4 class="text-lg font-bold text-on-surface mb-6">Attendance &amp; Performance Overview</h4>
+<div class="grid grid-cols-1 md:grid-cols-5 gap-8">
+<div class="col-span-1 md:col-span-3">
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="text-sm font-bold">On-Time Attendance</span>
+<span class="text-sm font-bold text-secondary">98.2%</span>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 98.2%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="text-sm font-bold">High Performance Tier</span>
+<span class="text-sm font-bold text-primary">34.5%</span>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 34.5%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="text-sm font-bold">Training Completion</span>
+<span class="text-sm font-bold text-slate-400">76.0%</span>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-slate-400 h-full rounded-full" style="width: 76.0%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="col-span-1 md:col-span-2 bg-surface-container p-6 rounded-lg flex items-center gap-6">
+<div class="bg-primary/10 p-4 rounded-xl">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="verified">verified</span>
+</div>
+<div>
+<h5 class="font-bold text-on-surface">Compliance Rating</h5>
+<p class="text-3xl font-black text-on-surface">AA+</p>
+<p class="text-xs text-slate-500 mt-1">Audit score: 99.4/100</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Generated Reports Table -->
+<section class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden">
+<div class="px-8 py-6 border-b border-outline-variant/5 flex justify-between items-center">
+<h4 class="text-lg font-bold text-on-surface">Recent Generated Reports</h4>
+<button class="text-sm font-bold text-primary hover:underline transition-all">View All Archives</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+<th class="px-8 py-4">Report Name</th>
+<th class="px-6 py-4">Type</th>
+<th class="px-6 py-4">Generated Date</th>
+<th class="px-6 py-4">Generated By</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-8 py-4 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container" data-icon="description">description</span>
+<span class="font-semibold text-on-surface">Q2 Payroll Reconciliation</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-600">Financial</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-400 tabular-nums">Oct 24, 2024</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-600">Sarah Jenkins</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-secondary-fixed text-on-secondary-fixed-variant">Ready</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:bg-primary/5 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container" data-icon="bar_chart_4_bars">bar_chart_4_bars</span>
+<span class="font-semibold text-on-surface">Annual Retention Analysis</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-600">Analytics</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-400 tabular-nums">Oct 23, 2024</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-600">System Auto</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center gap-1 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-pulse"></span> Processing
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-slate-300 cursor-not-allowed p-2 rounded-lg">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container" data-icon="verified_user">verified_user</span>
+<span class="font-semibold text-on-surface">Compliance Audit v2.1</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-600">Legal</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-400 tabular-nums">Oct 20, 2024</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-600">Michael Ross</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-secondary-fixed text-on-secondary-fixed-variant">Ready</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:bg-primary/5 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container" data-icon="article">article</span>
+<span class="font-semibold text-on-surface">Benefit Enrollment Census</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-600">HR Operations</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-400 tabular-nums">Oct 18, 2024</td>
+<td class="px-6 py-5 text-sm font-medium text-slate-600">Sarah Jenkins</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-secondary-fixed text-on-secondary-fixed-variant">Ready</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:bg-primary/5 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-4 bg-surface-container-low flex items-center justify-between text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+<span>Showing 1-4 of 128 reports</span>
+<div class="flex gap-4">
+<button class="hover:text-primary">Previous</button>
+<button class="text-primary">Next Page</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>
