@@ -2,12 +2,14 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    use IdentityInsert;
     public function run(): void
     {
         DB::table('user_roles')->delete();
@@ -37,7 +39,7 @@ class UserSeeder extends Seeder
             ['id' => 15, 'name' => 'Hoang Thi Thao',      'username' => 'emp010',    'email' => 'emp010@erp.vn',     'password' => $pw, 'phone' => '0901000015', 'is_active' => true, 'last_login_at' => null, 'email_verified_at' => $now, 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        DB::table('users')->insert($users);
+        $this->insertWithIdentity('users', $users);
 
         // ---------------------------------------------------------------
         // User-Role assignments
@@ -71,7 +73,7 @@ class UserSeeder extends Seeder
             ['id' => 20, 'user_id' => 15, 'role_id' => 5, 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        DB::table('user_roles')->insert($userRoles);
+        $this->insertWithIdentity('user_roles', $userRoles);
     }
 }
 
