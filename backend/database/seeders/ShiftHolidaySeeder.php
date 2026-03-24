@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class ShiftHolidaySeeder extends Seeder
 {
+    use IdentityInsert;
     public function run(): void
     {
         DB::table('late_early_rules')->delete();
@@ -18,7 +20,7 @@ class ShiftHolidaySeeder extends Seeder
         // ---------------------------------------------------------------
         // Shifts
         // ---------------------------------------------------------------
-        DB::table('shifts')->insert([
+        $this->insertWithIdentity('shifts', [
             [
                 'id' => 1,
                 'code' => 'HC08',
@@ -96,7 +98,7 @@ class ShiftHolidaySeeder extends Seeder
         // ---------------------------------------------------------------
         // Vietnamese Holidays 2026
         // ---------------------------------------------------------------
-        DB::table('holidays')->insert([
+        $this->insertWithIdentity('holidays', [
             // Tet Duong Lich (New Year)
             ['id' => 1,  'holiday_date' => '2026-01-01', 'name' => 'Tet Duong Lich',                         'multiplier' => 3.0, 'is_paid' => true, 'created_at' => $now, 'updated_at' => $now],
 
@@ -125,7 +127,7 @@ class ShiftHolidaySeeder extends Seeder
         // ---------------------------------------------------------------
         // Late/Early Rules
         // ---------------------------------------------------------------
-        DB::table('late_early_rules')->insert([
+        $this->insertWithIdentity('late_early_rules', [
             ['id' => 1, 'code' => 'LATE_01', 'name' => 'Di tre 6-15 phut',     'from_minute' => 6,   'to_minute' => 15,  'deduction_type' => 'fixed',   'deduction_value' => 50000.00,   'exclude_meal' => false, 'effective_from' => '2024-01-01', 'effective_to' => null, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'code' => 'LATE_02', 'name' => 'Di tre 16-30 phut',    'from_minute' => 16,  'to_minute' => 30,  'deduction_type' => 'fixed',   'deduction_value' => 100000.00,  'exclude_meal' => false, 'effective_from' => '2024-01-01', 'effective_to' => null, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'code' => 'LATE_03', 'name' => 'Di tre 31-60 phut',    'from_minute' => 31,  'to_minute' => 60,  'deduction_type' => 'fixed',   'deduction_value' => 200000.00,  'exclude_meal' => true,  'effective_from' => '2024-01-01', 'effective_to' => null, 'created_at' => $now, 'updated_at' => $now],
