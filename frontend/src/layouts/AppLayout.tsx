@@ -24,18 +24,30 @@ function resolveTitle(pathname: string): string {
 export default function AppLayout() {
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem("sidebar-collapsed") === "true"; } catch { return false; }
+  });
 
   useEffect(() => {
     setMobileNavOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    try { localStorage.setItem("sidebar-collapsed", String(collapsed)); } catch { /* noop */ }
+  }, [collapsed]);
+
   const title = resolveTitle(location.pathname);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.14),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(99,102,241,0.12),_transparent_24%),linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900">
-      <Sidebar open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
+      <Sidebar
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((c) => !c)}
+      />
 
-      <div className="lg:pl-72">
+      <div className={`transition-[padding-left] duration-300 ${collapsed ? "lg:pl-16" : "lg:pl-72"}`}>
         <Topbar
           title={title}
           subtitle={location.pathname}
