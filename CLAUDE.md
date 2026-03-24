@@ -88,7 +88,7 @@ docker compose exec backend php artisan tinker   # Laravel REPL inside container
 
 **Roles**: `hr_staff`, `accountant`, `system_admin`, `management`
 
-**Mock login**: POST `/api/auth/login` with `{"username":"admin","password":"password"}` — also `hr_user`, `accountant`, `manager` (all password: `password`)
+**Mock login**: POST `/api/auth/login` with `{"username":"admin01","password":"password"}` — also `hr01`, `payroll01`, `manager01` (all password: `password`)
 
 ## API Response Format
 
