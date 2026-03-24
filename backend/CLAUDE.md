@@ -37,7 +37,7 @@ All services are stateless classes returning hardcoded arrays. When DB arrives:
 - **Payroll calculation**: `PayrollService::previewRun()` — gross, insurance (BHXH 8%, BHYT 1.5%, BHTN 1%), PIT brackets, net
 - **State machine**: `PayrollRunStatus::canTransitionTo()` — draft→previewed→finalized→locked
 - **Permission matrix**: `CheckPermission::PERMISSION_MAP` — module.action → allowed roles
-- **Mock users**: `AuthService::USERS` — admin, hr_user, accountant, manager (all pw: "password")
+- **Mock users**: `AuthService::mockUsers` — admin01, hr01, payroll01, manager01 (all pw: "password")
 
 ### Middleware Stack (applied in routes/api.php)
 
