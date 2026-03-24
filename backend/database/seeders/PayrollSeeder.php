@@ -3,11 +3,13 @@
 namespace Database\Seeders;
 
 use Carbon\Carbon;
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class PayrollSeeder extends Seeder
 {
+    use IdentityInsert;
     public function run(): void
     {
         DB::table('payslip_items')->delete();
@@ -23,7 +25,7 @@ class PayrollSeeder extends Seeder
         // ---------------------------------------------------------------
         // Payroll Parameters
         // ---------------------------------------------------------------
-        DB::table('payroll_parameters')->insert([
+        $this->insertWithIdentity('payroll_parameters', [
             [
                 'id' => 1,
                 'code' => 'INSURANCE_RATE',
@@ -112,7 +114,7 @@ class PayrollSeeder extends Seeder
         // ---------------------------------------------------------------
         // Payroll Parameter Details
         // ---------------------------------------------------------------
-        DB::table('payroll_parameter_details')->insert([
+        $this->insertWithIdentity('payroll_parameter_details', [
             // Insurance rates (employee side)
             ['id' => 1,  'payroll_parameter_id' => 1, 'param_key' => 'bhxh_employee_rate',  'param_type' => 'percent', 'default_value' => '8.0',   'validation_rule' => 'min:0|max:100', 'display_order' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2,  'payroll_parameter_id' => 1, 'param_key' => 'bhyt_employee_rate',  'param_type' => 'percent', 'default_value' => '1.5',   'validation_rule' => 'min:0|max:100', 'display_order' => 2, 'created_at' => $now, 'updated_at' => $now],
@@ -132,7 +134,7 @@ class PayrollSeeder extends Seeder
         // ---------------------------------------------------------------
         // Bonus/Deduction Types
         // ---------------------------------------------------------------
-        DB::table('bonus_deduction_types')->insert([
+        $this->insertWithIdentity('bonus_deduction_types', [
             ['id' => 1, 'code' => 'BONUS_KPI',     'name' => 'Thuong KPI',              'kind' => 'bonus',     'is_taxable' => true,  'is_insurance_base' => false, 'is_recurring' => false, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'code' => 'BONUS_TET',     'name' => 'Thuong Tet',              'kind' => 'bonus',     'is_taxable' => true,  'is_insurance_base' => false, 'is_recurring' => false, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'code' => 'BONUS_PROJECT', 'name' => 'Thuong Du An',            'kind' => 'bonus',     'is_taxable' => true,  'is_insurance_base' => false, 'is_recurring' => false, 'created_at' => $now, 'updated_at' => $now],
@@ -147,7 +149,7 @@ class PayrollSeeder extends Seeder
         // Bonus/Deductions for Feb 2026 (attendance_period_id = 2)
         // 10 entries across various employees
         // ---------------------------------------------------------------
-        DB::table('bonus_deductions')->insert([
+        $this->insertWithIdentity('bonus_deductions', [
             ['id' => 1,  'employee_id' => 1,  'attendance_period_id' => 2, 'type_id' => 1, 'amount' => 3000000.00,  'description' => 'Thuong KPI quy 4/2025',            'status' => 'active', 'created_by' => 4, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2,  'employee_id' => 5,  'attendance_period_id' => 2, 'type_id' => 1, 'amount' => 5000000.00,  'description' => 'Thuong KPI quy 4/2025',            'status' => 'active', 'created_by' => 4, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3,  'employee_id' => 8,  'attendance_period_id' => 2, 'type_id' => 3, 'amount' => 2000000.00,  'description' => 'Thuong hoan thanh du an Alpha',     'status' => 'active', 'created_by' => 4, 'created_at' => $now, 'updated_at' => $now],
@@ -166,7 +168,7 @@ class PayrollSeeder extends Seeder
         // Period 2 (Feb) => previewed
         // Period 3 (Mar) => draft
         // ---------------------------------------------------------------
-        DB::table('payroll_runs')->insert([
+        $this->insertWithIdentity('payroll_runs', [
             [
                 'id' => 1,
                 'attendance_period_id' => 1,
@@ -347,11 +349,8 @@ class PayrollSeeder extends Seeder
             }
         }
 
-        DB::table('payslips')->insert($payslips);
-
-        foreach (array_chunk($payslipItems, 200) as $chunk) {
-            DB::table('payslip_items')->insert($chunk);
-        }
+        $this->insertWithIdentity('payslips', $payslips);
+        $this->insertWithIdentity('payslip_items', $payslipItems);
     }
 
     /**
