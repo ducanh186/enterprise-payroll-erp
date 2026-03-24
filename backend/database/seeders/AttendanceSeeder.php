@@ -3,11 +3,13 @@
 namespace Database\Seeders;
 
 use Carbon\Carbon;
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceSeeder extends Seeder
 {
+    use IdentityInsert;
     /**
      * Employee IDs that participate in attendance (all 15 employees, but we focus on
      * the 10 regular employees emp001-emp010 = employee IDs 6-15, plus the 5 staff).
@@ -40,7 +42,7 @@ class AttendanceSeeder extends Seeder
         // ---------------------------------------------------------------
         // Attendance Periods (3 months: Jan, Feb, Mar 2026)
         // ---------------------------------------------------------------
-        DB::table('attendance_periods')->insert([
+        $this->insertWithIdentity('attendance_periods', [
             ['id' => 1, 'period_code' => '2026-01', 'month' => 1, 'year' => 2026, 'from_date' => '2026-01-01', 'to_date' => '2026-01-31', 'status' => 'locked',    'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'period_code' => '2026-02', 'month' => 2, 'year' => 2026, 'from_date' => '2026-02-01', 'to_date' => '2026-02-28', 'status' => 'confirmed', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'period_code' => '2026-03', 'month' => 3, 'year' => 2026, 'from_date' => '2026-03-01', 'to_date' => '2026-03-31', 'status' => 'draft',     'created_at' => $now, 'updated_at' => $now],
@@ -148,20 +150,13 @@ class AttendanceSeeder extends Seeder
             }
         }
 
-        // Insert shift assignments in chunks
-        foreach (array_chunk($shiftAssignments, 200) as $chunk) {
-            DB::table('shift_assignments')->insert($chunk);
-        }
-
-        // Insert time logs in chunks
-        foreach (array_chunk($timeLogs, 200) as $chunk) {
-            DB::table('time_logs')->insert($chunk);
-        }
+        $this->insertWithIdentity('shift_assignments', $shiftAssignments);
+        $this->insertWithIdentity('time_logs', $timeLogs);
 
         // ---------------------------------------------------------------
         // Attendance Requests (various statuses)
         // ---------------------------------------------------------------
-        DB::table('attendance_requests')->insert([
+        $this->insertWithIdentity('attendance_requests', [
             // emp002 (7) - leave request for the absent day, approved
             ['id' => 1, 'employee_id' => 7,  'request_type' => 'annual_leave',     'from_date' => $feb2026WorkDays[5], 'to_date' => $feb2026WorkDays[5], 'reason' => 'Nghi phep nam - viec gia dinh',        'status' => 'approved', 'submitted_at' => Carbon::parse($feb2026WorkDays[5])->subDays(3), 'approved_by' => 2, 'approved_at' => Carbon::parse($feb2026WorkDays[5])->subDays(2), 'created_at' => $now, 'updated_at' => $now],
 
@@ -185,7 +180,7 @@ class AttendanceSeeder extends Seeder
         ]);
 
         // Attendance request details
-        DB::table('attendance_request_details')->insert([
+        $this->insertWithIdentity('attendance_request_details', [
             ['id' => 1, 'request_id' => 1, 'work_date' => $feb2026WorkDays[5],  'requested_check_in' => null, 'requested_check_out' => null, 'requested_hours' => 8.0, 'note' => 'Nghi ca ngay'],
             ['id' => 2, 'request_id' => 2, 'work_date' => $feb2026WorkDays[12], 'requested_check_in' => null, 'requested_check_out' => null, 'requested_hours' => 8.0, 'note' => 'Nghi ca ngay'],
             ['id' => 3, 'request_id' => 3, 'work_date' => $feb2026WorkDays[10], 'requested_check_in' => null, 'requested_check_out' => $feb2026WorkDays[10] . ' 17:00:00', 'requested_hours' => null, 'note' => 'Bo sung gio ra'],
@@ -222,9 +217,7 @@ class AttendanceSeeder extends Seeder
             }
         }
 
-        foreach (array_chunk($attendanceDaily, 200) as $chunk) {
-            DB::table('attendance_daily')->insert($chunk);
-        }
+        $this->insertWithIdentity('attendance_daily', $attendanceDaily);
 
         // ---------------------------------------------------------------
         // Attendance Monthly Summary (Feb 2026)
@@ -250,15 +243,15 @@ class AttendanceSeeder extends Seeder
                 'id' => $msId++,
                 'attendance_period_id' => 2, // Feb 2026
                 'employee_id' => $empId,
-                'total_workdays' => $totalWorkdays,
-                'regular_hours' => $regularHours,
-                'ot_hours' => $otHours,
-                'night_hours' => $nightHours,
-                'paid_leave_days' => $leaveDays,
-                'unpaid_leave_days' => $absentDays,
-                'late_minutes' => $lateMinutes,
-                'early_minutes' => $earlyMinutes,
-                'meal_count' => $mealCount,
+                'total_workdays' => (float) $totalWorkdays,
+                'regular_hours' => (float) $regularHours,
+                'ot_hours' => (float) $otHours,
+                'night_hours' => (float) $nightHours,
+                'paid_leave_days' => (int) $leaveDays,
+                'unpaid_leave_days' => (int) $absentDays,
+                'late_minutes' => (int) $lateMinutes,
+                'early_minutes' => (int) $earlyMinutes,
+                'meal_count' => (int) $mealCount,
                 'status' => 'confirmed',
                 'generated_at' => $now,
                 'confirmed_at' => $now,
@@ -267,7 +260,7 @@ class AttendanceSeeder extends Seeder
             ];
         }
 
-        DB::table('attendance_monthly_summary')->insert($monthlySummaries);
+        $this->insertWithIdentity('attendance_monthly_summary', $monthlySummaries);
     }
 
     /**
@@ -627,16 +620,16 @@ class AttendanceSeeder extends Seeder
             'shift_assignment_id' => $saId,
             'first_in' => $firstIn ? $firstIn->format('Y-m-d H:i:s') : null,
             'last_out' => $lastOut ? $lastOut->format('Y-m-d H:i:s') : null,
-            'late_minutes' => $lateMin,
-            'early_minutes' => $earlyMin,
-            'regular_hours' => $regularHours,
-            'ot_hours' => $otHours,
-            'night_hours' => $nightHours,
-            'workday_value' => $workdayValue,
-            'meal_count' => $mealCount,
+            'late_minutes' => (int) $lateMin,
+            'early_minutes' => (int) $earlyMin,
+            'regular_hours' => (float) $regularHours,
+            'ot_hours' => (float) $otHours,
+            'night_hours' => (float) $nightHours,
+            'workday_value' => (float) $workdayValue,
+            'meal_count' => (int) $mealCount,
             'attendance_status' => $status,
             'source_status' => $sourceStatus,
-            'is_confirmed_by_employee' => true,
+            'is_confirmed_by_employee' => 1,
             'confirmed_at' => $now,
             'confirmed_by' => $empId <= 5 ? $empId : null,
             'calculation_version' => 1,
