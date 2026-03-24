@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class ContractSeeder extends Seeder
 {
+    use IdentityInsert;
     public function run(): void
     {
         DB::table('contract_allowances')->delete();
@@ -21,7 +23,7 @@ class ContractSeeder extends Seeder
         // ---------------------------------------------------------------
         // Contract Types
         // ---------------------------------------------------------------
-        DB::table('contract_types')->insert([
+        $this->insertWithIdentity('contract_types', [
             ['id' => 1, 'code' => 'THU_VIEC',  'name' => 'Hop Dong Thu Viec',             'duration_months' => 2,    'is_probationary' => true,  'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'code' => 'XDTH_12',   'name' => 'Hop Dong Xac Dinh Thoi Han 12 thang', 'duration_months' => 12, 'is_probationary' => false, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'code' => 'XDTH_24',   'name' => 'Hop Dong Xac Dinh Thoi Han 24 thang', 'duration_months' => 24, 'is_probationary' => false, 'created_at' => $now, 'updated_at' => $now],
@@ -32,7 +34,7 @@ class ContractSeeder extends Seeder
         // ---------------------------------------------------------------
         // Payroll Types
         // ---------------------------------------------------------------
-        DB::table('payroll_types')->insert([
+        $this->insertWithIdentity('payroll_types', [
             ['id' => 1, 'code' => 'LUONG_CO_BAN',    'name' => 'Luong Co Ban',         'is_probationary' => false, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'code' => 'LUONG_THU_VIEC',  'name' => 'Luong Thu Viec',       'is_probationary' => true,  'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'code' => 'LUONG_KHOAN',     'name' => 'Luong Khoan',          'is_probationary' => false, 'created_at' => $now, 'updated_at' => $now],
@@ -41,7 +43,7 @@ class ContractSeeder extends Seeder
         // ---------------------------------------------------------------
         // Salary Levels (per payroll type)
         // ---------------------------------------------------------------
-        DB::table('salary_levels')->insert([
+        $this->insertWithIdentity('salary_levels', [
             // Regular salary levels
             ['id' => 1,  'payroll_type_id' => 1, 'code' => 'CB_B1', 'level_no' => 1, 'amount' => 8000000.00,  'effective_from' => '2024-01-01', 'effective_to' => null, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2,  'payroll_type_id' => 1, 'code' => 'CB_B2', 'level_no' => 2, 'amount' => 10000000.00, 'effective_from' => '2024-01-01', 'effective_to' => null, 'created_at' => $now, 'updated_at' => $now],
@@ -63,7 +65,7 @@ class ContractSeeder extends Seeder
         // ---------------------------------------------------------------
         // Allowance Types
         // ---------------------------------------------------------------
-        DB::table('allowance_types')->insert([
+        $this->insertWithIdentity('allowance_types', [
             ['id' => 1, 'code' => 'PC_AN',     'name' => 'Phu Cap An Trua',          'is_taxable' => false, 'is_insurance_base' => false, 'default_amount' => 730000.00,   'status' => 'active', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'code' => 'PC_XE',     'name' => 'Phu Cap Xang Xe',          'is_taxable' => false, 'is_insurance_base' => false, 'default_amount' => 500000.00,   'status' => 'active', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'code' => 'PC_DT',     'name' => 'Phu Cap Dien Thoai',       'is_taxable' => false, 'is_insurance_base' => false, 'default_amount' => 300000.00,   'status' => 'active', 'created_at' => $now, 'updated_at' => $now],
@@ -92,7 +94,7 @@ class ContractSeeder extends Seeder
         // NV014 emp009:     12M (B3)  - 24-month
         // NV015 emp010:      8M (B1)  - 12-month
 
-        DB::table('labour_contracts')->insert([
+        $this->insertWithIdentity('labour_contracts', [
             ['id' => 1,  'employee_id' => 1,  'contract_no' => 'HD-2020-001', 'contract_type_id' => 5, 'position_title_snapshot' => 'Truong Phong IT',         'department_snapshot' => 'Phong Cong Nghe Thong Tin', 'start_date' => '2020-01-15', 'end_date' => null,         'sign_date' => '2020-01-10', 'status' => 'active', 'base_salary' => 25000000.00, 'salary_level_id' => 7,  'payroll_type_id' => 1, 'probation_rate' => 100.00, 'created_by' => 1, 'approved_by' => 5,  'created_at' => $now, 'updated_at' => $now],
             ['id' => 2,  'employee_id' => 2,  'contract_no' => 'HD-2021-002', 'contract_type_id' => 5, 'position_title_snapshot' => 'Truong Phong Nhan Su',    'department_snapshot' => 'Phong Nhan Su',             'start_date' => '2021-03-01', 'end_date' => null,         'sign_date' => '2021-02-25', 'status' => 'active', 'base_salary' => 18000000.00, 'salary_level_id' => 5,  'payroll_type_id' => 1, 'probation_rate' => 100.00, 'created_by' => 1, 'approved_by' => 5,  'created_at' => $now, 'updated_at' => $now],
             ['id' => 3,  'employee_id' => 3,  'contract_no' => 'HD-2022-003', 'contract_type_id' => 3, 'position_title_snapshot' => 'Nhan Vien Nhan Su',       'department_snapshot' => 'Phong Nhan Su',             'start_date' => '2022-06-15', 'end_date' => '2024-06-14', 'sign_date' => '2022-06-10', 'status' => 'active', 'base_salary' => 12000000.00, 'salary_level_id' => 3,  'payroll_type_id' => 1, 'probation_rate' => 100.00, 'created_by' => 1, 'approved_by' => 5,  'created_at' => $now, 'updated_at' => $now],
@@ -190,7 +192,7 @@ class ContractSeeder extends Seeder
             ];
         }
 
-        DB::table('contract_allowances')->insert($contractAllowances);
+        $this->insertWithIdentity('contract_allowances', $contractAllowances);
     }
 }
 
