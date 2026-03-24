@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class EmployeeSeeder extends Seeder
 {
+    use IdentityInsert;
     public function run(): void
     {
         DB::table('dependents')->delete();
@@ -62,7 +64,7 @@ class EmployeeSeeder extends Seeder
             ['id' => 15, 'employee_code' => 'NV015', 'user_id' => 15, 'full_name' => 'Hoang Thi Thao',     'dob' => '1998-11-30', 'gender' => 'female', 'national_id' => '001098009012', 'tax_code' => '8001234581',   'email' => 'emp010@erp.vn',    'phone' => '0901000015', 'bank_account_no' => '1001000015', 'bank_name' => 'Techcombank', 'department_id' => 4, 'position_id' => 8,  'join_date' => '2024-06-01', 'employment_status' => 'active', 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        DB::table('employees')->insert($employees);
+        $this->insertWithIdentity('employees', $employees);
 
         // Update department manager_employee_id after employees exist
         DB::table('departments')->where('id', 1)->update(['manager_employee_id' => 5]);  // BOD => Manager
@@ -97,7 +99,7 @@ class EmployeeSeeder extends Seeder
             ['id' => 10, 'employee_id' => 13, 'full_name' => 'Le Minh Khang',        'dob' => '2020-11-08', 'relationship' => 'child',   'national_id' => null,           'tax_reduction_from' => '2021-01-01', 'tax_reduction_to' => null, 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        DB::table('dependents')->insert($dependents);
+        $this->insertWithIdentity('dependents', $dependents);
     }
 }
 
