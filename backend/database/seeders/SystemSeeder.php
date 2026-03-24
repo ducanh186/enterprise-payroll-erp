@@ -3,11 +3,13 @@
 namespace Database\Seeders;
 
 use Carbon\Carbon;
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class SystemSeeder extends Seeder
 {
+    use IdentityInsert;
     public function run(): void
     {
         DB::table('audit_logs')->delete();
@@ -19,7 +21,7 @@ class SystemSeeder extends Seeder
         // ---------------------------------------------------------------
         // Report Templates
         // ---------------------------------------------------------------
-        DB::table('report_templates')->insert([
+        $this->insertWithIdentity('report_templates', [
             ['id' => 1, 'code' => 'RPT_ATTENDANCE_DAILY',   'name' => 'Bao Cao Cham Cong Hang Ngay',             'module' => 'attendance', 'sp_name' => 'sp_Report_AttendanceDaily',    'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'code' => 'RPT_ATTENDANCE_MONTHLY',  'name' => 'Bao Cao Cham Cong Hang Thang',            'module' => 'attendance', 'sp_name' => 'sp_Report_AttendanceMonthly',  'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'code' => 'RPT_PAYROLL_SUMMARY',     'name' => 'Bao Cao Tong Hop Luong',                  'module' => 'payroll',    'sp_name' => 'sp_Report_PayrollSummary',     'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
@@ -31,7 +33,7 @@ class SystemSeeder extends Seeder
         // ---------------------------------------------------------------
         // System Configs
         // ---------------------------------------------------------------
-        DB::table('system_configs')->insert([
+        $this->insertWithIdentity('system_configs', [
             ['id' => 1,  'config_key' => 'company_name',              'config_value' => 'Cong Ty TNHH ABC',                    'description' => 'Ten cong ty',                              'created_at' => $now, 'updated_at' => $now],
             ['id' => 2,  'config_key' => 'company_tax_code',          'config_value' => '0123456789',                           'description' => 'Ma so thue cong ty',                       'created_at' => $now, 'updated_at' => $now],
             ['id' => 3,  'config_key' => 'company_address',           'config_value' => '123 Nguyen Hue, Quan 1, TP.HCM',      'description' => 'Dia chi cong ty',                          'created_at' => $now, 'updated_at' => $now],
@@ -174,7 +176,7 @@ class SystemSeeder extends Seeder
             ],
         ];
 
-        DB::table('audit_logs')->insert($auditLogs);
+        $this->insertWithIdentity('audit_logs', $auditLogs);
     }
 }
 
