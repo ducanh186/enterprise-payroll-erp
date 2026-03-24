@@ -33,6 +33,8 @@ docker/data/
 
 # Temp / session files
 ses.txt
-
+frontend/.env.production.local
+backend/storage/logs/
+CLAUDE.md 
 # OS
 *.orig
