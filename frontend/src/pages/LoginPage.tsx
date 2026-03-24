@@ -37,86 +37,41 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen overflow-hidden bg-slate-50">
-      {/* Left Column: Brand Section */}
-      <section
-        className="relative hidden overflow-hidden lg:flex lg:w-7/12 lg:flex-col lg:justify-between p-12 text-white"
-        style={{
-          backgroundColor: "#0f172a",
-          backgroundImage:
-            "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0)",
-          backgroundSize: "24px 24px",
-        }}
-      >
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-[10%] -right-[10%] h-96 w-96 rounded-full bg-indigo-900 opacity-40 blur-[120px]" />
-          <div className="absolute -bottom-[5%] left-[10%] h-64 w-64 rounded-full bg-emerald-600 opacity-20 blur-[100px]" />
-        </div>
+    <div
+      className="flex min-h-screen items-center justify-center p-4"
+      style={{
+        backgroundColor: "#0f172a",
+        backgroundImage:
+          "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0)",
+        backgroundSize: "24px 24px",
+      }}
+    >
+      {/* Decorative blobs */}
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute -top-[10%] -right-[10%] h-96 w-96 rounded-full bg-indigo-900 opacity-40 blur-[120px]" />
+        <div className="absolute -bottom-[5%] left-[10%] h-64 w-64 rounded-full bg-emerald-600 opacity-20 blur-[100px]" />
+      </div>
 
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
-            <ShieldCheck className="h-6 w-6 text-sky-300" />
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+            <ShieldCheck className="h-7 w-7 text-sky-300" />
           </div>
           <h1 className="text-2xl font-black uppercase tracking-tight text-white">
             Payroll ERP
           </h1>
         </div>
 
-        {/* Hero copy */}
-        <div className="relative z-10 max-w-lg">
-          <h2 className="font-[family-name:var(--font-display)] mb-6 text-5xl font-bold leading-tight tracking-tighter text-white">
-            Nhân sự doanh nghiệp,
-            <br />
-            tính toán chính xác.
-          </h2>
-          <p className="text-lg font-medium leading-relaxed text-indigo-200/90">
-            Hệ thống HRM doanh nghiệp được thiết kế với độ chặt chẽ cao. Quản lý
-            bảng lương, tuân thủ và chấm công qua một nền tảng kỹ thuật số duy nhất.
-          </p>
-        </div>
-
-        {/* Stats row */}
-        <div className="relative z-10 flex gap-12 border-t border-white/10 pt-8">
-          <div>
-            <p className="text-3xl font-bold text-white">12k+</p>
-            <p className="text-sm font-bold uppercase tracking-widest text-indigo-300">
-              Doanh nghiệp
-            </p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-white">99.9%</p>
-            <p className="text-sm font-bold uppercase tracking-widest text-indigo-300">
-              Uptime
-            </p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-white">BHXH</p>
-            <p className="text-sm font-bold uppercase tracking-widest text-indigo-300">
-              Tuân thủ
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Right Column: Login Form */}
-      <main className="flex w-full flex-col items-center justify-center bg-white p-8 shadow-[-20px_0_50px_rgba(0,0,0,0.02)] md:p-16 lg:w-5/12 lg:p-24">
-        <div className="w-full max-w-md">
-          {/* Mobile brand header */}
-          <div className="mb-12 flex items-center gap-2 lg:hidden">
-            <ShieldCheck className="h-8 w-8 text-slate-950" />
-            <span className="text-xl font-black uppercase tracking-tight text-slate-950">
-              Payroll ERP
-            </span>
-          </div>
-
+        {/* Card */}
+        <div className="rounded-2xl bg-white p-8 shadow-2xl shadow-black/20 md:p-10">
           {/* Form header */}
-          <header className="mb-10">
-            <h3 className="font-[family-name:var(--font-display)] mb-2 text-3xl font-bold tracking-tight text-slate-900">
+          <header className="mb-8 text-center">
+            <h3 className="font-[family-name:var(--font-display)] mb-2 text-2xl font-bold tracking-tight text-slate-900">
               Chào mừng trở lại
             </h3>
-            <p className="font-medium text-slate-500">
+            <p className="text-sm font-medium text-slate-500">
               Nhập thông tin đăng nhập để vào hệ thống.
             </p>
           </header>
@@ -129,7 +84,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Username field */}
             <div className="space-y-1.5">
               <label
@@ -231,8 +186,8 @@ export default function LoginPage() {
           </form>
 
           {/* Footer */}
-          <footer className="mt-12 border-t border-slate-200 pt-8">
-            <div className="flex flex-col gap-4 text-center">
+          <footer className="mt-8 border-t border-slate-200 pt-6">
+            <div className="flex flex-col gap-3 text-center">
               <p className="text-sm text-slate-500">
                 Chưa có tài khoản?{" "}
                 <a href="#" className="font-bold text-slate-950 hover:underline">
@@ -253,7 +208,7 @@ export default function LoginPage() {
             </div>
           </footer>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
