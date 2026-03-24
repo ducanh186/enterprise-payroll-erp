@@ -77,7 +77,7 @@ export default function RolePermissionsPage() {
 
   const permissionsQuery = useQuery({
     queryKey: ["admin", "permissions"],
-    queryFn: async () => apiGet<unknown>("/admin/permissions"),
+    queryFn: async () => apiGet<unknown>("/permissions"),
   });
 
   const roles = useMemo(
@@ -237,7 +237,7 @@ export default function RolePermissionsPage() {
               <div className="p-8">
                 <EmptyState
                   title="No permission data"
-                  description="Backend has not returned a permissions list. Check GET /admin/permissions."
+                  description="Backend has not returned a permissions list. Check GET /permissions."
                 />
               </div>
             ) : (
@@ -260,85 +260,86 @@ export default function RolePermissionsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {Object.entries(permissionGroups).map(([module, perms]) => {
+                  {Object.entries(permissionGroups).flatMap(([module, perms]) => {
                     const style = getModuleStyle(module);
                     const isExpanded = expandedModules[module] !== false; // default expanded
 
-                    return (
-                      <>
-                        {/* Module Header Row */}
-                        <tr
-                          key={`module-${module}`}
-                          className="cursor-pointer hover:bg-slate-50/70 transition"
-                          onClick={() => toggleModule(module)}
+                    const rows = [
+                      <tr
+                        key={`module-${module}`}
+                        className="cursor-pointer hover:bg-slate-50/70 transition"
+                        onClick={() => toggleModule(module)}
+                      >
+                        <td
+                          colSpan={roles.length + 1}
+                          className="px-6 py-3"
                         >
-                          <td
-                            colSpan={roles.length + 1}
-                            className="px-6 py-3"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`flex h-8 w-8 items-center justify-center rounded ${style.bg} ${style.color}`}
-                              >
-                                {style.icon}
-                              </div>
-                              <span className="text-sm font-bold capitalize text-slate-700">
-                                {module}
-                              </span>
-                              <span className="text-xs text-slate-400">({perms.length})</span>
-                              <ChevronDown
-                                className={`ml-auto h-4 w-4 text-slate-400 transition-transform ${
-                                  isExpanded ? "" : "-rotate-90"
-                                }`}
-                              />
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`flex h-8 w-8 items-center justify-center rounded ${style.bg} ${style.color}`}
+                            >
+                              {style.icon}
                             </div>
-                          </td>
-                        </tr>
+                            <span className="text-sm font-bold capitalize text-slate-700">
+                              {module}
+                            </span>
+                            <span className="text-xs text-slate-400">({perms.length})</span>
+                            <ChevronDown
+                              className={`ml-auto h-4 w-4 text-slate-400 transition-transform ${
+                                isExpanded ? "" : "-rotate-90"
+                              }`}
+                            />
+                          </div>
+                        </td>
+                      </tr>,
+                    ];
 
-                        {/* Permission Rows */}
-                        {isExpanded &&
-                          perms.map((perm, permIndex) => {
-                            const permCode = textValue(perm, ["code", "name"], "");
-                            const permLabel = permCode.split(".").slice(1).join(".");
+                    if (isExpanded) {
+                      rows.push(
+                        ...perms.map((perm, permIndex) => {
+                          const permCode = textValue(perm, ["code", "name"], "");
+                          const permLabel = permCode.split(".").slice(1).join(".");
 
-                            return (
-                              <tr
-                                key={`perm-${permCode}-${permIndex}`}
-                                className="transition hover:bg-sky-50/40"
-                              >
-                                <td className="border-t border-slate-50 px-6 py-3 pl-16 text-sm text-slate-700">
-                                  <span className="font-medium">{permLabel || permCode}</span>
-                                  {perm.description && (
-                                    <span className="ml-2 text-xs text-slate-400">
-                                      {textValue(perm, ["description"], "")}
-                                    </span>
-                                  )}
-                                </td>
-                                {roles.map((role, roleIndex) => {
-                                  const roleId = textValue(role, ["id"], "");
-                                  const has = rolePermissionMap.get(roleId)?.has(permCode);
-                                  const isHighlighted = roleIndex === activeRoleIndex;
+                          return (
+                            <tr
+                              key={`perm-${module}-${permCode}-${permIndex}`}
+                              className="transition hover:bg-sky-50/40"
+                            >
+                              <td className="border-t border-slate-50 px-6 py-3 pl-16 text-sm text-slate-700">
+                                <span className="font-medium">{permLabel || permCode}</span>
+                                {textValue(perm, ["description"], "") && (
+                                  <span className="ml-2 text-xs text-slate-400">
+                                    {textValue(perm, ["description"], "")}
+                                  </span>
+                                )}
+                              </td>
+                              {roles.map((role, roleIndex) => {
+                                const roleId = textValue(role, ["id"], "");
+                                const has = rolePermissionMap.get(roleId)?.has(permCode);
+                                const isHighlighted = roleIndex === activeRoleIndex;
 
-                                  return (
-                                    <td
-                                      key={`cell-${permCode}-${roleId}-${roleIndex}`}
-                                      className={`border-t border-slate-50 px-4 py-3 text-center ${
-                                        isHighlighted ? "bg-indigo-50/30" : ""
-                                      }`}
-                                    >
-                                      {has ? (
-                                        <CheckCircle2 className="mx-auto h-4 w-4 text-emerald-500" />
-                                      ) : (
-                                        <span className="text-base text-slate-200">—</span>
-                                      )}
-                                    </td>
-                                  );
-                                })}
-                              </tr>
-                            );
-                          })}
-                      </>
-                    );
+                                return (
+                                  <td
+                                    key={`cell-${module}-${permCode}-${roleId}-${roleIndex}`}
+                                    className={`border-t border-slate-50 px-4 py-3 text-center ${
+                                      isHighlighted ? "bg-indigo-50/30" : ""
+                                    }`}
+                                  >
+                                    {has ? (
+                                      <CheckCircle2 className="mx-auto h-4 w-4 text-emerald-500" />
+                                    ) : (
+                                      <span className="text-base text-slate-200">—</span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        }),
+                      );
+                    }
+
+                    return rows;
                   })}
                 </tbody>
               </table>

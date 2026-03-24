@@ -20,7 +20,7 @@ import {
 import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
 import { formatDateTime, formatNumber } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
-import { Badge, EmptyState, PageHeader, Panel } from "../components/ui";
+import { Badge, EmptyState, Panel } from "../components/ui";
 
 type Template = Record<string, unknown>;
 type Department = Record<string, unknown>;

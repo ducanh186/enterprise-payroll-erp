@@ -12,17 +12,12 @@ import {
   Pencil,
   Printer,
   Info,
-  History,
-  FolderOpen,
-  Download,
-  TrendingUp,
-  ClipboardCheck,
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
 import { apiGet } from "../lib/api";
 import { formatCurrency, formatDate } from "../lib/format";
-import { numberValue, textValue, toArray, boolValue } from "../lib/records";
+import { numberValue, textValue, toArray } from "../lib/records";
 import { Badge, EmptyState, Panel } from "../components/ui";
 
 export default function ContractDetailPage() {
