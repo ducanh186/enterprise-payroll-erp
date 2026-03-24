@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class RolePermissionSeeder extends Seeder
 {
+    use IdentityInsert;
     public function run(): void
     {
         // Truncate in correct order (child tables first)
@@ -28,7 +30,7 @@ class RolePermissionSeeder extends Seeder
             ['id' => 5, 'code' => 'employee',       'name' => 'Employee',      'created_at' => $now, 'updated_at' => $now],
         ];
 
-        DB::table('roles')->insert($roles);
+        $this->insertWithIdentity('roles', $roles);
 
         // ---------------------------------------------------------------
         // Permissions (module.action format)
@@ -92,7 +94,7 @@ class RolePermissionSeeder extends Seeder
             ];
         }
 
-        DB::table('permissions')->insert($permissions);
+        $this->insertWithIdentity('permissions', $permissions);
 
         // ---------------------------------------------------------------
         // Role-Permission matrix
@@ -171,10 +173,7 @@ class RolePermissionSeeder extends Seeder
             $rolePermissions[] = ['id' => $rpId++, 'role_id' => 5, 'permission_id' => $permMap[$code]];
         }
 
-        // Insert in chunks to avoid parameter limit
-        foreach (array_chunk($rolePermissions, 100) as $chunk) {
-            DB::table('role_permissions')->insert($chunk);
-        }
+        $this->insertWithIdentity('role_permissions', $rolePermissions);
     }
 }
 
