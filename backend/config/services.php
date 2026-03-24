@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'auth' => [
+        'allow_mock_fallback' => env('AUTH_ALLOW_MOCK_FALLBACK', false),
+    ],
+
 ];

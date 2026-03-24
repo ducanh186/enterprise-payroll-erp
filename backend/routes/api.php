@@ -118,5 +118,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{id}', [AdminController::class, 'updateUser'])->where('id', '[0-9]+');
     Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword'])->where('id', '[0-9]+');
     Route::get('/roles', [AdminController::class, 'roles']);
+    Route::get('/permissions', [AdminController::class, 'permissions']);
+    Route::get('/admin/permissions', [AdminController::class, 'permissions']);
     Route::post('/users/{id}/roles', [AdminController::class, 'assignRoles'])->where('id', '[0-9]+');
 });

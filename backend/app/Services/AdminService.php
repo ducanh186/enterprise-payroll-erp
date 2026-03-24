@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Carbon\Carbon;
@@ -100,12 +101,20 @@ class AdminService
     public function getRoles(): array
     {
         return Role::query()
+            ->with(['permissions' => fn ($query) => $query->orderBy('module')->orderBy('code')])
             ->orderBy('id')
             ->get()
-            ->map(fn (Role $role) => [
-                'value' => $role->code,
-                'label' => $role->name,
-            ])
+            ->map(fn (Role $role) => $this->formatRole($role))
+            ->all();
+    }
+
+    public function getPermissions(): array
+    {
+        return Permission::query()
+            ->orderBy('module')
+            ->orderBy('code')
+            ->get()
+            ->map(fn (Permission $permission) => $this->formatPermission($permission))
             ->all();
     }
 
@@ -145,6 +154,33 @@ class AdminService
             'is_active' => (bool) $user->is_active,
             'last_login' => $this->dateTimeValue($user->last_login_at),
             'created_at' => $this->dateTimeValue($user->created_at),
+        ];
+    }
+
+    protected function formatRole(Role $role): array
+    {
+        return [
+            'id' => $role->id,
+            'code' => $role->code,
+            'name' => $role->name,
+            'value' => $role->code,
+            'label' => $role->name,
+            'permissions' => $role->permissions
+                ->map(fn (Permission $permission) => $this->formatPermission($permission))
+                ->values()
+                ->all(),
+        ];
+    }
+
+    protected function formatPermission(Permission $permission): array
+    {
+        return [
+            'id' => $permission->id,
+            'code' => $permission->code,
+            'name' => $permission->name,
+            'module' => $permission->module,
+            'label' => $permission->name,
+            'description' => $permission->name,
         ];
     }
 

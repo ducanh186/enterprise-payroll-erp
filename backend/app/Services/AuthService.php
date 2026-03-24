@@ -16,49 +16,49 @@ class AuthService
     private array $mockUsers = [
         [
             'id' => 1,
-            'username' => 'admin',
+            'username' => 'admin01',
             'password' => 'password',
-            'name' => 'Nguyen Van An',
-            'email' => 'admin@payroll.vn',
+            'name' => 'Nguyen Van Admin',
+            'email' => 'admin01@erp.vn',
             'role' => 'system_admin',
-            'department_id' => 1,
-            'department_name' => 'IT Department',
+            'department_id' => 8,
+            'department_name' => 'Phong Cong Nghe Thong Tin',
             'avatar' => null,
             'is_active' => true,
         ],
         [
             'id' => 2,
-            'username' => 'hr_user',
+            'username' => 'hr01',
             'password' => 'password',
-            'name' => 'Tran Thi Bich',
-            'email' => 'hr@payroll.vn',
+            'name' => 'Tran Thi HR',
+            'email' => 'hr01@erp.vn',
             'role' => 'hr_staff',
             'department_id' => 2,
-            'department_name' => 'Human Resources',
-            'avatar' => null,
-            'is_active' => true,
-        ],
-        [
-            'id' => 3,
-            'username' => 'accountant',
-            'password' => 'password',
-            'name' => 'Le Van Cuong',
-            'email' => 'accountant@payroll.vn',
-            'role' => 'accountant',
-            'department_id' => 3,
-            'department_name' => 'Finance & Accounting',
+            'department_name' => 'Phong Nhan Su',
             'avatar' => null,
             'is_active' => true,
         ],
         [
             'id' => 4,
-            'username' => 'manager',
+            'username' => 'payroll01',
             'password' => 'password',
-            'name' => 'Pham Thi Dung',
-            'email' => 'manager@payroll.vn',
+            'name' => 'Pham Thi Payroll',
+            'email' => 'payroll01@erp.vn',
+            'role' => 'accountant',
+            'department_id' => 3,
+            'department_name' => 'Phong Ke Toan',
+            'avatar' => null,
+            'is_active' => true,
+        ],
+        [
+            'id' => 5,
+            'username' => 'manager01',
+            'password' => 'password',
+            'name' => 'Hoang Van Manager',
+            'email' => 'manager01@erp.vn',
             'role' => 'management',
-            'department_id' => 4,
-            'department_name' => 'Board of Directors',
+            'department_id' => 1,
+            'department_name' => 'Ban Giam Doc',
             'avatar' => null,
             'is_active' => true,
         ],
@@ -157,6 +157,10 @@ class AuthService
             ];
         }
 
+        if (!$this->allowMockFallback()) {
+            return null;
+        }
+
         // Fallback to mock data
         foreach ($this->mockUsers as $user) {
             if ($user['username'] === $username && $user['password'] === $password) {
@@ -207,6 +211,10 @@ class AuthService
             ];
         }
 
+        if (!$this->allowMockFallback()) {
+            return [];
+        }
+
         // Fallback to mock admin user
         $user = $this->mockUsers[0];
         unset($user['password']);
@@ -241,10 +249,23 @@ class AuthService
             ];
         }
 
+        if (!$this->allowMockFallback()) {
+            return [
+                'role' => $role,
+                'role_label' => UserRole::tryFrom($role)?->label() ?? $role,
+                'permissions' => [],
+            ];
+        }
+
         return [
             'role' => $role,
             'role_label' => UserRole::tryFrom($role)?->label() ?? $role,
             'permissions' => self::ROLE_PERMISSIONS[$role] ?? [],
         ];
+    }
+
+    private function allowMockFallback(): bool
+    {
+        return (bool) config('services.auth.allow_mock_fallback', false);
     }
 }

@@ -72,6 +72,11 @@ class AdminController extends Controller
         return $this->success($this->adminService->getRoles());
     }
 
+    public function permissions(): JsonResponse
+    {
+        return $this->success($this->adminService->getPermissions());
+    }
+
     public function assignRoles(Request $request, int $id): JsonResponse
     {
         $request->validate([

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -91,9 +92,13 @@ class PayrollParameter extends Model
     /**
      * Filter to parameters effective on a given date (defaults to today).
      */
-    public function scopeEffective(Builder $query, ?Carbon $date = null): Builder
+    public function scopeEffective(Builder $query, CarbonInterface|string|null $date = null): Builder
     {
-        $date = $date ?? Carbon::today();
+        $date = match (true) {
+            $date instanceof CarbonInterface => Carbon::instance($date),
+            is_string($date) && $date !== '' => Carbon::parse($date),
+            default => Carbon::today(),
+        };
 
         return $query
             ->where('effective_from', '<=', $date)
