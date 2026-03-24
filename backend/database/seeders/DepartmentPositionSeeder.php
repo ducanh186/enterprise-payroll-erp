@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\IdentityInsert;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class DepartmentPositionSeeder extends Seeder
 {
+    use IdentityInsert;
     public function run(): void
     {
         DB::table('positions')->delete();
@@ -28,7 +30,7 @@ class DepartmentPositionSeeder extends Seeder
             ['id' => 8, 'code' => 'IT',     'name' => 'Phong Cong Nghe Thong Tin', 'parent_id' => 1, 'manager_employee_id' => null, 'status' => 'active', 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        DB::table('departments')->insert($departments);
+        $this->insertWithIdentity('departments', $departments);
 
         // ---------------------------------------------------------------
         // Positions (linked to departments)
@@ -65,7 +67,7 @@ class DepartmentPositionSeeder extends Seeder
             ['id' => 14, 'code' => 'NV_IT',    'name' => 'Nhan Vien IT',            'department_id' => 8, 'status' => 'active', 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        DB::table('positions')->insert($positions);
+        $this->insertWithIdentity('positions', $positions);
     }
 }
 
