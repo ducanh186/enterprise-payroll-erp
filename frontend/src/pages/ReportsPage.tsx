@@ -18,8 +18,10 @@ import {
   Wallet,
 } from "lucide-react";
 import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { formatDateTime, formatNumber } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState, Panel } from "../components/ui";
 
 type Template = Record<string, unknown>;
@@ -89,6 +91,7 @@ function categoryIconBg(category: string): string {
 }
 
 export default function ReportsPage() {
+  const { user } = useAuth();
   const [selectedCode, setSelectedCode] = useState<string>("");
   const [form, setForm] = useState({
     month: String(new Date().getMonth() + 1),
@@ -101,6 +104,11 @@ export default function ReportsPage() {
   const [exportResult, setExportResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canExportReports = hasPermissionAccess(permissionSet, "reports.export");
+  const canViewDepartments =
+    hasPermissionAccess(permissionSet, "reference.view") ||
+    hasPermissionAccess(permissionSet, "reference.manage");
 
   const templatesQuery = useQuery({
     queryKey: ["reports", "templates"],
@@ -110,6 +118,7 @@ export default function ReportsPage() {
   const departmentsQuery = useQuery({
     queryKey: ["reference", "departments"],
     queryFn: async () => apiGet<unknown>("/reference/departments"),
+    enabled: canViewDepartments,
   });
 
   const templates = useMemo(() => toArray<Template>(templatesQuery.data?.data), [templatesQuery.data?.data]);
@@ -412,6 +421,7 @@ export default function ReportsPage() {
                 <select
                   value={form.department_id}
                   onChange={(e) => setForm((c) => ({ ...c, department_id: e.target.value }))}
+                  disabled={!canViewDepartments}
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                 >
                   <option value="">Tất cả phòng ban</option>
@@ -478,19 +488,21 @@ export default function ReportsPage() {
                   )}
                   Xem trước
                 </button>
-                <button
-                  type="button"
-                  onClick={() => exportMutation.mutate()}
-                  disabled={exportMutation.isPending || !selectedCode}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {exportMutation.isPending ? (
-                    <RefreshCcw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  Xuất báo cáo
-                </button>
+                {canExportReports && (
+                  <button
+                    type="button"
+                    onClick={() => exportMutation.mutate()}
+                    disabled={exportMutation.isPending || !selectedCode}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {exportMutation.isPending ? (
+                      <RefreshCcw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                    Xuất báo cáo
+                  </button>
+                )}
               </div>
             </div>
           ) : (
