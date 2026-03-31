@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 class RolePermissionSeeder extends Seeder
 {
     use IdentityInsert;
+
     public function run(): void
     {
         // Truncate in correct order (child tables first)
@@ -36,6 +37,9 @@ class RolePermissionSeeder extends Seeder
         // Permissions (module.action format)
         // ---------------------------------------------------------------
         $permissionDefs = [
+            // Dashboard module
+            ['dashboard.view',       'View Dashboard',                  'dashboard'],
+
             // Auth module
             ['auth.login',          'Login',                            'auth'],
             ['auth.logout',         'Logout',                           'auth'],
@@ -55,6 +59,9 @@ class RolePermissionSeeder extends Seeder
             // Contract module
             ['contract.view',       'View Contracts',                   'contract'],
             ['contract.create',     'Create Contract',                  'contract'],
+            ['contract.update',     'Update Contract',                  'contract'],
+            ['contract.renew',      'Renew Contract',                   'contract'],
+            ['contract.terminate',  'Terminate Contract',               'contract'],
 
             // Attendance module
             ['attendance.view',           'View Attendance',            'attendance'],
@@ -66,7 +73,8 @@ class RolePermissionSeeder extends Seeder
 
             // Payroll module
             ['payroll.view',         'View Payroll',                    'payroll'],
-            ['payroll.manage_param', 'Manage Payroll Parameters',      'payroll'],
+            ['payroll.manage_param', 'Manage Payroll Parameters',       'payroll'],
+            ['payroll.adjust',       'Manage Payroll Adjustments',      'payroll'],
             ['payroll.run',          'Run Payroll',                     'payroll'],
             ['payroll.finalize',     'Finalize Payroll',                'payroll'],
             ['payroll.lock',         'Lock Payroll',                    'payroll'],
@@ -80,6 +88,12 @@ class RolePermissionSeeder extends Seeder
             ['admin.roles',          'Manage Roles',                   'admin'],
             ['admin.config',         'Manage System Config',           'admin'],
             ['admin.audit',          'View Audit Logs',                'admin'],
+            ['admin.backup',         'Manage Backup & Restore',        'admin'],
+
+            // Self-service module
+            ['self.attendance.view', 'View Own Attendance',            'self_service'],
+            ['self.request.manage',  'Manage Own Attendance Requests', 'self_service'],
+            ['self.payslip.view',    'View Own Payslips',              'self_service'],
         ];
 
         $permissions = [];
@@ -102,78 +116,59 @@ class RolePermissionSeeder extends Seeder
         // Build a code-to-id map
         $permMap = collect($permissions)->pluck('id', 'code');
 
-        // system_admin gets ALL permissions
-        $allPermIds = $permMap->values()->toArray();
-
-        // hr_staff permissions
-        $hrPermCodes = [
-            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
-            'reference.view',
-            'employee.view', 'employee.create', 'employee.update',
-            'contract.view', 'contract.create',
-            'attendance.view', 'attendance.manage_period', 'attendance.import_logs',
-            'attendance.calculate', 'attendance.manage_request', 'attendance.confirm',
-            'reports.view', 'reports.export',
-        ];
-
-        // accountant permissions
-        $accountantPermCodes = [
-            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
-            'reference.view',
-            'employee.view',
-            'contract.view',
-            'attendance.view',
-            'payroll.view', 'payroll.manage_param', 'payroll.run', 'payroll.finalize', 'payroll.lock',
-            'reports.view', 'reports.export',
-        ];
-
-        // management permissions
-        $managementPermCodes = [
-            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
-            'reference.view',
-            'employee.view',
-            'contract.view',
-            'attendance.view',
-            'payroll.view',
-            'reports.view', 'reports.export',
-        ];
-
-        // employee permissions
-        $employeePermCodes = [
-            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
-            'attendance.view',
-            'payroll.view',
+        $rolePermissionCodes = [
+            'system_admin' => [
+                'dashboard.view',
+                'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+                'payroll.manage_param',
+                'admin.users', 'admin.roles', 'admin.config', 'admin.audit', 'admin.backup',
+            ],
+            'hr_staff' => [
+                'dashboard.view',
+                'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+                'reference.view', 'reference.manage',
+                'employee.view', 'employee.create', 'employee.update', 'employee.delete',
+                'contract.view', 'contract.create', 'contract.update', 'contract.renew', 'contract.terminate',
+                'attendance.view', 'attendance.manage_period', 'attendance.import_logs',
+                'attendance.calculate', 'attendance.manage_request', 'attendance.confirm',
+                'reports.view', 'reports.export',
+            ],
+            'accountant' => [
+                'dashboard.view',
+                'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+                'reference.view',
+                'employee.view',
+                'contract.view',
+                'attendance.view',
+                'payroll.view', 'payroll.adjust', 'payroll.run', 'payroll.finalize', 'payroll.lock',
+                'reports.view', 'reports.export',
+            ],
+            'management' => [
+                'dashboard.view',
+                'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+                'reports.view', 'reports.export',
+            ],
+            'employee' => [
+                'dashboard.view',
+                'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+                'self.attendance.view', 'self.request.manage', 'self.payslip.view',
+            ],
         ];
 
         $rolePermissions = [];
         $rpId = 1;
 
-        // system_admin (role_id=1) => all
-        foreach ($allPermIds as $pid) {
-            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 1, 'permission_id' => $pid];
-        }
-
-        // hr_staff (role_id=2)
-        foreach ($hrPermCodes as $code) {
-            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 2, 'permission_id' => $permMap[$code]];
-        }
-
-        // accountant (role_id=3)
-        foreach ($accountantPermCodes as $code) {
-            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 3, 'permission_id' => $permMap[$code]];
-        }
-
-        // management (role_id=4)
-        foreach ($managementPermCodes as $code) {
-            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 4, 'permission_id' => $permMap[$code]];
-        }
-
-        // employee (role_id=5)
-        foreach ($employeePermCodes as $code) {
-            $rolePermissions[] = ['id' => $rpId++, 'role_id' => 5, 'permission_id' => $permMap[$code]];
+        $roleMap = collect($roles)->pluck('id', 'code');
+        foreach ($rolePermissionCodes as $roleCode => $codes) {
+            foreach ($codes as $code) {
+                $rolePermissions[] = [
+                    'id' => $rpId++,
+                    'role_id' => $roleMap[$roleCode],
+                    'permission_id' => $permMap[$code],
+                ];
+            }
         }
 
         $this->insertWithIdentity('role_permissions', $rolePermissions);
     }
 }
-
