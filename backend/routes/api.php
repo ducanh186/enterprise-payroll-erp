@@ -38,7 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // -----------------------------------------------------------------------
     // Reference / Master Data Module
     // -----------------------------------------------------------------------
-    Route::prefix('reference')->group(function () {
+    Route::prefix('reference')->middleware('permission:reference.view')->group(function () {
         Route::get('/shifts', [ReferenceController::class, 'shifts']);
         Route::get('/holidays', [ReferenceController::class, 'holidays']);
         Route::get('/contract-types', [ReferenceController::class, 'contractTypes']);
@@ -53,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // -----------------------------------------------------------------------
     // Employee Module
     // -----------------------------------------------------------------------
-    Route::prefix('employees')->group(function () {
+    Route::prefix('employees')->middleware('permission:employee.view')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
         Route::get('/{id}', [EmployeeController::class, 'show'])->where('id', '[0-9]+');
         Route::get('/{id}/active-contract', [EmployeeController::class, 'activeContract'])->where('id', '[0-9]+');
@@ -63,7 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // -----------------------------------------------------------------------
     // Contract Module
     // -----------------------------------------------------------------------
-    Route::prefix('contracts')->group(function () {
+    Route::prefix('contracts')->middleware('permission:contract.view')->group(function () {
         Route::get('/', [ContractController::class, 'index']);
         Route::get('/{id}', [ContractController::class, 'show'])->where('id', '[0-9]+');
     });
@@ -72,57 +72,57 @@ Route::middleware('auth:sanctum')->group(function () {
     // Attendance Module (PRIORITY)
     // -----------------------------------------------------------------------
     Route::prefix('attendance')->group(function () {
-        Route::get('/checkin-logs', [AttendanceController::class, 'checkinLogs']);
-        Route::post('/checkin-logs/manual', [AttendanceController::class, 'manualCheckin']);
-        Route::get('/daily', [AttendanceController::class, 'daily']);
-        Route::get('/monthly-summary', [AttendanceController::class, 'monthlySummary']);
-        Route::post('/recalculate', [AttendanceController::class, 'recalculate']);
-        Route::get('/requests', [AttendanceController::class, 'requestsIndex']);
-        Route::post('/requests', [AttendanceController::class, 'requestsStore']);
-        Route::get('/requests/{id}', [AttendanceController::class, 'requestsShow'])->where('id', '[0-9]+');
-        Route::post('/requests/{id}/approve', [AttendanceController::class, 'requestsApprove'])->where('id', '[0-9]+');
-        Route::post('/requests/{id}/reject', [AttendanceController::class, 'requestsReject'])->where('id', '[0-9]+');
-        Route::get('/shift-assignments', [AttendanceController::class, 'shiftAssignments']);
+        Route::get('/checkin-logs', [AttendanceController::class, 'checkinLogs'])->middleware('permission:attendance.import_logs');
+        Route::post('/checkin-logs/manual', [AttendanceController::class, 'manualCheckin'])->middleware('permission:attendance.manage_request');
+        Route::get('/daily', [AttendanceController::class, 'daily'])->middleware('permission:attendance.view');
+        Route::get('/monthly-summary', [AttendanceController::class, 'monthlySummary'])->middleware('permission:attendance.view');
+        Route::post('/recalculate', [AttendanceController::class, 'recalculate'])->middleware('permission:attendance.calculate');
+        Route::get('/requests', [AttendanceController::class, 'requestsIndex'])->middleware('permission:attendance.manage_request');
+        Route::post('/requests', [AttendanceController::class, 'requestsStore'])->middleware('permission:attendance.manage_request');
+        Route::get('/requests/{id}', [AttendanceController::class, 'requestsShow'])->where('id', '[0-9]+')->middleware('permission:attendance.manage_request');
+        Route::post('/requests/{id}/approve', [AttendanceController::class, 'requestsApprove'])->where('id', '[0-9]+')->middleware('permission:attendance.confirm');
+        Route::post('/requests/{id}/reject', [AttendanceController::class, 'requestsReject'])->where('id', '[0-9]+')->middleware('permission:attendance.confirm');
+        Route::get('/shift-assignments', [AttendanceController::class, 'shiftAssignments'])->middleware('permission:attendance.manage_period');
     });
 
     // -----------------------------------------------------------------------
     // Payroll Module (PRIORITY)
     // -----------------------------------------------------------------------
     Route::prefix('payroll')->group(function () {
-        Route::get('/periods', [PayrollController::class, 'periods']);
-        Route::post('/periods/open', [PayrollController::class, 'openPeriod']);
-        Route::get('/runs/preview-parameters', [PayrollController::class, 'previewParameters']);
-        Route::post('/runs/preview', [PayrollController::class, 'previewRun']);
-        Route::get('/runs/{runId}', [PayrollController::class, 'showRun']);
-        Route::post('/runs/{runId}/finalize', [PayrollController::class, 'finalizeRun']);
-        Route::post('/runs/{runId}/lock', [PayrollController::class, 'lockRun']);
-        Route::get('/payslips', [PayrollController::class, 'payslips']);
-        Route::get('/payslips/{id}', [PayrollController::class, 'showPayslip'])->where('id', '[0-9]+');
-        Route::get('/payslips/{id}/details', [PayrollController::class, 'payslipDetails'])->where('id', '[0-9]+');
-        Route::post('/adjustments', [PayrollController::class, 'createAdjustment']);
-        Route::put('/adjustments/{id}', [PayrollController::class, 'updateAdjustment'])->where('id', '[0-9]+');
-        Route::delete('/adjustments/{id}', [PayrollController::class, 'deleteAdjustment'])->where('id', '[0-9]+');
-        Route::get('/bonus-deductions', [PayrollController::class, 'bonusDeductions']);
+        Route::get('/periods', [PayrollController::class, 'periods'])->middleware('permission:payroll.view');
+        Route::post('/periods/open', [PayrollController::class, 'openPeriod'])->middleware('permission:payroll.run');
+        Route::get('/runs/preview-parameters', [PayrollController::class, 'previewParameters'])->middleware('permission:payroll.run');
+        Route::post('/runs/preview', [PayrollController::class, 'previewRun'])->middleware('permission:payroll.run');
+        Route::get('/runs/{runId}', [PayrollController::class, 'showRun'])->middleware('permission:payroll.view');
+        Route::post('/runs/{runId}/finalize', [PayrollController::class, 'finalizeRun'])->middleware('permission:payroll.finalize');
+        Route::post('/runs/{runId}/lock', [PayrollController::class, 'lockRun'])->middleware('permission:payroll.lock');
+        Route::get('/payslips', [PayrollController::class, 'payslips'])->middleware('permission:payroll.view');
+        Route::get('/payslips/{id}', [PayrollController::class, 'showPayslip'])->where('id', '[0-9]+')->middleware('permission:payroll.view');
+        Route::get('/payslips/{id}/details', [PayrollController::class, 'payslipDetails'])->where('id', '[0-9]+')->middleware('permission:payroll.view');
+        Route::post('/adjustments', [PayrollController::class, 'createAdjustment'])->middleware('permission:payroll.adjust');
+        Route::put('/adjustments/{id}', [PayrollController::class, 'updateAdjustment'])->where('id', '[0-9]+')->middleware('permission:payroll.adjust');
+        Route::delete('/adjustments/{id}', [PayrollController::class, 'deleteAdjustment'])->where('id', '[0-9]+')->middleware('permission:payroll.adjust');
+        Route::get('/bonus-deductions', [PayrollController::class, 'bonusDeductions'])->middleware('permission:payroll.adjust');
     });
 
     // -----------------------------------------------------------------------
     // Reports Module
     // -----------------------------------------------------------------------
     Route::prefix('reports')->group(function () {
-        Route::get('/templates', [ReportController::class, 'templates']);
-        Route::post('/{code}/preview', [ReportController::class, 'preview']);
-        Route::post('/{code}/export', [ReportController::class, 'export']);
+        Route::get('/templates', [ReportController::class, 'templates'])->middleware('permission:reports.view');
+        Route::post('/{code}/preview', [ReportController::class, 'preview'])->middleware('permission:reports.view');
+        Route::post('/{code}/export', [ReportController::class, 'export'])->middleware('permission:reports.export');
     });
 
     // -----------------------------------------------------------------------
     // Admin Module (system_admin only)
     // -----------------------------------------------------------------------
-    Route::get('/users', [AdminController::class, 'users']);
-    Route::post('/users', [AdminController::class, 'createUser']);
-    Route::put('/users/{id}', [AdminController::class, 'updateUser'])->where('id', '[0-9]+');
-    Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword'])->where('id', '[0-9]+');
-    Route::get('/roles', [AdminController::class, 'roles']);
-    Route::get('/permissions', [AdminController::class, 'permissions']);
-    Route::get('/admin/permissions', [AdminController::class, 'permissions']);
-    Route::post('/users/{id}/roles', [AdminController::class, 'assignRoles'])->where('id', '[0-9]+');
+    Route::get('/users', [AdminController::class, 'users'])->middleware('permission:admin.users');
+    Route::post('/users', [AdminController::class, 'createUser'])->middleware('permission:admin.users');
+    Route::put('/users/{id}', [AdminController::class, 'updateUser'])->where('id', '[0-9]+')->middleware('permission:admin.users');
+    Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword'])->where('id', '[0-9]+')->middleware('permission:admin.users');
+    Route::get('/roles', [AdminController::class, 'roles'])->middleware('permission:admin.roles');
+    Route::get('/permissions', [AdminController::class, 'permissions'])->middleware('permission:admin.roles');
+    Route::get('/admin/permissions', [AdminController::class, 'permissions'])->middleware('permission:admin.roles');
+    Route::post('/users/{id}/roles', [AdminController::class, 'assignRoles'])->where('id', '[0-9]+')->middleware('permission:admin.roles');
 });
