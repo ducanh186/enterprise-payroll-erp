@@ -3,8 +3,10 @@ import type { FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, RefreshCcw } from "lucide-react";
 import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { formatDateTime } from "../lib/format";
 import { textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState, Modal, PageHeader } from "../components/ui";
 
 type ManualForm = {
@@ -24,11 +26,15 @@ const DEFAULT_FORM: ManualForm = {
 };
 
 export default function ManualAttendancePage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<ManualForm>(DEFAULT_FORM);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canCreateManualAttendance = hasPermissionAccess(permissionSet, "attendance.manage_request");
+  const canViewManualEntries = hasPermissionAccess(permissionSet, "attendance.import_logs");
 
   const query = useQuery({
     queryKey: ["attendance", "manual-entries"],
@@ -38,6 +44,7 @@ export default function ManualAttendancePage() {
         page: 1,
         per_page: 20,
       }),
+    enabled: canViewManualEntries,
   });
 
   const items = useMemo(
@@ -72,6 +79,9 @@ export default function ManualAttendancePage() {
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!canCreateManualAttendance) {
+      return;
+    }
     mutation.mutate();
   }
 
@@ -85,20 +95,26 @@ export default function ManualAttendancePage() {
           <>
             <button
               type="button"
-              onClick={() => query.refetch()}
+              onClick={() => {
+                if (canViewManualEntries) {
+                  void query.refetch();
+                }
+              }}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
             >
               <RefreshCcw className="h-4 w-4" />
               Làm mới
             </button>
-            <button
-              type="button"
-              onClick={() => { setShowModal(true); setError(null); setSuccess(false); }}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
-            >
-              <Plus className="h-4 w-4" />
-              Thêm chấm công
-            </button>
+            {canCreateManualAttendance && (
+              <button
+                type="button"
+                onClick={() => { setShowModal(true); setError(null); setSuccess(false); }}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+                Thêm chấm công
+              </button>
+            )}
           </>
         }
       />
@@ -125,7 +141,16 @@ export default function ManualAttendancePage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {query.isLoading ? (
+            {!canViewManualEntries ? (
+              <tr>
+                <td colSpan={5} className="py-10">
+                  <EmptyState
+                    title="Không có quyền xem danh sách chấm công bổ sung"
+                    description="Tài khoản này không được truy cập log chấm công thủ công."
+                  />
+                </td>
+              </tr>
+            ) : query.isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   {Array.from({ length: 5 }).map((__, j) => (
@@ -164,8 +189,12 @@ export default function ManualAttendancePage() {
                 <td colSpan={5} className="py-10">
                   <EmptyState
                     title="Chưa có chấm công bổ sung"
-                    description="Nhấn Thêm chấm công để ghi nhận chấm công thủ công."
-                    action={
+                    description={
+                      canCreateManualAttendance
+                        ? "Nhấn Thêm chấm công để ghi nhận chấm công thủ công."
+                        : "Chưa có bản ghi nào trong phạm vi được hiển thị."
+                    }
+                    action={canCreateManualAttendance ? (
                       <button
                         type="button"
                         onClick={() => setShowModal(true)}
@@ -174,7 +203,7 @@ export default function ManualAttendancePage() {
                         <Plus className="h-4 w-4" />
                         Thêm chấm công
                       </button>
-                    }
+                    ) : undefined}
                   />
                 </td>
               </tr>
@@ -189,7 +218,7 @@ export default function ManualAttendancePage() {
       </div>
 
       {/* Manual Attendance Modal */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="Chấm công bổ sung" size="md">
+      <Modal open={showModal && canCreateManualAttendance} onClose={() => setShowModal(false)} title="Chấm công bổ sung" size="md">
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Mã nhân viên</label>
