@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, Plus, RefreshCcw, Search } from "lucide-react";
 import { apiGet } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { formatCurrency, formatDate, formatNumber } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState, Modal, PageHeader } from "../components/ui";
 
 function periodStatusBadge(status: string) {
@@ -17,10 +19,13 @@ function periodStatusBadge(status: string) {
 }
 
 export default function PayrollPeriodsPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canRunPayroll = hasPermissionAccess(permissionSet, "payroll.run");
 
   const query = useQuery({
     queryKey: ["payroll", "periods"],
@@ -60,14 +65,16 @@ export default function PayrollPeriodsPage() {
               <RefreshCcw className="h-4 w-4" />
               Làm mới
             </button>
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
-            >
-              <Plus className="h-4 w-4" />
-              Tạo kỳ lương
-            </button>
+            {canRunPayroll && (
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+                Tạo kỳ lương
+              </button>
+            )}
           </>
         }
       />
@@ -148,16 +155,18 @@ export default function PayrollPeriodsPage() {
                       {createdAt ? formatDate(createdAt) : "—"}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                        <button
-                          type="button"
-                          onClick={() => navigate("/payroll/run")}
-                          className="rounded-lg p-1.5 text-slate-400 transition hover:text-indigo-600"
-                          title="Xem chi tiết kỳ lương"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {canRunPayroll && (
+                        <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => navigate("/payroll/run")}
+                            className="rounded-lg p-1.5 text-slate-400 transition hover:text-indigo-600"
+                            title="Xem chi tiết kỳ lương"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -183,7 +192,7 @@ export default function PayrollPeriodsPage() {
       </div>
 
       {/* Create Period Modal */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="Tạo kỳ lương mới" size="md">
+      <Modal open={showModal && canRunPayroll} onClose={() => setShowModal(false)} title="Tạo kỳ lương mới" size="md">
         <form className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Tên kỳ lương</label>
