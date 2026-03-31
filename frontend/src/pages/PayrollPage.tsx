@@ -3,12 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Play, Download, Receipt, ChevronLeft, ChevronRight, Lock, BarChart2, FileWarning } from "lucide-react";
 import { apiGet } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { formatCurrency, formatNumber } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { EmptyState } from "../components/ui";
 
 export default function PayrollPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canRunPayroll = hasPermissionAccess(permissionSet, "payroll.run");
+  const canViewReports = hasPermissionAccess(permissionSet, "reports.view");
+  const canExportReports = hasPermissionAccess(permissionSet, "reports.export");
 
   const periodsQuery = useQuery({
     queryKey: ["payroll", "periods"],
@@ -73,17 +80,21 @@ export default function PayrollPage() {
           <p className="text-slate-500 font-medium mt-1">Theo dõi tình hình lương tháng {currentMonthLabel}</p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-600 border border-slate-200 font-semibold rounded-lg hover:bg-slate-50 transition-colors text-sm shadow-sm">
-            <Download className="h-4 w-4" />
-            Xuất CSV
-          </button>
-          <button
-            onClick={() => navigate("/payroll/run")}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-slate-950 to-indigo-700 text-white font-bold rounded-lg shadow-lg hover:opacity-90 transition-opacity text-sm"
-          >
-            <Play className="h-4 w-4" />
-            Tạo vòng tính mới
-          </button>
+          {canExportReports && (
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-600 border border-slate-200 font-semibold rounded-lg hover:bg-slate-50 transition-colors text-sm shadow-sm">
+              <Download className="h-4 w-4" />
+              Xuất CSV
+            </button>
+          )}
+          {canRunPayroll && (
+            <button
+              onClick={() => navigate("/payroll/run")}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-slate-950 to-indigo-700 text-white font-bold rounded-lg shadow-lg hover:opacity-90 transition-opacity text-sm"
+            >
+              <Play className="h-4 w-4" />
+              Tạo vòng tính mới
+            </button>
+          )}
         </div>
       </header>
 
@@ -221,14 +232,14 @@ export default function PayrollPage() {
                         <EmptyState
                           title="Chưa có vòng tính lương"
                           description="Điều chỉnh bộ lọc hoặc tạo vòng tính lương mới cho kỳ này."
-                          action={
+                          action={canRunPayroll ? (
                             <button
                               onClick={() => navigate("/payroll/run")}
                               className="px-6 py-2 bg-indigo-700 text-white rounded-lg font-bold text-sm hover:bg-indigo-800 transition-colors"
                             >
                               Tạo vòng tính đầu tiên
                             </button>
-                          }
+                          ) : undefined}
                         />
                       </td>
                     </tr>
@@ -260,16 +271,18 @@ export default function PayrollPage() {
           <div className="space-y-4">
             <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Thao tác nhanh</h4>
             <div className="grid grid-cols-1 gap-3">
-              <button
-                onClick={() => navigate("/reports")}
-                className="flex items-center gap-3 p-4 bg-white hover:bg-slate-50 transition-all rounded-lg border border-slate-200/60 text-left shadow-sm group"
-              >
-                <BarChart2 className="h-5 w-5 text-indigo-700 group-hover:scale-110 transition-transform" />
-                <div>
-                  <span className="block text-sm font-bold">Xem báo cáo</span>
-                  <span className="block text-[10px] text-slate-500">Tổng hợp thuế và chênh lệch</span>
-                </div>
-              </button>
+              {canViewReports && (
+                <button
+                  onClick={() => navigate("/reports")}
+                  className="flex items-center gap-3 p-4 bg-white hover:bg-slate-50 transition-all rounded-lg border border-slate-200/60 text-left shadow-sm group"
+                >
+                  <BarChart2 className="h-5 w-5 text-indigo-700 group-hover:scale-110 transition-transform" />
+                  <div>
+                    <span className="block text-sm font-bold">Xem báo cáo</span>
+                    <span className="block text-[10px] text-slate-500">Tổng hợp thuế và chênh lệch</span>
+                  </div>
+                </button>
+              )}
               <button
                 onClick={() => navigate("/payroll/payslips")}
                 className="flex items-center gap-3 p-4 bg-white hover:bg-slate-50 transition-all rounded-lg border border-slate-200/60 text-left shadow-sm group"
