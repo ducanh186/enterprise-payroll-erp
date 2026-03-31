@@ -12,8 +12,11 @@ import {
   ChevronRight,
   Plus,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { apiGet } from "../lib/api";
+import { useDetachedEditor } from "../lib/detachedEditor";
 import { formatCurrency, formatDate } from "../lib/format";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { numberValue, textValue, toArray } from "../lib/records";
 import { Badge, EmptyState } from "../components/ui";
 
@@ -76,14 +79,33 @@ function avatarColor(name: string): string {
 }
 
 export default function ContractsPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingId, setEditingId] = useState<string>("");
+  const { editorAction, editorId, openCreateTab, openEditTab, closeDetachedEditor } = useDetachedEditor("/contracts");
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const permissionSet = useMemo(() => createPermissionSet(user?.permissions), [user?.permissions]);
+  const canCreateContract = hasPermissionAccess(permissionSet, "contract.create");
+  const canEditContract = hasPermissionAccess(permissionSet, "contract.update");
+  const activeEditingId = canEditContract ? editingId || (editorAction === "edit" ? editorId : "") : "";
+  const modalOpen =
+    (canCreateContract && (showCreateModal || editorAction === "create")) ||
+    (canEditContract && Boolean(activeEditingId));
+
+  function handleCloseEditor() {
+    if (editorAction === "create" || editorAction === "edit") {
+      closeDetachedEditor();
+      return;
+    }
+
+    setShowCreateModal(false);
+    setEditingId("");
+  }
 
   const contractsQuery = useQuery({
     queryKey: ["contracts"],
@@ -155,14 +177,16 @@ export default function ContractsPage() {
             <Download className="h-4 w-4" />
             Xuất CSV
           </button>
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
-          >
-            <Plus className="h-4 w-4" />
-            Hợp đồng mới
-          </button>
+          {canCreateContract && (
+            <button
+              type="button"
+              onClick={openCreateTab}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+            >
+              <Plus className="h-4 w-4" />
+              Hợp đồng mới
+            </button>
+          )}
         </div>
       </div>
 
@@ -357,13 +381,15 @@ export default function ContractsPage() {
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setEditingId(id); }}
-                          className="rounded-lg p-1.5 text-slate-400 transition hover:text-indigo-600"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
+                        {canEditContract && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openEditTab(id); }}
+                            className="rounded-lg p-1.5 text-slate-400 transition hover:text-indigo-600"
+                            title="Chỉnh sửa"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -537,23 +563,20 @@ export default function ContractsPage() {
       </div>
 
       {/* Create/Edit Modal */}
-      {(showCreateModal || editingId) && (
+      {modalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
-          onClick={() => {
-            setShowCreateModal(false);
-            setEditingId("");
-          }}
+          onClick={handleCloseEditor}
         >
           <div
             className="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-bold text-slate-900">
-              {showCreateModal ? "Tạo hợp đồng mới" : "Chỉnh sửa hợp đồng"}
+              {editorAction === "create" || showCreateModal ? "Tạo hợp đồng mới" : "Chỉnh sửa hợp đồng"}
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              {showCreateModal ? "Nhập thông tin hợp đồng lao động mới" : "Cập nhật thông tin hợp đồng"}
+              {editorAction === "create" || showCreateModal ? "Nhập thông tin hợp đồng lao động mới" : "Cập nhật thông tin hợp đồng"}
             </p>
 
             <form className="mt-6 space-y-4">
@@ -616,21 +639,14 @@ export default function ContractsPage() {
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setEditingId("");
-                }}
+                onClick={handleCloseEditor}
                 className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
               >
                 Hủy
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  // Mock save - just close modal
-                  setShowCreateModal(false);
-                  setEditingId("");
-                }}
+                onClick={handleCloseEditor}
                 className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
               >
                 Lưu
