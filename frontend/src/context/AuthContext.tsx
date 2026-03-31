@@ -1,8 +1,13 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import api, { getApiErrorMessage } from "../lib/api";
 import type { AuthSession, AuthUser } from "../lib/auth";
-import { clearStoredSession, getStoredSession, saveStoredSession } from "../lib/auth";
+import {
+  clearStoredSession,
+  getStoredSession,
+  hasPersistentStoredSession,
+  saveStoredSession,
+} from "../lib/auth";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -24,6 +29,51 @@ function hydrateSession(): AuthSession | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(hydrateSession);
+
+  useEffect(() => {
+    if (!session?.token || session.user.permissions !== undefined) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void api
+      .get("/me/permissions")
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+
+        const permissions = response.data?.data?.permissions;
+        if (!Array.isArray(permissions)) {
+          return;
+        }
+
+        setSession((current) => {
+          if (!current) {
+            return current;
+          }
+
+          const nextSession: AuthSession = {
+            ...current,
+            user: {
+              ...current.user,
+              permissions,
+            },
+          };
+
+          saveStoredSession(nextSession, hasPersistentStoredSession());
+          return nextSession;
+        });
+      })
+      .catch(() => {
+        // Keep the current session when permissions cannot be hydrated.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.token, session?.user.permissions]);
 
   const login: AuthContextValue["login"] = async (
     username,
