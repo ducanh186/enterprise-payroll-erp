@@ -4,6 +4,51 @@ Hệ thống quản lý nhân sự, chấm công, tính lương dành cho doanh 
 
 **Stack**: React 19 + Vite 8 + Tailwind 4 | Laravel 11 + Sanctum | SQL Server 2022
 
+## Mục lục
+
+- [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
+- [Cài đặt & Chạy bằng Docker (Khuyến nghị)](#cài-đặt--chạy-bằng-docker-khuyến-nghị)
+  - [Bước 1: Clone dự án](#bước-1-clone-dự-án)
+  - [Bước 2: Khởi động Docker](#bước-2-khởi-động-docker)
+  - [Bước 3: Kiểm tra container đã chạy](#bước-3-kiểm-tra-container-đã-chạy)
+  - [Bước 4: Tạo APP_KEY cho Laravel](#bước-4-tạo-app_key-cho-laravel)
+  - [Bước 5: Tạo database & seed dữ liệu test](#bước-5-tạo-database--seed-dữ-liệu-test)
+  - [Bước 6: Truy cập ứng dụng](#bước-6-truy-cập-ứng-dụng)
+- [Cập nhật code để dùng tiếp](#cập-nhật-code-để-dùng-tiếp)
+  - [Nếu bạn không sửa gì ở máy](#nếu-bạn-không-sửa-gì-ở-máy)
+  - [Nếu bạn đã sửa code ở máy và muốn giữ lại](#nếu-bạn-đã-sửa-code-ở-máy-và-muốn-giữ-lại)
+  - [Kiểm tra nhanh](#kiểm-tra-nhanh)
+  - [Khi gặp lỗi](#khi-gặp-lỗi)
+- [Tài khoản đăng nhập test](#tài-khoản-đăng-nhập-test)
+  - [Chế độ có Database (sau khi chạy migrate:fresh --seed)](#chế-độ-có-database-sau-khi-chạy-migratefresh---seed)
+  - [Chế độ Mock (khi chưa có DB / DB chưa migrate)](#chế-độ-mock-khi-chưa-có-db--db-chưa-migrate)
+- [Dữ liệu test có sẵn (sau khi seed)](#dữ-liệu-test-có-sẵn-sau-khi-seed)
+  - [Tổ chức](#tổ-chức)
+  - [Hợp đồng](#hợp-đồng)
+  - [Chấm công (tháng 02/2026 & 03/2026)](#chấm-công-tháng-022026--032026)
+  - [Bảng lương](#bảng-lương)
+  - [Người phụ thuộc](#người-phụ-thuộc)
+- [Quy tắc giao diện (UI Conventions)](#quy-tắc-giao-diện-ui-conventions)
+- [Cấu trúc dự án](#cấu-trúc-dự-án)
+- [API Endpoints chính](#api-endpoints-chính)
+  - [Authentication](#authentication)
+  - [Nhân sự](#nhân-sự)
+  - [Chấm công](#chấm-công)
+  - [Bảng lương](#bảng-lương-1)
+  - [Báo cáo & Quản trị](#báo-cáo--quản-trị)
+- [Chạy không dùng Docker (Local)](#chạy-không-dùng-docker-local)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
+- [Các lệnh hữu ích](#các-lệnh-hữu-ích)
+- [Thông tin kết nối SQL Server](#thông-tin-kết-nối-sql-server)
+- [Xử lý sự cố](#xử-lý-sự-cố)
+  - [Backend không khởi động](#backend-không-khởi-động)
+  - [SQL Server chưa sẵn sàng](#sql-server-chưa-sẵn-sàng)
+  - [Frontend không kết nối được API](#frontend-không-kết-nối-được-api)
+  - [Lỗi "port already in use"](#lỗi-port-already-in-use)
+
+---
+
 ## Yêu cầu hệ thống
 
 - **Docker Desktop** >= 4.x (bật WSL2 trên Windows)
