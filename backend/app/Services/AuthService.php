@@ -66,37 +66,40 @@ class AuthService
 
     private const ROLE_PERMISSIONS = [
         'system_admin' => [
-            'auth.*',
-            'reference.read', 'reference.write',
-            'employee.read', 'employee.write',
-            'attendance.read', 'attendance.write',
-            'payroll.read', 'payroll.write',
-            'reports.read', 'reports.write',
-            'admin.read', 'admin.write',
+            'dashboard.view',
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'payroll.manage_param',
+            'admin.users', 'admin.roles', 'admin.config', 'admin.audit', 'admin.backup',
         ],
         'hr_staff' => [
-            'auth.*',
-            'reference.read',
-            'employee.read', 'employee.write',
-            'attendance.read', 'attendance.write',
-            'payroll.read',
-            'reports.read', 'reports.write',
+            'dashboard.view',
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'reference.view', 'reference.manage',
+            'employee.view', 'employee.create', 'employee.update', 'employee.delete',
+            'contract.view', 'contract.create', 'contract.update', 'contract.renew', 'contract.terminate',
+            'attendance.view', 'attendance.manage_period', 'attendance.import_logs',
+            'attendance.calculate', 'attendance.manage_request', 'attendance.confirm',
+            'reports.view', 'reports.export',
         ],
         'accountant' => [
-            'auth.*',
-            'reference.read',
-            'employee.read',
-            'attendance.read',
-            'payroll.read', 'payroll.write',
-            'reports.read', 'reports.write',
+            'dashboard.view',
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'reference.view',
+            'employee.view',
+            'contract.view',
+            'attendance.view',
+            'payroll.view', 'payroll.adjust', 'payroll.run', 'payroll.finalize', 'payroll.lock',
+            'reports.view', 'reports.export',
         ],
         'management' => [
-            'auth.*',
-            'reference.read',
-            'employee.read',
-            'attendance.read',
-            'payroll.read',
-            'reports.read', 'reports.write',
+            'dashboard.view',
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'reports.view', 'reports.export',
+        ],
+        'employee' => [
+            'dashboard.view',
+            'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+            'self.attendance.view', 'self.request.manage', 'self.payslip.view',
         ],
     ];
 
@@ -143,17 +146,7 @@ class AuthService
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => 86400,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $primaryRole,
-                    'department_id' => $department?->id ?? $user->employee?->department_id,
-                    'department_name' => $department?->name,
-                    'avatar' => null,
-                    'is_active' => $user->is_active,
-                ],
+                'user' => $this->formatUserPayload($user, $primaryRole, $department?->id ?? $user->employee?->department_id, $department?->name),
             ];
         }
 
@@ -166,6 +159,7 @@ class AuthService
             if ($user['username'] === $username && $user['password'] === $password) {
                 $userData = $user;
                 unset($userData['password']);
+                $userData['permissions'] = self::ROLE_PERMISSIONS[$userData['role']] ?? [];
                 return [
                     'token' => 'mock-jwt-token-' . $user['id'] . '-' . bin2hex(random_bytes(16)),
                     'token_type' => 'Bearer',
@@ -198,17 +192,7 @@ class AuthService
             $primaryRole = $user->roles->first()?->code ?? 'employee';
             $department = $user->employee?->department;
 
-            return [
-                'id' => $user->id,
-                'username' => $user->username,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $primaryRole,
-                'department_id' => $department?->id ?? $user->employee?->department_id,
-                'department_name' => $department?->name,
-                'avatar' => null,
-                'is_active' => $user->is_active,
-            ];
+            return $this->formatUserPayload($user, $primaryRole, $department?->id ?? $user->employee?->department_id, $department?->name);
         }
 
         if (!$this->allowMockFallback()) {
@@ -218,6 +202,8 @@ class AuthService
         // Fallback to mock admin user
         $user = $this->mockUsers[0];
         unset($user['password']);
+        $user['permissions'] = self::ROLE_PERMISSIONS[$user['role']] ?? [];
+
         return $user;
     }
 
@@ -225,27 +211,14 @@ class AuthService
     {
         $user = Auth::user();
 
-        // If authenticated with DB, build permissions from roles
         if ($user instanceof User && $this->dbAvailable()) {
-            $user->load('roles.permissions');
-
-            $permissions = $user->roles
-                ->flatMap(fn ($r) => $r->permissions->pluck('code'))
-                ->unique()
-                ->values()
-                ->toArray();
-
-            $primaryRole = $user->roles->first()?->code ?? $role;
-
-            // If DB permissions are empty, fall back to static mapping
-            if (empty($permissions)) {
-                $permissions = self::ROLE_PERMISSIONS[$primaryRole] ?? [];
-            }
+            $user->loadMissing('roles.permissions');
+            $role = $user->roles->first()?->code ?? $role;
 
             return [
-                'role' => $primaryRole,
-                'role_label' => UserRole::tryFrom($primaryRole)?->label() ?? $primaryRole,
-                'permissions' => $permissions,
+                'role' => $role,
+                'role_label' => UserRole::tryFrom($role)?->label() ?? $role,
+                'permissions' => $this->resolvePermissions($user, $role),
             ];
         }
 
@@ -260,12 +233,47 @@ class AuthService
         return [
             'role' => $role,
             'role_label' => UserRole::tryFrom($role)?->label() ?? $role,
-            'permissions' => self::ROLE_PERMISSIONS[$role] ?? [],
+            'permissions' => $this->resolvePermissions($user instanceof User ? $user : null, $role),
         ];
     }
 
     private function allowMockFallback(): bool
     {
         return (bool) config('services.auth.allow_mock_fallback', false);
+    }
+
+    private function formatUserPayload(User $user, string $role, mixed $departmentId, ?string $departmentName): array
+    {
+        return [
+            'id' => $user->id,
+            'username' => $user->username,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $role,
+            'department_id' => $departmentId,
+            'department_name' => $departmentName,
+            'avatar' => null,
+            'is_active' => $user->is_active,
+            'permissions' => $this->resolvePermissions($user, $role),
+        ];
+    }
+
+    private function resolvePermissions(?User $user, string $role): array
+    {
+        if ($user instanceof User && $this->dbAvailable()) {
+            $user->loadMissing('roles.permissions');
+
+            $permissions = $user->roles
+                ->flatMap(fn ($assignedRole) => $assignedRole->permissions->pluck('code'))
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if ($permissions !== []) {
+                return $permissions;
+            }
+        }
+
+        return self::ROLE_PERMISSIONS[$role] ?? [];
     }
 }
