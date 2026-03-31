@@ -50,6 +50,10 @@ export function getStoredSession(): AuthSession | null {
   return readFromStorage(localStorage) ?? readFromStorage(sessionStorage);
 }
 
+export function hasPersistentStoredSession(): boolean {
+  return readFromStorage(localStorage) !== null;
+}
+
 export function getStoredToken(): string | null {
   return getStoredSession()?.token ?? null;
 }
@@ -69,4 +73,3 @@ export function clearStoredSession(): void {
   clearStorage(localStorage);
   clearStorage(sessionStorage);
 }
-
