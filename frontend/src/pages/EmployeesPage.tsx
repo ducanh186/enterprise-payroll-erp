@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, RefreshCcw, Search } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { apiGet } from "../lib/api";
+import { useDetachedEditor } from "../lib/detachedEditor";
 import { formatDate } from "../lib/format";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { textValue, toArray } from "../lib/records";
 import { Badge, EmptyState, Modal, PageHeader } from "../components/ui";
 
@@ -34,8 +37,22 @@ function statusBadge(status: string) {
 }
 
 export default function EmployeesPage() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const { editorAction, openCreateTab, closeDetachedEditor } = useDetachedEditor("/employees");
+  const permissionSet = useMemo(() => createPermissionSet(user?.permissions), [user?.permissions]);
+  const canCreateEmployee = hasPermissionAccess(permissionSet, "employee.create");
+  const modalOpen = canCreateEmployee && (showModal || editorAction === "create");
+
+  function handleCloseModal() {
+    if (editorAction === "create") {
+      closeDetachedEditor();
+      return;
+    }
+
+    setShowModal(false);
+  }
 
   const query = useQuery({
     queryKey: ["employees"],
@@ -74,14 +91,16 @@ export default function EmployeesPage() {
               <RefreshCcw className="h-4 w-4" />
               Làm mới
             </button>
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
-            >
-              <Plus className="h-4 w-4" />
-              Thêm mới
-            </button>
+            {canCreateEmployee && (
+              <button
+                type="button"
+                onClick={openCreateTab}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+                Thêm mới
+              </button>
+            )}
           </>
         }
       />
@@ -179,7 +198,7 @@ export default function EmployeesPage() {
       </div>
 
       {/* Add Employee Modal */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="Thêm nhân viên mới" size="md">
+      <Modal open={modalOpen} onClose={handleCloseModal} title="Thêm nhân viên mới" size="md">
         <form className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -212,10 +231,10 @@ export default function EmployeesPage() {
             </div>
           </div>
           <div className="flex items-center justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setShowModal(false)} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
+            <button type="button" onClick={handleCloseModal} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">
               Hủy
             </button>
-            <button type="button" onClick={() => setShowModal(false)} className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95">
+            <button type="button" onClick={handleCloseModal} className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95">
               Lưu
             </button>
           </div>
