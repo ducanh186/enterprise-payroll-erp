@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   KeyRound,
   LockKeyhole,
@@ -9,13 +10,15 @@ import {
   Search,
   Shield,
   ShieldCheck,
-  Trash2,
   UserPlus,
   Users,
 } from "lucide-react";
 import { apiGet, apiPost, apiPut, getApiErrorMessage } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+import { useDetachedEditor } from "../lib/detachedEditor";
 import { formatDateTime, formatNumber } from "../lib/format";
 import { boolValue, textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState, PageHeader } from "../components/ui";
 
 type NewUserState = {
@@ -72,6 +75,7 @@ function getUserInitials(name: string): string {
 }
 
 export default function AdminUsersPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string>("");
   const [newUser, setNewUser] = useState<NewUserState>(initialNewUser);
@@ -87,6 +91,12 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const { editorAction, editorId, openCreateTab, openEditTab } = useDetachedEditor("/admin/users");
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canManageUsers = hasPermissionAccess(permissionSet, "admin.users");
+  const canManageRoles = hasPermissionAccess(permissionSet, "admin.roles");
+  const canCreateUsers = canManageUsers && canManageRoles;
+  const createFormOpen = canCreateUsers && (showCreateForm || editorAction === "create");
 
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
@@ -96,10 +106,26 @@ export default function AdminUsersPage() {
   const rolesQuery = useQuery({
     queryKey: ["admin", "roles"],
     queryFn: async () => apiGet<unknown>("/roles"),
+    enabled: canManageRoles,
   });
 
   const users = useMemo(() => toArray<Record<string, unknown>>(usersQuery.data?.data), [usersQuery.data?.data]);
   const roles = useMemo(() => toArray<Record<string, unknown>>(rolesQuery.data?.data), [rolesQuery.data?.data]);
+  const roleOptions = useMemo(() => {
+    if (roles.length > 0) {
+      return roles.map((role) => ({
+        value: textValue(role, ["code", "value"], ""),
+        label: textValue(role, ["name", "label"], textValue(role, ["code", "value"], "")),
+      }));
+    }
+
+    return [
+      { value: "system_admin", label: "Quản trị hệ thống" },
+      { value: "hr_staff", label: "Nhân sự" },
+      { value: "accountant", label: "Kế toán" },
+      { value: "management", label: "Quản lý" },
+    ];
+  }, [roles]);
   const currentSelected = useMemo(
     () => users.find((user) => String(textValue(user, ["id"], "")) === selectedId) ?? users[0] ?? null,
     [selectedId, users],
@@ -126,10 +152,15 @@ export default function AdminUsersPage() {
   }, [users, searchQuery, roleFilter, statusFilter]);
 
   useEffect(() => {
+    if (editorAction === "edit" && editorId) {
+      setSelectedId(editorId);
+      return;
+    }
+
     if (!selectedId && currentSelected) {
       setSelectedId(String(textValue(currentSelected, ["id"], "")));
     }
-  }, [currentSelected, selectedId]);
+  }, [currentSelected, editorAction, editorId, selectedId]);
 
   useEffect(() => {
     if (currentSelected) {
@@ -159,7 +190,10 @@ export default function AdminUsersPage() {
   const updateMutation = useMutation({
     mutationFn: async () =>
       apiPut<unknown>(`/users/${selectedId}`, {
-        ...editUser,
+        name: editUser.name,
+        email: editUser.email,
+        ...(canManageRoles ? { role: editUser.role } : {}),
+        department: editUser.department,
         is_active: editUser.is_active,
       }),
     onSuccess: async () => {
@@ -207,16 +241,16 @@ export default function AdminUsersPage() {
         eyebrow="Quản trị"
         title="Quản lý người dùng"
         description="Quản lý tài khoản và phân quyền hệ thống."
-        actions={
+        actions={canCreateUsers ? (
           <button
             type="button"
-            onClick={() => setShowCreateForm(true)}
+            onClick={openCreateTab}
             className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-slate-950 to-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl hover:opacity-90 active:scale-95"
           >
             <UserPlus className="h-4 w-4" />
             Thêm người dùng mới
           </button>
-        }
+        ) : undefined}
       />
 
       {/* Stats Row */}
@@ -250,7 +284,9 @@ export default function AdminUsersPage() {
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Vai trò</p>
-              <p className="text-2xl font-extrabold text-slate-900">{formatNumber(roles.length)}</p>
+              <p className="text-2xl font-extrabold text-slate-900">
+                {canManageRoles ? formatNumber(roles.length) : "—"}
+              </p>
             </div>
           </div>
         </div>
@@ -388,37 +424,33 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-5 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedId(id);
-                            }}
-                            className="rounded p-1.5 text-slate-400 transition hover:text-indigo-600"
-                            title="Chỉnh sửa người dùng"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedId(id);
-                              resetPasswordMutation.mutate();
-                            }}
-                            className="rounded p-1.5 text-slate-400 transition hover:text-indigo-600"
-                            title="Đặt lại mật khẩu"
-                          >
-                            <KeyRound className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => e.stopPropagation()}
-                            className="rounded p-1.5 text-slate-400 transition hover:text-rose-600"
-                            title="Vô hiệu hóa"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {canManageUsers && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditTab(id);
+                              }}
+                              className="rounded p-1.5 text-slate-400 transition hover:text-indigo-600"
+                              title="Chỉnh sửa người dùng"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          )}
+                          {canManageUsers && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedId(id);
+                                resetPasswordMutation.mutate();
+                              }}
+                              className="rounded p-1.5 text-slate-400 transition hover:text-indigo-600"
+                              title="Đặt lại mật khẩu"
+                            >
+                              <KeyRound className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -474,25 +506,63 @@ export default function AdminUsersPage() {
 
                 <form className="space-y-4" onSubmit={submitUpdate}>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {[
-                      ["Họ tên", "name"],
-                      ["Email", "email"],
-                      ["Vai trò", "role"],
-                      ["Phòng ban", "department"],
-                    ].map(([label, key]) => (
-                      <label key={key} className="space-y-1.5">
+                    <label className="space-y-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                        Họ tên
+                      </span>
+                      <input
+                        value={editUser.name}
+                        onChange={(e) => setEditUser((cur) => ({ ...cur, name: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition"
+                      />
+                    </label>
+                    <label className="space-y-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                        Email
+                      </span>
+                      <input
+                        value={editUser.email}
+                        onChange={(e) => setEditUser((cur) => ({ ...cur, email: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition"
+                      />
+                    </label>
+                    {canManageRoles ? (
+                      <label className="space-y-1.5">
                         <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                          {label}
+                          Vai trò
                         </span>
-                        <input
-                          value={editUser[key as keyof typeof editUser] as string}
-                          onChange={(e) =>
-                            setEditUser((cur) => ({ ...cur, [key]: e.target.value }))
-                          }
+                        <select
+                          value={editUser.role}
+                          onChange={(e) => setEditUser((cur) => ({ ...cur, role: e.target.value }))}
                           className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition"
-                        />
+                        >
+                          {roleOptions.map((role) => (
+                            <option key={role.value} value={role.value}>
+                              {role.label}
+                            </option>
+                          ))}
+                        </select>
                       </label>
-                    ))}
+                    ) : (
+                      <div className="space-y-1.5">
+                        <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                          Vai trò
+                        </span>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700">
+                          {editUser.role || "—"}
+                        </div>
+                      </div>
+                    )}
+                    <label className="space-y-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                        Phòng ban
+                      </span>
+                      <input
+                        value={editUser.department}
+                        onChange={(e) => setEditUser((cur) => ({ ...cur, department: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition"
+                      />
+                    </label>
                   </div>
 
                   <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 cursor-pointer">
@@ -508,32 +578,38 @@ export default function AdminUsersPage() {
                   </label>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <button
-                      type="submit"
-                      disabled={updateMutation.isPending}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-slate-950 to-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <Users className="h-4 w-4" />
-                      {updateMutation.isPending ? "Đang lưu..." : "Cập nhật"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => resetPasswordMutation.mutate()}
-                      disabled={resetPasswordMutation.isPending}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <KeyRound className="h-4 w-4" />
-                      Đặt lại mật khẩu
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => assignRolesMutation.mutate()}
-                      disabled={assignRolesMutation.isPending}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
-                    >
-                      <Shield className="h-4 w-4" />
-                      {assignRolesMutation.isPending ? "Đang gán..." : "Gán vai trò"}
-                    </button>
+                    {canManageUsers && (
+                      <button
+                        type="submit"
+                        disabled={updateMutation.isPending}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-slate-950 to-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Users className="h-4 w-4" />
+                        {updateMutation.isPending ? "Đang lưu..." : "Cập nhật"}
+                      </button>
+                    )}
+                    {canManageUsers && (
+                      <button
+                        type="button"
+                        onClick={() => resetPasswordMutation.mutate()}
+                        disabled={resetPasswordMutation.isPending}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                        Đặt lại mật khẩu
+                      </button>
+                    )}
+                    {canManageRoles && (
+                      <button
+                        type="button"
+                        onClick={() => assignRolesMutation.mutate()}
+                        disabled={assignRolesMutation.isPending}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
+                      >
+                        <Shield className="h-4 w-4" />
+                        {assignRolesMutation.isPending ? "Đang gán..." : "Gán vai trò"}
+                      </button>
+                    )}
                   </div>
                 </form>
               </div>
@@ -541,10 +617,17 @@ export default function AdminUsersPage() {
           </section>
 
           {/* Create User Panel */}
-          <section className="rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+          {canCreateUsers && (
+            <section className="rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden">
             <button
               type="button"
-              onClick={() => setShowCreateForm((v) => !v)}
+              onClick={() => {
+                if (editorAction === "create") {
+                  return;
+                }
+
+                setShowCreateForm((v) => !v);
+              }}
               className="flex w-full items-center justify-between px-6 py-4 text-left transition hover:bg-slate-50"
             >
               <div className="flex items-center gap-2">
@@ -554,7 +637,7 @@ export default function AdminUsersPage() {
               <span className="text-xs text-slate-400">POST /users</span>
             </button>
 
-            {showCreateForm && (
+            {createFormOpen && (
               <div className="border-t border-slate-100 p-6">
                 <form className="grid gap-4 sm:grid-cols-2" onSubmit={submitCreate}>
                   {[
@@ -562,12 +645,10 @@ export default function AdminUsersPage() {
                     ["Họ và tên", "name", "text"],
                     ["Email", "email", "email"],
                     ["Mật khẩu", "password", "password"],
-                    ["Vai trò", "role", "text"],
-                    ["Phòng ban", "department", "text"],
                   ].map(([label, key, type]) => (
                     <label
                       key={key}
-                      className={`space-y-1.5 ${key === "department" ? "sm:col-span-2" : ""}`}
+                      className="space-y-1.5"
                     >
                       <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                         {label}
@@ -582,6 +663,37 @@ export default function AdminUsersPage() {
                       />
                     </label>
                   ))}
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                      Vai trò
+                    </span>
+                    <select
+                      value={newUser.role}
+                      onChange={(e) =>
+                        setNewUser((cur) => ({ ...cur, role: e.target.value }))
+                      }
+                      className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition"
+                    >
+                      {roleOptions.map((role) => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-1.5 sm:col-span-2">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                      Phòng ban
+                    </span>
+                    <input
+                      type="text"
+                      value={newUser.department}
+                      onChange={(e) =>
+                        setNewUser((cur) => ({ ...cur, department: e.target.value }))
+                      }
+                      className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition"
+                    />
+                  </label>
                   <button
                     type="submit"
                     disabled={createMutation.isPending}
@@ -590,10 +702,20 @@ export default function AdminUsersPage() {
                     <UserPlus className="h-4 w-4" />
                     {createMutation.isPending ? "Đang tạo..." : "Tạo người dùng"}
                   </button>
+                  {editorAction === "create" && (
+                    <Link
+                      to="/admin/users"
+                      replace
+                      className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 sm:col-span-2"
+                    >
+                      Đóng editor
+                    </Link>
+                  )}
                 </form>
               </div>
             )}
-          </section>
+            </section>
+          )}
         </div>
       </div>
 
