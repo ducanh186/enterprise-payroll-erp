@@ -1,122 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CircleDollarSign, Clock, Shield, Users, ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-
-interface SubItem {
-  to: string;
-  label: string;
-}
-
-interface SubCategory {
-  heading: string;
-  items: SubItem[];
-}
-
-interface NavItem {
-  to?: string;
-  label: string;
-  icon: typeof LayoutDashboard;
-  subCategories?: SubCategory[];
-  children?: SubItem[];
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  {
-    label: "Nhân sự & HĐLĐ",
-    icon: Users,
-    subCategories: [
-      {
-        heading: "Danh mục",
-        items: [
-          { to: "/employees", label: "Hồ sơ cán bộ nhân viên" },
-          { to: "/reference/contract-types", label: "Danh mục loại hợp đồng" },
-          { to: "/reference/salary-levels", label: "Danh mục thang bậc lương" },
-        ],
-      },
-      {
-        heading: "Biến động",
-        items: [
-          { to: "/contracts", label: "Hợp đồng lao động" },
-          { to: "/reference/allowances", label: "Phụ cấp" },
-        ],
-      },
-      {
-        heading: "Báo cáo",
-        items: [
-          { to: "/reports?category=employee", label: "DS người lao động theo loại HĐ" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Chấm công",
-    icon: Clock,
-    subCategories: [
-      {
-        heading: "Danh mục",
-        items: [
-          { to: "/reference/late-early-rules", label: "Quy định đi trễ về sớm" },
-          { to: "/reference/holidays", label: "Danh mục ngày nghỉ" },
-          { to: "/reference/shifts", label: "Danh mục ca làm việc" },
-        ],
-      },
-      {
-        heading: "Biến động",
-        items: [
-          { to: "/attendance/shift-assignments", label: "Phân ca làm việc" },
-          { to: "/attendance/logs", label: "Dữ liệu thời gian vào - ra" },
-          { to: "/attendance/leave-requests", label: "Đơn xin nghỉ phép" },
-          { to: "/attendance/manual", label: "Chấm công bổ sung" },
-          { to: "/attendance/summary", label: "Tổng hợp công" },
-        ],
-      },
-      {
-        heading: "Báo cáo",
-        items: [
-          { to: "/reports?category=attendance&code=shift", label: "Bảng phân ca hàng ngày" },
-          { to: "/reports?category=attendance&code=late", label: "Bảng tổng hợp đi trễ về sớm" },
-          { to: "/reports?category=attendance&code=monthly", label: "Bảng chấm công" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Tính lương",
-    icon: CircleDollarSign,
-    subCategories: [
-      {
-        heading: "Danh mục",
-        items: [
-          { to: "/payroll/parameters", label: "Bộ công thức và tham số lương" },
-        ],
-      },
-      {
-        heading: "Biến động",
-        items: [
-          { to: "/payroll/bonus-deductions", label: "Khen thưởng và kỷ luật" },
-          { to: "/payroll/run", label: "Tính lương" },
-          { to: "/payroll/periods", label: "Bảng lương" },
-        ],
-      },
-      {
-        heading: "Báo cáo",
-        items: [
-          { to: "/payroll/payslips", label: "Phiếu lương" },
-          { to: "/reports?category=payroll", label: "Bảng tổng hợp thanh toán lương" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Quản trị",
-    icon: Shield,
-    children: [
-      { to: "/admin/users", label: "Người dùng" },
-      { to: "/admin/roles", label: "Phân quyền" },
-    ],
-  },
-];
+import {
+  ChevronDown,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { getNavigationForPermissions } from "../lib/rbac";
 
 const activeClass = "bg-white/12 text-white shadow-[0_10px_20px_rgba(15,23,42,0.2)]";
 const inactiveClass = "text-slate-300 hover:bg-white/6 hover:text-white";
@@ -129,7 +20,9 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) {
+  const { user } = useAuth();
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
+  const navItems = useMemo(() => getNavigationForPermissions(user?.permissions), [user?.permissions]);
 
   const toggleModule = (label: string) => {
     setExpandedModules((prev) => ({
@@ -176,7 +69,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
         </div>
 
         <nav className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isExpanded = expandedModules[item.label];
 
