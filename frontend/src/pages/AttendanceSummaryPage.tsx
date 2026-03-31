@@ -12,8 +12,10 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { formatDate, formatNumber, formatPercent } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState } from "../components/ui";
 
 type SummaryFilters = {
@@ -101,6 +103,7 @@ function avatarColor(name: string): string {
 }
 
 export default function AttendanceSummaryPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<SummaryFilters>({
     month: String(current.getMonth() + 1),
@@ -108,6 +111,10 @@ export default function AttendanceSummaryPage() {
     department_id: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canRecalculateAttendance = hasPermissionAccess(permissionSet, "attendance.calculate");
+  const canConfirmAttendance = hasPermissionAccess(permissionSet, "attendance.confirm");
+  const canExportAttendance = hasPermissionAccess(permissionSet, "reports.export");
 
   const summaryQuery = useQuery({
     queryKey: ["attendance", "monthly-summary", filters],
@@ -149,6 +156,9 @@ export default function AttendanceSummaryPage() {
 
   function submitRecalculate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canRecalculateAttendance) {
+      return;
+    }
     recalculateMutation.mutate();
   }
 
@@ -168,29 +178,35 @@ export default function AttendanceSummaryPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <form onSubmit={submitRecalculate}>
+          {canRecalculateAttendance && (
+            <form onSubmit={submitRecalculate}>
+              <button
+                type="submit"
+                disabled={recalculateMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RefreshCw className={`h-4 w-4 ${recalculateMutation.isPending ? "animate-spin" : ""}`} />
+                {recalculateMutation.isPending ? "Đang chạy..." : "Tính lại"}
+              </button>
+            </form>
+          )}
+          {canExportAttendance && (
             <button
-              type="submit"
-              disabled={recalculateMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              type="button"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300"
             >
-              <RefreshCw className={`h-4 w-4 ${recalculateMutation.isPending ? "animate-spin" : ""}`} />
-              {recalculateMutation.isPending ? "Đang chạy..." : "Tính lại"}
+              Xuất Excel
             </button>
-          </form>
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300"
-          >
-            Xuất Excel
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Xác nhận tất cả
-          </button>
+          )}
+          {canConfirmAttendance && (
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Xác nhận tất cả
+            </button>
+          )}
         </div>
       </div>
 
