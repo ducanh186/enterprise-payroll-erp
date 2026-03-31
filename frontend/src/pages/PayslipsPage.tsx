@@ -110,7 +110,7 @@ export default function PayslipsPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <PageHeader
-        eyebrow="Payroll"
+        eyebrow="Tính lương"
         title="Lịch sử phiếu lương"
         description="Xem và tải phiếu lương hàng tháng. Lọc theo kỳ để tra cứu nhanh."
         actions={
@@ -284,7 +284,7 @@ export default function PayslipsPage() {
                   <div className="grid grid-cols-2 gap-2">
                     {(
                       [
-                        ["Gross", ["gross_salary", "summary.gross_salary"]],
+                        ["Lương gross", ["gross_salary", "summary.gross_salary"]],
                         ["Thực lĩnh", ["net_salary", "summary.net_salary"]],
                         ["Bảo hiểm", ["insurance_employee", "summary.insurance_employee"]],
                         ["Thuế TNCN", ["pit_amount", "summary.pit_amount"]],
@@ -387,7 +387,7 @@ export default function PayslipsPage() {
                 <table className="w-full border-collapse text-left">
                   <thead className="bg-slate-50">
                     <tr>
-                      {["Nhân viên", "Kỳ", "Gross", "Trạng thái", "Thực lĩnh", "Tải về"].map(
+                      {["Nhân viên", "Kỳ", "Lương gross", "Trạng thái", "Thực lĩnh", "Tải về"].map(
                         (col) => (
                           <th
                             key={col}

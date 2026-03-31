@@ -10,6 +10,8 @@ Hệ thống quản lý nhân sự, chấm công, tính lương dành cho doanh 
 - **Git**
 - RAM tối thiểu 4GB (SQL Server cần ~2GB)
 
+
+
 ## Cài đặt & Chạy bằng Docker (Khuyến nghị)
 
 ### Bước 1: Clone dự án
@@ -68,6 +70,51 @@ Lệnh này tạo toàn bộ bảng và nạp dữ liệu test (~15 nhân viên,
 - **Backend API**: http://localhost:8001/api
 
 ---
+## Cập nhật code để dùng tiếp
+
+Dùng phần này khi bạn **đã clone dự án trước đó** và chỉ muốn lấy code mới nhất để chạy tiếp.
+
+### Nếu bạn không sửa gì ở máy
+
+```bash
+cd enterprise-payroll-erp
+git pull origin main
+docker compose up -d --build
+```
+
+### Nếu bạn đã sửa code ở máy và muốn giữ lại
+
+```bash
+cd enterprise-payroll-erp
+git add .
+git commit -m "save local work"
+git pull origin main
+docker compose up -d --build
+docker compose exec backend php artisan migrate
+```
+
+### Kiểm tra nhanh
+
+```bash
+git status
+docker compose ps
+```
+
+- `working tree clean` = local không còn file sửa dở
+- Có đủ `payroll-backend`, `payroll-frontend`, `payroll-sqlserver` = hệ thống đang chạy
+
+### Khi gặp lỗi
+
+```bash
+docker compose down
+docker compose up -d --build
+```
+
+Nếu vẫn lỗi sau khi `git pull`, đặc biệt là báo **conflict**, hãy nhờ người phụ trách kỹ thuật hỗ trợ.
+
+---
+
+
 
 ## Tài khoản đăng nhập test
 
@@ -134,7 +181,17 @@ Tất cả mật khẩu: **`password`**
 
 ---
 
-## Cấu trúc dự án
+## Quy tắc giao diện (UI Conventions)
+
+- **Ngôn ngữ**: Toàn bộ text hiển thị trên UI bằng **tiếng Việt có dấu** (trừ mã code, tên biến)
+- **Kiểu chữ**: Sentence case cho labels (không ALL CAPS trong JSX — CSS `uppercase` xử lý nếu cần)
+- **Sidebar**: Cấu trúc 3 cấp: Nhóm chức năng → Phân loại (Danh mục/Biến động/Báo cáo) → Trang cụ thể
+- **Icons**: Sử dụng `lucide-react`, không dùng Material Symbols
+- **Fonts**: Manrope (body), IBM Plex Serif (headings)
+- **Trạng thái**: Nháp / Đã tạo / Đã hoàn tất / Đã khóa (không dùng Draft/Generated/Finalized/Locked)
+
+---
+
 ## Cấu trúc dự án
 
 ```

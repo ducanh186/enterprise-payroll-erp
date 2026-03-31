@@ -131,9 +131,9 @@ export default function RolePermissionsPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <PageHeader
-        eyebrow="Admin / Role Management"
-        title="Role & Permissions Matrix"
-        description="View and understand the permissions assigned to each role in the system."
+        eyebrow="Quản trị / Phân quyền"
+        title="Ma trận vai trò và quyền hạn"
+        description="Xem và quản lý phân quyền theo vai trò trong hệ thống."
         actions={
           <div className="flex items-center gap-3">
             <button
@@ -145,7 +145,7 @@ export default function RolePermissionsPage() {
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-95"
             >
               <RefreshCcw className="h-4 w-4" />
-              Refresh
+              Làm mới
             </button>
           </div>
         }
@@ -196,7 +196,7 @@ export default function RolePermissionsPage() {
                     <span className="text-2xl font-extrabold text-slate-900">
                       {rolePerms?.size ?? 0}
                     </span>
-                    <span className="text-xs text-slate-500">permissions</span>
+                    <span className="text-xs text-slate-500">quyền</span>
                   </div>
                 </button>
               );
@@ -231,13 +231,13 @@ export default function RolePermissionsPage() {
           <div className="rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden">
             {isLoading ? (
               <div className="px-6 py-12 text-center text-sm text-slate-500">
-                Loading permission matrix...
+                Đang tải ma trận phân quyền...
               </div>
             ) : !permissions.length ? (
               <div className="p-8">
                 <EmptyState
-                  title="No permission data"
-                  description="Backend has not returned a permissions list. Check GET /permissions."
+                  title="Không có dữ liệu phân quyền"
+                  description="Backend chưa trả về danh sách phân quyền. Kiểm tra GET /permissions."
                 />
               </div>
             ) : (
@@ -245,7 +245,7 @@ export default function RolePermissionsPage() {
                 <thead>
                   <tr className="bg-slate-50/60">
                     <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                      Module / Permission
+                      Chức năng / Quyền
                     </th>
                     {roles.map((role, index) => (
                       <th
@@ -353,17 +353,17 @@ export default function RolePermissionsPage() {
           {activeRole && (
             <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                Role Insights
+                Thông tin vai trò
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-slate-50 p-3">
-                  <p className="text-[10px] font-bold uppercase text-slate-400">Role</p>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Vai trò</p>
                   <p className="mt-1 text-sm font-bold text-slate-900 truncate">
                     {textValue(activeRole, ["name", "display_name"], "—")}
                   </p>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-3">
-                  <p className="text-[10px] font-bold uppercase text-slate-400">Permissions</p>
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Quyền</p>
                   <p className="mt-1 text-2xl font-extrabold text-slate-900">
                     {activeRolePerms?.size ?? 0}
                   </p>
@@ -372,11 +372,11 @@ export default function RolePermissionsPage() {
 
               <div className="mt-4 rounded-lg border-l-4 border-indigo-500 bg-indigo-50 p-4">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-700">
-                  Access Reminder
+                  Lưu ý phân quyền
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-indigo-700/80">
-                  Changes to "{textValue(activeRole, ["name", "display_name"], "this role")}" will
-                  affect all active users assigned to this role immediately upon saving.
+                  Thay đổi vai trò "{textValue(activeRole, ["name", "display_name"], "vai trò này")}" sẽ
+                  ảnh hưởng đến tất cả người dùng đang sử dụng vai trò này ngay sau khi lưu.
                 </p>
               </div>
             </div>
@@ -387,7 +387,7 @@ export default function RolePermissionsPage() {
             <div className="mb-5 flex items-center gap-2">
               <Shield className="h-4 w-4 text-indigo-700" />
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                Module Summary
+                Tổng hợp chức năng
               </h3>
             </div>
             <div className="space-y-3">
@@ -423,7 +423,7 @@ export default function RolePermissionsPage() {
                 );
               })}
               {!Object.keys(permissionGroups).length && !isLoading && (
-                <p className="text-xs text-slate-400">No permission data available.</p>
+                <p className="text-xs text-slate-400">Không có dữ liệu phân quyền.</p>
               )}
             </div>
           </div>
@@ -431,16 +431,16 @@ export default function RolePermissionsPage() {
           {/* Legend */}
           <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
             <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
-              Legend
+              Chú thích
             </h3>
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span className="text-sm text-slate-700">Permission granted</span>
+                <span className="text-sm text-slate-700">Đã cấp quyền</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-base text-slate-300">—</span>
-                <span className="text-sm text-slate-700">Permission not granted</span>
+                <span className="text-sm text-slate-700">Chưa cấp quyền</span>
               </div>
             </div>
           </div>

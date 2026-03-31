@@ -204,9 +204,9 @@ export default function AdminUsersPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <PageHeader
-        eyebrow="Administration"
-        title="User Management Directory"
-        description="Manage system permissions, roles, and security protocols for all personnel."
+        eyebrow="Quản trị"
+        title="Quản lý người dùng"
+        description="Quản lý tài khoản và phân quyền hệ thống."
         actions={
           <button
             type="button"
@@ -214,7 +214,7 @@ export default function AdminUsersPage() {
             className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-slate-950 to-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl hover:opacity-90 active:scale-95"
           >
             <UserPlus className="h-4 w-4" />
-            Add New User
+            Thêm người dùng mới
           </button>
         }
       />
@@ -227,7 +227,7 @@ export default function AdminUsersPage() {
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Total Users</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Tổng người dùng</p>
               <p className="text-2xl font-extrabold text-slate-900">{formatNumber(users.length)}</p>
             </div>
           </div>
@@ -238,7 +238,7 @@ export default function AdminUsersPage() {
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Active</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Đang hoạt động</p>
               <p className="text-2xl font-extrabold text-slate-900">{formatNumber(activeCount)}</p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function AdminUsersPage() {
               <Shield className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Roles</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Vai trò</p>
               <p className="text-2xl font-extrabold text-slate-900">{formatNumber(roles.length)}</p>
             </div>
           </div>
@@ -269,7 +269,7 @@ export default function AdminUsersPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter by name, email, or username..."
+              placeholder="Tìm theo tên, email hoặc tên đăng nhập..."
               className="w-full rounded-lg border-0 bg-slate-100 py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-200 outline-none transition"
             />
           </div>
@@ -280,11 +280,11 @@ export default function AdminUsersPage() {
                 onChange={(e) => setRoleFilter(e.target.value)}
                 className="appearance-none rounded-lg border-0 bg-slate-100 py-2.5 pl-4 pr-9 text-sm font-medium text-slate-600 focus:ring-2 focus:ring-indigo-200 outline-none cursor-pointer"
               >
-                <option value="">All Roles</option>
-                <option value="system_admin">System Admin</option>
-                <option value="hr_staff">HR Staff</option>
-                <option value="accountant">Accountant</option>
-                <option value="management">Management</option>
+                <option value="">Tất cả vai trò</option>
+                <option value="system_admin">Quản trị hệ thống</option>
+                <option value="hr_staff">Nhân sự</option>
+                <option value="accountant">Kế toán</option>
+                <option value="management">Quản lý</option>
               </select>
             </div>
             <div className="relative">
@@ -293,16 +293,16 @@ export default function AdminUsersPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="appearance-none rounded-lg border-0 bg-slate-100 py-2.5 pl-4 pr-9 text-sm font-medium text-slate-600 focus:ring-2 focus:ring-indigo-200 outline-none cursor-pointer"
               >
-                <option value="">Status: All</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="">Tất cả</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Ngưng hoạt động</option>
               </select>
             </div>
             <button
               type="button"
               onClick={() => usersQuery.refetch()}
               className="rounded-lg border border-slate-200 p-2.5 text-slate-500 transition hover:bg-slate-50 active:scale-95"
-              title="Refresh"
+              title="Làm mới"
             >
               <RefreshCcw className="h-4 w-4" />
             </button>
@@ -317,26 +317,26 @@ export default function AdminUsersPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/60">
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">User Details</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">System Role</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Department</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Status</th>
-                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-500">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Thông tin người dùng</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Vai trò hệ thống</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Phòng ban</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Trạng thái</th>
+                <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-500">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {usersQuery.isLoading ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-500">
-                    Loading users...
+                    Đang tải...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-10 text-center">
                     <EmptyState
-                      title="No users found"
-                      description="Try adjusting your filters or add a new user."
+                      title="Không tìm thấy người dùng"
+                      description="Thử điều chỉnh bộ lọc hoặc thêm người dùng mới."
                     />
                   </td>
                 </tr>
@@ -381,9 +381,9 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-5">
                         {isActive ? (
-                          <Badge tone="success">Active</Badge>
+                          <Badge tone="success">Hoạt động</Badge>
                         ) : (
-                          <Badge tone="neutral">Inactive</Badge>
+                          <Badge tone="neutral">Ngưng hoạt động</Badge>
                         )}
                       </td>
                       <td className="px-6 py-5 text-right">
@@ -395,7 +395,7 @@ export default function AdminUsersPage() {
                               setSelectedId(id);
                             }}
                             className="rounded p-1.5 text-slate-400 transition hover:text-indigo-600"
-                            title="Edit User"
+                            title="Chỉnh sửa người dùng"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
@@ -407,7 +407,7 @@ export default function AdminUsersPage() {
                               resetPasswordMutation.mutate();
                             }}
                             className="rounded p-1.5 text-slate-400 transition hover:text-indigo-600"
-                            title="Reset Password"
+                            title="Đặt lại mật khẩu"
                           >
                             <KeyRound className="h-4 w-4" />
                           </button>
@@ -415,7 +415,7 @@ export default function AdminUsersPage() {
                             type="button"
                             onClick={(e) => e.stopPropagation()}
                             className="rounded p-1.5 text-slate-400 transition hover:text-rose-600"
-                            title="Deactivate"
+                            title="Vô hiệu hóa"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -431,8 +431,8 @@ export default function AdminUsersPage() {
           {/* Table Footer */}
           <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/40 px-6 py-4">
             <p className="text-xs text-slate-500">
-              Showing <span className="font-bold text-slate-900">{filteredUsers.length}</span> of{" "}
-              <span className="font-bold text-slate-900">{users.length}</span> users
+              Hiển thị <span className="font-bold text-slate-900">{filteredUsers.length}</span> trong tổng số{" "}
+              <span className="font-bold text-slate-900">{users.length}</span> người dùng
             </p>
           </div>
         </div>
@@ -443,18 +443,18 @@ export default function AdminUsersPage() {
           <section className="rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden">
             <div className="border-b border-slate-100 px-6 py-4">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                {selectedId ? "Edit User" : "Select a user"}
+                {selectedId ? "Chỉnh sửa người dùng" : "Chọn người dùng"}
               </p>
               <h3 className="mt-0.5 text-sm font-semibold text-slate-900">
-                {currentSelected ? textValue(currentSelected, ["name"], "User") : "No user selected"}
+                {currentSelected ? textValue(currentSelected, ["name"], "Người dùng") : "Chưa chọn người dùng"}
               </h3>
             </div>
 
             {!selectedId || !currentSelected ? (
               <div className="px-6 py-8">
                 <EmptyState
-                  title="No user selected"
-                  description="Click a row in the table to edit the user."
+                  title="Chưa chọn người dùng"
+                  description="Nhấp vào một dòng trong bảng để chỉnh sửa."
                 />
               </div>
             ) : (
@@ -462,8 +462,8 @@ export default function AdminUsersPage() {
                 {/* Quick info */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    ["Username", textValue(currentSelected, ["username"], "—")],
-                    ["Last login", formatDateTime(textValue(currentSelected, ["last_login"], ""))],
+                    ["Tên đăng nhập", textValue(currentSelected, ["username"], "—")],
+                    ["Đăng nhập lần cuối", formatDateTime(textValue(currentSelected, ["last_login"], ""))],
                   ].map(([label, value]) => (
                     <div key={String(label)} className="rounded-lg bg-slate-50 px-4 py-3">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label as string}</p>
@@ -475,10 +475,10 @@ export default function AdminUsersPage() {
                 <form className="space-y-4" onSubmit={submitUpdate}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {[
-                      ["Name", "name"],
+                      ["Họ tên", "name"],
                       ["Email", "email"],
-                      ["Role", "role"],
-                      ["Department", "department"],
+                      ["Vai trò", "role"],
+                      ["Phòng ban", "department"],
                     ].map(([label, key]) => (
                       <label key={key} className="space-y-1.5">
                         <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
@@ -504,7 +504,7 @@ export default function AdminUsersPage() {
                       }
                       className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="text-sm font-medium text-slate-700">Account active</span>
+                    <span className="text-sm font-medium text-slate-700">Tài khoản hoạt động</span>
                   </label>
 
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -514,7 +514,7 @@ export default function AdminUsersPage() {
                       className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-slate-950 to-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Users className="h-4 w-4" />
-                      {updateMutation.isPending ? "Saving..." : "Update User"}
+                      {updateMutation.isPending ? "Đang lưu..." : "Cập nhật"}
                     </button>
                     <button
                       type="button"
@@ -523,7 +523,7 @@ export default function AdminUsersPage() {
                       className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <KeyRound className="h-4 w-4" />
-                      Reset Password
+                      Đặt lại mật khẩu
                     </button>
                     <button
                       type="button"
@@ -532,7 +532,7 @@ export default function AdminUsersPage() {
                       className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
                     >
                       <Shield className="h-4 w-4" />
-                      {assignRolesMutation.isPending ? "Assigning..." : "Assign Role"}
+                      {assignRolesMutation.isPending ? "Đang gán..." : "Gán vai trò"}
                     </button>
                   </div>
                 </form>
@@ -549,7 +549,7 @@ export default function AdminUsersPage() {
             >
               <div className="flex items-center gap-2">
                 <UserPlus className="h-4 w-4 text-indigo-600" />
-                <span className="text-sm font-semibold text-slate-900">Add New User</span>
+                <span className="text-sm font-semibold text-slate-900">Thêm người dùng mới</span>
               </div>
               <span className="text-xs text-slate-400">POST /users</span>
             </button>
@@ -558,12 +558,12 @@ export default function AdminUsersPage() {
               <div className="border-t border-slate-100 p-6">
                 <form className="grid gap-4 sm:grid-cols-2" onSubmit={submitCreate}>
                   {[
-                    ["Username", "username", "text"],
-                    ["Full Name", "name", "text"],
+                    ["Tên đăng nhập", "username", "text"],
+                    ["Họ và tên", "name", "text"],
                     ["Email", "email", "email"],
-                    ["Password", "password", "password"],
-                    ["Role", "role", "text"],
-                    ["Department", "department", "text"],
+                    ["Mật khẩu", "password", "password"],
+                    ["Vai trò", "role", "text"],
+                    ["Phòng ban", "department", "text"],
                   ].map(([label, key, type]) => (
                     <label
                       key={key}
@@ -588,7 +588,7 @@ export default function AdminUsersPage() {
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-slate-950 to-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
                   >
                     <UserPlus className="h-4 w-4" />
-                    {createMutation.isPending ? "Creating..." : "Create User"}
+                    {createMutation.isPending ? "Đang tạo..." : "Tạo người dùng"}
                   </button>
                 </form>
               </div>
@@ -605,8 +605,8 @@ export default function AdminUsersPage() {
               <ShieldCheck className="h-6 w-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900">System Integrity</h4>
-              <p className="text-xs text-slate-500">2-Factor Authentication is active for 98% of users.</p>
+              <h4 className="font-bold text-slate-900">Bảo mật hệ thống</h4>
+              <p className="text-xs text-slate-500">Xác thực 2 yếu tố đã được kích hoạt cho 98% người dùng.</p>
             </div>
           </div>
         </div>
@@ -616,8 +616,8 @@ export default function AdminUsersPage() {
               <Users className="h-6 w-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900">Pending Approval</h4>
-              <p className="text-xs text-slate-500">New user requests waiting for HR verification.</p>
+              <h4 className="font-bold text-slate-900">Chờ phê duyệt</h4>
+              <p className="text-xs text-slate-500">Yêu cầu tạo tài khoản mới đang chờ xác minh từ bộ phận nhân sự.</p>
             </div>
           </div>
         </div>
@@ -627,8 +627,8 @@ export default function AdminUsersPage() {
               <Shield className="h-6 w-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900">Audit Logs</h4>
-              <p className="text-xs text-slate-500">Review recent administrative access and changes.</p>
+              <h4 className="font-bold text-slate-900">Nhật ký kiểm toán</h4>
+              <p className="text-xs text-slate-500">Xem lại lịch sử truy cập và thay đổi quản trị gần đây.</p>
             </div>
           </div>
         </div>

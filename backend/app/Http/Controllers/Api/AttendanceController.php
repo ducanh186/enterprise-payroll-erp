@@ -131,4 +131,9 @@ class AttendanceController extends Controller
 
         return $this->success($result, 'Request rejected.');
     }
+
+    public function shiftAssignments(): JsonResponse
+    {
+        return $this->success($this->attendanceService->getShiftAssignments());
+    }
 }

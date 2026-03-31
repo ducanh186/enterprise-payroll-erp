@@ -38,3 +38,7 @@ backend/storage/logs/
 CLAUDE.md 
 # OS
 *.orig
+
+# Test reports
+bao-cao-kiem-tra-frontend-payroll-erp.md
+huongdantest_fixv1.md

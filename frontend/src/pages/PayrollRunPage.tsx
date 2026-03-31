@@ -79,9 +79,9 @@ export default function PayrollRunPage() {
   }
 
   const stepLabels: Record<Step, string> = {
-    1: "Setup",
-    2: "Inputs & Adjustments",
-    3: "Preview & Finalize",
+    1: "Thiết lập",
+    2: "Nhập liệu và điều chỉnh",
+    3: "Xem trước và hoàn tất",
   };
 
   const totalEmployees = result ? numberValue(result, ["total_employees", "summary.total_employees"], 0) : 0;
@@ -104,8 +104,8 @@ export default function PayrollRunPage() {
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-indigo-700">Payroll Run Wizard</h1>
-            <p className="text-slate-500 mt-1">Initialize the payroll framework for this period's disbursements.</p>
+            <h1 className="text-3xl font-black tracking-tight text-indigo-700">Trình chạy bảng lương</h1>
+            <p className="text-slate-500 mt-1">Thiết lập và chạy bảng lương theo kỳ.</p>
           </div>
 
           {/* Step Indicator */}
@@ -159,7 +159,7 @@ export default function PayrollRunPage() {
             >
               {currentStep === step && (
                 <span className="absolute -top-3 left-0 text-[10px] font-bold tracking-widest uppercase text-indigo-700">
-                  Active
+                  Đang thực hiện
                 </span>
               )}
               <div className={`flex items-center gap-3 ${currentStep !== step ? "opacity-50" : ""}`}>
@@ -191,14 +191,14 @@ export default function PayrollRunPage() {
             <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200/60 space-y-8">
               <h3 className="text-[11px] font-bold tracking-[0.05em] uppercase text-slate-500 flex items-center gap-2">
                 <Play className="h-4 w-4" />
-                Execution Parameters
+                Tham số thực thi
               </h3>
 
               <form onSubmit={submitPreview} className="space-y-6">
                 <div className="grid grid-cols-2 gap-8">
                   {/* Month/Year */}
                   <div className="space-y-2">
-                    <label className="text-[12px] font-bold text-slate-500">Payroll Month</label>
+                    <label className="text-[12px] font-bold text-slate-500">Tháng lương</label>
                     <select
                       value={form.month}
                       onChange={(e) => setForm((f) => ({ ...f, month: e.target.value }))}
@@ -213,7 +213,7 @@ export default function PayrollRunPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[12px] font-bold text-slate-500">Year</label>
+                    <label className="text-[12px] font-bold text-slate-500">Năm</label>
                     <input
                       type="number"
                       value={form.year}
@@ -224,7 +224,7 @@ export default function PayrollRunPage() {
 
                   {/* Scope */}
                   <div className="col-span-2 space-y-2">
-                    <label className="text-[12px] font-bold text-slate-500">Payroll Scope</label>
+                    <label className="text-[12px] font-bold text-slate-500">Phạm vi tính lương</label>
                     <div className="grid grid-cols-2 gap-px bg-slate-300 rounded-lg overflow-hidden border border-slate-300">
                       <button
                         type="button"
@@ -233,7 +233,7 @@ export default function PayrollRunPage() {
                           form.scope === "all" ? "bg-white text-indigo-700" : "bg-slate-50 text-slate-500 hover:bg-white"
                         }`}
                       >
-                        Full Monthly (All)
+                        Toàn bộ (cả tháng)
                       </button>
                       <button
                         type="button"
@@ -242,7 +242,7 @@ export default function PayrollRunPage() {
                           form.scope === "department" ? "bg-white text-indigo-700" : "bg-slate-50 text-slate-500 hover:bg-white"
                         }`}
                       >
-                        By Department
+                        Theo phòng ban
                       </button>
                     </div>
                   </div>
@@ -250,7 +250,7 @@ export default function PayrollRunPage() {
                   {/* Department (conditional) */}
                   {form.scope === "department" && (
                     <div className="col-span-2 space-y-2">
-                      <label className="text-[12px] font-bold text-slate-500">Department Scope</label>
+                      <label className="text-[12px] font-bold text-slate-500">Phạm vi phòng ban</label>
                       <select
                         value={form.department_id}
                         onChange={(e) => setForm((f) => ({ ...f, department_id: e.target.value }))}
@@ -272,10 +272,10 @@ export default function PayrollRunPage() {
                   <Users className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-bold text-emerald-900">
-                      {previewParams.length} Preview Parameters Loaded
+                      {previewParams.length} Tham số đã tải
                     </p>
                     <p className="text-[12px] text-emerald-800 opacity-80 mt-0.5">
-                      System has loaded {previewParams.length} parameter definitions for the "{form.scope}" scope of Tháng {form.month}/{form.year}.
+                      Hệ thống đã tải {previewParams.length} tham số cho phạm vi "{form.scope}" của Tháng {form.month}/{form.year}.
                     </p>
                   </div>
                 </div>
@@ -295,14 +295,14 @@ export default function PayrollRunPage() {
                     className="text-sm font-bold text-slate-500 hover:underline disabled:opacity-50"
                   >
                     <ShieldCheck className="h-4 w-4 inline mr-1" />
-                    {openPeriodMutation.isPending ? "Đang mở..." : "Open Period & Exit"}
+                    {openPeriodMutation.isPending ? "Đang mở..." : "Mở kỳ lương"}
                   </button>
                   <button
                     type="submit"
                     disabled={previewMutation.isPending}
                     className="bg-gradient-to-br from-slate-950 to-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-sm shadow-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center gap-2"
                   >
-                    {previewMutation.isPending ? "Generating Preview..." : "Proceed to Next Step"}
+                    {previewMutation.isPending ? "Đang tạo bản xem trước..." : "Tiếp tục bước tiếp theo"}
                     {!previewMutation.isPending && <ArrowRight className="h-4 w-4" />}
                   </button>
                 </div>
@@ -314,25 +314,25 @@ export default function PayrollRunPage() {
           <div className="space-y-6">
             <div className="bg-slate-50 p-6 rounded-xl border-l-4 border-emerald-600">
               <h3 className="text-[11px] font-bold tracking-[0.05em] uppercase text-slate-500 mb-6 flex items-center gap-2">
-                Previous Month Reference
+                Tham chiếu tháng trước
               </h3>
               <div className="space-y-6">
                 <div className="flex justify-between items-end border-b border-slate-200 pb-4">
                   <div>
-                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Total Net Pay</p>
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Tổng lương thực nhận</p>
                     <p className="text-xl font-black text-slate-900 tabular-nums">—</p>
                   </div>
                   <div className="text-right">
-                    <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold">CONFIRMED</span>
+                    <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold">Đã xác nhận</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 bg-white rounded border border-slate-200">
-                    <p className="text-[10px] text-slate-500 uppercase font-medium">Params Loaded</p>
+                    <p className="text-[10px] text-slate-500 uppercase font-medium">Tham số đã tải</p>
                     <p className="text-sm font-bold text-emerald-600 tabular-nums">{previewParams.length}</p>
                   </div>
                   <div className="p-3 bg-white rounded border border-slate-200">
-                    <p className="text-[10px] text-slate-500 uppercase font-medium">Departments</p>
+                    <p className="text-[10px] text-slate-500 uppercase font-medium">Phòng ban</p>
                     <p className="text-sm font-bold text-slate-900 tabular-nums">{departments.length}</p>
                   </div>
                 </div>
@@ -340,9 +340,9 @@ export default function PayrollRunPage() {
             </div>
 
             <div className="bg-slate-100 p-6 rounded-xl border border-dashed border-slate-300">
-              <h4 className="text-xs font-bold mb-2 text-slate-700">Note</h4>
+              <h4 className="text-xs font-bold mb-2 text-slate-700">Ghi chú</h4>
               <p className="text-[11px] text-slate-500 leading-relaxed italic">
-                "Ensure all attendance sheets are approved before proceeding to Step 2. Unapproved hours will default to basic contract values."
+                "Đảm bảo tất cả bảng chấm công đã được phê duyệt trước khi chuyển sang Bước 2. Giờ chưa phê duyệt sẽ được tính theo giá trị hợp đồng cơ bản."
               </p>
             </div>
           </div>
@@ -357,7 +357,7 @@ export default function PayrollRunPage() {
             <div className="flex items-center gap-3">
               <div className="relative">
                 <select className="appearance-none bg-white border border-slate-200 rounded-lg pl-4 pr-10 py-2.5 text-sm font-medium shadow-sm focus:ring-2 focus:ring-indigo-200">
-                  <option>All Departments</option>
+                  <option>Tất cả phòng ban</option>
                   {departments.map((d, i) => (
                     <option key={i}>{textValue(d, ["name"], "Department")}</option>
                   ))}
@@ -367,7 +367,7 @@ export default function PayrollRunPage() {
             </div>
             <div className="flex items-center gap-3 text-sm font-bold text-slate-500 bg-slate-100 px-4 py-2 rounded-lg">
               <Users className="h-4 w-4 text-indigo-700" />
-              {formatNumber(totalEmployees)} Employees Listed
+              {formatNumber(totalEmployees)} Nhân viên được liệt kê
             </div>
           </div>
 
@@ -375,22 +375,22 @@ export default function PayrollRunPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-xl border-l-4 border-emerald-600 shadow-sm flex flex-col justify-between h-36">
               <div className="flex justify-between items-start">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Net Pay</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng lương thực nhận</span>
               </div>
               <div>
                 <div className="text-2xl font-black text-slate-900 tabular-nums">{formatCurrency(totalNet)}</div>
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between h-36">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Deductions</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng khấu trừ</span>
               <div className="text-2xl font-black text-slate-900 tabular-nums">{formatCurrency(totalDeductions)}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between h-36">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Gross</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng lương gộp</span>
               <div className="text-2xl font-black text-slate-900 tabular-nums">{formatCurrency(totalGross)}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between h-36">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Employees</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng số nhân viên</span>
               <div className="text-2xl font-black text-slate-900 tabular-nums">{formatNumber(totalEmployees)}</div>
             </div>
           </div>
@@ -401,12 +401,12 @@ export default function PayrollRunPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 uppercase text-[10px] tracking-widest font-black text-slate-500 border-b border-slate-100">
-                    <th className="px-6 py-4">Employee</th>
-                    <th className="px-6 py-4">Base Salary</th>
-                    <th className="px-6 py-4">Bonuses</th>
-                    <th className="px-6 py-4">Deductions</th>
-                    <th className="px-6 py-4 text-right">Net Total</th>
-                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Nhân viên</th>
+                    <th className="px-6 py-4">Lương cơ bản</th>
+                    <th className="px-6 py-4">Thưởng</th>
+                    <th className="px-6 py-4">Khấu trừ</th>
+                    <th className="px-6 py-4 text-right">Thực nhận</th>
+                    <th className="px-6 py-4">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -458,8 +458,8 @@ export default function PayrollRunPage() {
                     <tr>
                       <td colSpan={6} className="px-6 py-10">
                         <EmptyState
-                          title="Preview data loaded"
-                          description="Employee-level breakdown will appear here when the service returns itemized data."
+                          title="Dữ liệu xem trước đã tải"
+                          description="Chi tiết từng nhân viên sẽ hiển thị tại đây khi dịch vụ trả về dữ liệu chi tiết."
                         />
                       </td>
                     </tr>
@@ -469,11 +469,11 @@ export default function PayrollRunPage() {
             </div>
             {previewItems.length > 0 && (
               <div className="px-6 py-4 bg-slate-50 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                <span>Showing {Math.min(10, previewItems.length)} of {previewItems.length} Employees</span>
+                <span>Hiển thị {Math.min(10, previewItems.length)} / {previewItems.length} Nhân viên</span>
                 <div className="flex items-center gap-4">
-                  <span className="text-emerald-600">Total Net: {formatCurrency(totalNet)}</span>
+                  <span className="text-emerald-600">Tổng thực nhận: {formatCurrency(totalNet)}</span>
                   <span className="text-slate-300">|</span>
-                  <span className="text-rose-500">Deductions: {formatCurrency(totalDeductions)}</span>
+                  <span className="text-rose-500">Khấu trừ: {formatCurrency(totalDeductions)}</span>
                 </div>
               </div>
             )}
@@ -481,7 +481,7 @@ export default function PayrollRunPage() {
 
           {/* Raw JSON summary */}
           <div className="bg-slate-950 rounded-xl p-6 text-white">
-            <p className="text-sm font-semibold mb-3">Raw Preview Summary</p>
+            <p className="text-sm font-semibold mb-3">Tóm tắt xem trước (JSON)</p>
             <pre className="overflow-x-auto text-xs leading-6 text-slate-300">{JSON.stringify(result, null, 2)}</pre>
           </div>
 
@@ -498,18 +498,18 @@ export default function PayrollRunPage() {
               className="flex items-center gap-2 text-slate-500 font-bold text-sm hover:text-slate-900 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Setup
+              Quay lại thiết lập
             </button>
             <div className="flex items-center gap-6">
               <div className="text-right">
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">Running Total</p>
+                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">Tổng tính</p>
                 <p className="text-xl font-black text-indigo-700 tabular-nums leading-tight">{formatCurrency(totalNet)}</p>
               </div>
               <button
                 onClick={() => setCurrentStep(3)}
                 className="bg-gradient-to-br from-slate-950 to-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-sm flex items-center gap-3 shadow-lg hover:opacity-90 transition-opacity"
               >
-                Proceed to Preview
+                Tiếp tục xem trước
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -524,34 +524,34 @@ export default function PayrollRunPage() {
           <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-xl border-l-4 border-emerald-600 shadow-sm flex flex-col justify-between h-40">
               <div className="flex justify-between items-start">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Net Pay</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng lương thực nhận</span>
               </div>
               <div>
                 <div className="text-3xl font-black text-slate-900 tabular-nums">{formatCurrency(totalNet)}</div>
                 <div className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-1">
-                  Ready for disbursement
+                  Sẵn sàng chi trả
                 </div>
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between h-40">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Deductions</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng khấu trừ</span>
               <div>
                 <div className="text-3xl font-black text-slate-900 tabular-nums">{formatCurrency(totalDeductions)}</div>
-                <div className="text-xs text-slate-500 font-medium mt-1">Taxes, Benefits &amp; Levies</div>
+                <div className="text-xs text-slate-500 font-medium mt-1">Thuế, phúc lợi và các khoản khấu trừ</div>
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between h-40">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Employees</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tổng số nhân viên</span>
               <div>
                 <div className="text-3xl font-black text-slate-900 tabular-nums">{formatNumber(totalEmployees)}</div>
-                <div className="text-xs text-slate-500 font-medium mt-1">In this run</div>
+                <div className="text-xs text-slate-500 font-medium mt-1">Trong lần chạy này</div>
               </div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between h-40">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Run Period</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kỳ lương</span>
               <div>
                 <div className="text-2xl font-black text-slate-900">T{form.month}/{form.year}</div>
-                <div className="text-xs text-slate-500 font-medium mt-1">Scope: {form.scope}</div>
+                <div className="text-xs text-slate-500 font-medium mt-1">Phạm vi: {form.scope}</div>
               </div>
             </div>
           </section>
@@ -560,9 +560,9 @@ export default function PayrollRunPage() {
           <section className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200/60">
             <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-3">
-                <h2 className="font-bold text-lg text-slate-900">Employee Payslip Ledger</h2>
+                <h2 className="font-bold text-lg text-slate-900">Bảng phiếu lương nhân viên</h2>
                 <div className="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold text-slate-500 uppercase">
-                  {formatNumber(totalEmployees)} Entries
+                  {formatNumber(totalEmployees)} Mục
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -570,7 +570,7 @@ export default function PayrollRunPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
                     className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-indigo-200 transition-all"
-                    placeholder="Search employee name or ID..."
+                    placeholder="Tìm kiếm tên hoặc mã nhân viên..."
                     type="text"
                   />
                 </div>
@@ -583,11 +583,11 @@ export default function PayrollRunPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 text-slate-500">
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider">Employee</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider">Department</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-right">Gross Pay</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-right">Tax &amp; Ded.</th>
-                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-right">Net Pay</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider">Nhân viên</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider">Phòng ban</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-right">Lương gộp</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-right">Thuế & KT</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-right">Thực nhận</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -631,7 +631,7 @@ export default function PayrollRunPage() {
                   ) : (
                     <tr>
                       <td colSpan={5} className="px-6 py-10">
-                        <EmptyState title="No employee data" description="Preview returned no itemized employee records." />
+                        <EmptyState title="Không có dữ liệu nhân viên" description="Xem trước không trả về dữ liệu chi tiết nhân viên." />
                       </td>
                     </tr>
                   )}
@@ -646,9 +646,9 @@ export default function PayrollRunPage() {
               <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 mb-2">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Ready to Finalize?</h3>
+              <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Sẵn sàng hoàn tất?</h3>
               <p className="text-slate-500 text-sm max-w-md">
-                Once finalized, the payroll run will be opened for the period and ready for disbursement. You will not be able to edit these values without a manual override.
+                Sau khi hoàn tất, bảng lương sẽ được mở cho kỳ này và sẵn sàng chi trả. Bạn sẽ không thể chỉnh sửa các giá trị này nếu không can thiệp thủ công.
               </p>
             </div>
 
@@ -664,7 +664,7 @@ export default function PayrollRunPage() {
                 className="px-8 py-4 border border-slate-200 rounded-lg font-bold text-slate-900 hover:bg-slate-50 transition-all flex items-center gap-2 justify-center"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Preview
+                Quay lại xem trước
               </button>
               <button
                 onClick={() => openPeriodMutation.mutate()}
@@ -672,7 +672,7 @@ export default function PayrollRunPage() {
                 className="px-10 py-4 bg-gradient-to-br from-slate-950 to-indigo-700 text-white rounded-lg shadow-xl hover:opacity-90 active:scale-95 transition-all font-black tracking-wide text-lg disabled:opacity-60 flex items-center gap-2 justify-center"
               >
                 <ShieldCheck className="h-5 w-5" />
-                {openPeriodMutation.isPending ? "Đang xử lý..." : "Finalize & Open Period"}
+                {openPeriodMutation.isPending ? "Đang xử lý..." : "Hoàn tất và mở kỳ lương"}
               </button>
             </div>
           </section>

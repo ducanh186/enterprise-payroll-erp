@@ -161,4 +161,9 @@ class PayrollController extends Controller
 
         return $this->success(null, 'Payroll adjustment deleted.');
     }
+
+    public function bonusDeductions(): JsonResponse
+    {
+        return $this->success($this->payrollService->getBonusDeductions());
+    }
 }

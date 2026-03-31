@@ -261,6 +261,25 @@ class AttendanceService
         ];
     }
 
+    public function getShiftAssignments(): array
+    {
+        return ShiftAssignment::query()
+            ->with(['employee', 'shift'])
+            ->orderBy('id')
+            ->get()
+            ->map(fn (ShiftAssignment $assignment) => [
+                'id' => $assignment->id,
+                'employee_id' => $assignment->employee_id,
+                'employee_name' => data_get($assignment, 'employee.full_name'),
+                'shift_id' => $assignment->shift_id,
+                'shift_name' => data_get($assignment, 'shift.name'),
+                'work_date' => $assignment->work_date?->format('Y-m-d'),
+                'source' => $assignment->source,
+                'note' => $assignment->note,
+            ])
+            ->all();
+    }
+
     public function getRequests(array $filters = []): array
     {
         $query = AttendanceRequest::query()

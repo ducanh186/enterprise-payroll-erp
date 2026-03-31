@@ -175,7 +175,7 @@ export default function AttendanceSummaryPage() {
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCw className={`h-4 w-4 ${recalculateMutation.isPending ? "animate-spin" : ""}`} />
-              {recalculateMutation.isPending ? "Đang chạy..." : "Recalculate"}
+              {recalculateMutation.isPending ? "Đang chạy..." : "Tính lại"}
             </button>
           </form>
           <button
@@ -219,7 +219,7 @@ export default function AttendanceSummaryPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Tháng lương
+              Tháng
             </label>
             <select
               value={filters.month}

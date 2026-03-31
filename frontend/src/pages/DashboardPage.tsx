@@ -59,35 +59,35 @@ export default function DashboardPage() {
     {
       label: "Tổng nhân viên",
       value: formatNumber(employeesTotal),
-      hint: "Từ /employees",
-      tag: <Badge tone="info">HR</Badge>,
+      hint: "Tổng số nhân viên trong hệ thống",
+      tag: <Badge tone="info">Nhân sự</Badge>,
     },
     {
       label: "Chấm công hôm nay",
       value: formatNumber(attendanceItems.length),
-      hint: "Từ /attendance/daily",
-      tag: <Badge tone="success">Live</Badge>,
+      hint: "Dữ liệu chấm công ngày hôm nay",
+      tag: <Badge tone="success">Trực tuyến</Badge>,
     },
     {
       label: "Phiếu lương",
       value: formatNumber(payslipItems.length),
       hint: "Top 5 gần nhất",
-      tag: <Badge tone="accent">Payroll</Badge>,
+      tag: <Badge tone="accent">Lương</Badge>,
     },
     {
       label: "Template báo cáo",
       value: formatNumber(reportTemplates.length),
-      hint: "Seed report templates",
-      tag: <Badge tone="neutral">Reports</Badge>,
+      hint: "Các mẫu báo cáo có sẵn",
+      tag: <Badge tone="neutral">Báo cáo</Badge>,
     },
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Overview"
+        eyebrow="Tổng quan"
         title="Dashboard vận hành"
-        description="Điểm vào để xem tình trạng HR, attendance, payroll và admin trong một màn hình."
+        description="Tổng quan tình trạng nhân sự, chấm công, tính lương và quản trị."
         actions={<Badge tone="neutral">Tự động làm mới khi chuyển route</Badge>}
       />
 
@@ -98,7 +98,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Panel title="Chấm công hôm nay" subtitle="Quick view từ API hiện có">
+        <Panel title="Chấm công hôm nay" subtitle="Xem nhanh dữ liệu chấm công">
           {attendanceQuery.isLoading ? (
             <p className="text-sm text-slate-500">Đang tải...</p>
           ) : attendanceItems.length ? (
@@ -132,14 +132,14 @@ export default function DashboardPage() {
         </Panel>
 
         <div className="space-y-6">
-          <Panel title="Payroll snapshots" subtitle="Kỳ lương và phiếu lương gần nhất">
+          <Panel title="Tổng quan phiếu lương" subtitle="Kỳ lương và phiếu lương gần nhất">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Kỳ lương</p>
                 <p className="mt-2 text-2xl font-bold text-slate-950">{formatNumber(periodItems.length)}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Users active</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Người dùng hoạt động</p>
                 <p className="mt-2 text-2xl font-bold text-slate-950">
                   {formatNumber(users.filter((user) => boolValue(user, ["is_active"], true)).length)}
                 </p>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
             </div>
           </Panel>
 
-          <Panel title="Contracts" subtitle="5 bản ghi gần nhất">
+          <Panel title="Hợp đồng" subtitle="5 bản ghi gần nhất">
             {contractItems.length ? (
               <div className="space-y-3">
                 {contractItems.slice(0, 4).map((item, index) => (

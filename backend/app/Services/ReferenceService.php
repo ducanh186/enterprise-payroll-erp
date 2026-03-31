@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AllowanceType;
 use App\Models\ContractType;
 use App\Models\Department;
 use App\Models\Holiday;
@@ -9,6 +10,7 @@ use App\Models\LateEarlyRule;
 use App\Models\PayrollParameter;
 use App\Models\PayrollParameterDetail;
 use App\Models\PayrollType;
+use App\Models\SalaryLevel;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -128,6 +130,41 @@ class ReferenceService
                 'manager_name' => data_get($department, 'manager.full_name'),
                 'employee_count' => (int) $department->employees_count,
                 'is_active' => $department->status === 'active',
+            ])
+            ->all();
+    }
+
+    public function getSalaryLevels(): array
+    {
+        return SalaryLevel::query()
+            ->with(['payrollType'])
+            ->orderBy('id')
+            ->get()
+            ->map(fn (SalaryLevel $level) => [
+                'id' => $level->id,
+                'code' => $level->code,
+                'level_no' => $level->level_no,
+                'amount' => $this->numericValue($level->amount),
+                'payroll_type_name' => data_get($level, 'payrollType.name'),
+                'effective_from' => $this->dateValue($level->effective_from),
+                'effective_to' => $this->dateValue($level->effective_to),
+            ])
+            ->all();
+    }
+
+    public function getAllowances(): array
+    {
+        return AllowanceType::query()
+            ->orderBy('id')
+            ->get()
+            ->map(fn (AllowanceType $type) => [
+                'id' => $type->id,
+                'code' => $type->code,
+                'name' => $type->name,
+                'default_amount' => $this->numericValue($type->default_amount),
+                'is_taxable' => (bool) $type->is_taxable,
+                'is_insurance_base' => (bool) $type->is_insurance_base,
+                'is_active' => $type->status === 'active',
             ])
             ->all();
     }

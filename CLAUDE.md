@@ -126,3 +126,18 @@ Replace mock data in `app/Services/*.php` with Eloquent models or raw SQL calls 
 - Middleware aliases: `role:hr_staff,system_admin` and `permission:module.action`
 - Frontend labels in Vietnamese for sidebar/UI; code in English
 - Pages in `frontend/src/pages/` render inside `AppLayout` (except `LoginPage` which is standalone)
+
+## Frontend UI Text Conventions
+
+- **All UI text must be Vietnamese with proper diacritics** (tiếng Việt có dấu)
+- **Sentence case** for labels in JSX — CSS `uppercase` handles visual capitalization
+- Status labels: Nháp / Đã tạo / Đã hoàn tất / Đã khóa (never English Draft/Generated/Finalized/Locked)
+- Sidebar: 3-level hierarchy (Nhân sự & HĐLĐ / Chấm công / Tính lương) → (Danh mục / Biến động / Báo cáo) → pages
+- Breadcrumbs: Friendly Vietnamese names via `ROUTE_TITLES` map in `AppLayout.tsx`
+- No API endpoint hints or dev notes visible in production UI
+- Icons: `lucide-react` only (not Material Symbols)
+
+## Test Status
+
+- Backend: 55 tests, 563 assertions (PHPUnit + SQLite :memory:)
+- Frontend: TypeScript compiles cleanly (`tsc -b && vite build`)

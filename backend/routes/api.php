@@ -46,6 +46,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/payroll-parameters', [ReferenceController::class, 'payrollParameters']);
         Route::get('/late-early-rules', [ReferenceController::class, 'lateEarlyRules']);
         Route::get('/departments', [ReferenceController::class, 'departments']);
+        Route::get('/salary-levels', [ReferenceController::class, 'salaryLevels']);
+        Route::get('/allowances', [ReferenceController::class, 'allowances']);
     });
 
     // -----------------------------------------------------------------------
@@ -80,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/requests/{id}', [AttendanceController::class, 'requestsShow'])->where('id', '[0-9]+');
         Route::post('/requests/{id}/approve', [AttendanceController::class, 'requestsApprove'])->where('id', '[0-9]+');
         Route::post('/requests/{id}/reject', [AttendanceController::class, 'requestsReject'])->where('id', '[0-9]+');
+        Route::get('/shift-assignments', [AttendanceController::class, 'shiftAssignments']);
     });
 
     // -----------------------------------------------------------------------
@@ -99,6 +102,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/adjustments', [PayrollController::class, 'createAdjustment']);
         Route::put('/adjustments/{id}', [PayrollController::class, 'updateAdjustment'])->where('id', '[0-9]+');
         Route::delete('/adjustments/{id}', [PayrollController::class, 'deleteAdjustment'])->where('id', '[0-9]+');
+        Route::get('/bonus-deductions', [PayrollController::class, 'bonusDeductions']);
     });
 
     // -----------------------------------------------------------------------

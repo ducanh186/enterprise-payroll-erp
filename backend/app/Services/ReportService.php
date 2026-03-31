@@ -100,7 +100,7 @@ class ReportService
     {
         return [
             'RPT_ATTENDANCE_DAILY' => [
-                'description' => 'Bao cao cham cong hang ngay.',
+                'description' => 'Báo cáo chấm công hàng ngày.',
                 'category' => 'attendance',
                 'parameters' => [
                     ['name' => 'date', 'type' => 'date', 'required' => true],
@@ -110,7 +110,7 @@ class ReportService
                 'export_formats' => ['xlsx', 'pdf'],
             ],
             'RPT_ATTENDANCE_MONTHLY' => [
-                'description' => 'Bang cham cong chi tiet theo thang.',
+                'description' => 'Bảng chấm công chi tiết theo tháng.',
                 'category' => 'attendance',
                 'parameters' => [
                     ['name' => 'month', 'type' => 'integer', 'required' => true],
@@ -121,7 +121,7 @@ class ReportService
                 'export_formats' => ['xlsx', 'pdf'],
             ],
             'RPT_PAYROLL_SUMMARY' => [
-                'description' => 'Bao cao tong hop chi phi luong theo thang.',
+                'description' => 'Báo cáo tổng hợp chi phí lương theo tháng.',
                 'category' => 'payroll',
                 'parameters' => [
                     ['name' => 'month', 'type' => 'integer', 'required' => true],
@@ -131,7 +131,7 @@ class ReportService
                 'export_formats' => ['xlsx', 'pdf'],
             ],
             'RPT_PAYSLIP' => [
-                'description' => 'Phieu luong ca nhan.',
+                'description' => 'Phiếu lương cá nhân.',
                 'category' => 'payroll',
                 'parameters' => [
                     ['name' => 'month', 'type' => 'integer', 'required' => true],
@@ -142,7 +142,7 @@ class ReportService
                 'export_formats' => ['xlsx', 'pdf'],
             ],
             'RPT_INSURANCE' => [
-                'description' => 'Bao cao dong bao hiem xa hoi, y te, that nghiep.',
+                'description' => 'Báo cáo đóng bảo hiểm xã hội, y tế, thất nghiệp.',
                 'category' => 'payroll',
                 'parameters' => [
                     ['name' => 'month', 'type' => 'integer', 'required' => true],
@@ -152,7 +152,7 @@ class ReportService
                 'export_formats' => ['xlsx'],
             ],
             'RPT_PIT' => [
-                'description' => 'Bao cao thue thu nhap ca nhan.',
+                'description' => 'Báo cáo thuế thu nhập cá nhân.',
                 'category' => 'payroll',
                 'parameters' => [
                     ['name' => 'month', 'type' => 'integer', 'required' => true],

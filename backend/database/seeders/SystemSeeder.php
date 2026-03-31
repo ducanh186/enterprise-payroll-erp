@@ -22,12 +22,12 @@ class SystemSeeder extends Seeder
         // Report Templates
         // ---------------------------------------------------------------
         $this->insertWithIdentity('report_templates', [
-            ['id' => 1, 'code' => 'RPT_ATTENDANCE_DAILY',   'name' => 'Bao Cao Cham Cong Hang Ngay',             'module' => 'attendance', 'sp_name' => 'sp_Report_AttendanceDaily',    'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 2, 'code' => 'RPT_ATTENDANCE_MONTHLY',  'name' => 'Bao Cao Cham Cong Hang Thang',            'module' => 'attendance', 'sp_name' => 'sp_Report_AttendanceMonthly',  'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 3, 'code' => 'RPT_PAYROLL_SUMMARY',     'name' => 'Bao Cao Tong Hop Luong',                  'module' => 'payroll',    'sp_name' => 'sp_Report_PayrollSummary',     'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 4, 'code' => 'RPT_PAYSLIP',             'name' => 'Phieu Luong Ca Nhan',                     'module' => 'payroll',    'sp_name' => 'sp_Report_Payslip',            'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 5, 'code' => 'RPT_INSURANCE',           'name' => 'Bao Cao Bao Hiem Xa Hoi',                 'module' => 'payroll',    'sp_name' => 'sp_Report_Insurance',          'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 6, 'code' => 'RPT_PIT',                 'name' => 'Bao Cao Thue Thu Nhap Ca Nhan',           'module' => 'payroll',    'sp_name' => 'sp_Report_PIT',                'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 1, 'code' => 'RPT_ATTENDANCE_DAILY',   'name' => 'Báo cáo chấm công hàng ngày',             'module' => 'attendance', 'sp_name' => 'sp_Report_AttendanceDaily',    'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 2, 'code' => 'RPT_ATTENDANCE_MONTHLY',  'name' => 'Báo cáo chấm công hàng tháng',            'module' => 'attendance', 'sp_name' => 'sp_Report_AttendanceMonthly',  'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 3, 'code' => 'RPT_PAYROLL_SUMMARY',     'name' => 'Báo cáo tổng hợp lương',                  'module' => 'payroll',    'sp_name' => 'sp_Report_PayrollSummary',     'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 4, 'code' => 'RPT_PAYSLIP',             'name' => 'Phiếu lương cá nhân',                     'module' => 'payroll',    'sp_name' => 'sp_Report_Payslip',            'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 5, 'code' => 'RPT_INSURANCE',           'name' => 'Báo cáo bảo hiểm xã hội',                 'module' => 'payroll',    'sp_name' => 'sp_Report_Insurance',          'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 6, 'code' => 'RPT_PIT',                 'name' => 'Báo cáo thuế thu nhập cá nhân',           'module' => 'payroll',    'sp_name' => 'sp_Report_PIT',                'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         // ---------------------------------------------------------------

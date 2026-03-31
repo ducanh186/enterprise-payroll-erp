@@ -335,7 +335,7 @@ export default function PayslipDetailPage() {
             <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
               <div>
                 <p className="text-[0.6875rem] font-bold uppercase tracking-widest text-white/60">
-                  THỰC LĨNH (NET PAYMENT)
+                  Thực lĩnh
                 </p>
                 <p className="mt-1 font-[family-name:var(--font-display)] text-5xl font-black tracking-tighter tabular-nums md:text-6xl">
                   {formatCurrency(netSalary)}

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 
 type BadgeTone = "neutral" | "success" | "warning" | "danger" | "info" | "accent";
@@ -129,6 +130,67 @@ export function EmptyState({
       <p className="font-medium text-slate-900">{title}</p>
       {description && <p className="mt-2 text-sm text-slate-500">{description}</p>}
       {action && <div className="mt-5">{action}</div>}
+    </div>
+  );
+}
+
+const MODAL_SIZE_CLASSES: Record<string, string> = {
+  sm: "max-w-md",
+  md: "max-w-lg",
+  lg: "max-w-2xl",
+  xl: "max-w-4xl",
+};
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  size = "md",
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  size?: "sm" | "md" | "lg" | "xl";
+}) {
+  useEffect(() => {
+    if (!open) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4"
+      onClick={onClose}
+    >
+      <div
+        className={`relative w-full ${MODAL_SIZE_CLASSES[size]} rounded-2xl border border-slate-200 bg-white shadow-2xl`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            aria-label="Đóng"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+            </svg>
+          </button>
+        </div>
+        {/* Body */}
+        <div className="px-6 py-5">{children}</div>
+      </div>
     </div>
   );
 }

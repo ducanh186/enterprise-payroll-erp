@@ -28,7 +28,7 @@ export default function Topbar({ title, subtitle, onMenuClick }: TopbarProps) {
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-sky-500" />
               <p className="truncate text-xs font-bold uppercase tracking-[0.24em] text-slate-500">
-                {subtitle ?? "Enterprise payroll workspace"}
+                {subtitle ?? "Hệ thống quản lý nhân sự"}
               </p>
             </div>
             <h1 className="truncate font-[family-name:var(--font-display)] text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">

@@ -49,6 +49,25 @@ class PayrollService
         ];
     }
 
+    public function getBonusDeductions(): array
+    {
+        return BonusDeduction::query()
+            ->with(['employee', 'type'])
+            ->orderBy('id')
+            ->get()
+            ->map(fn (BonusDeduction $item) => [
+                'id' => $item->id,
+                'employee_name' => data_get($item, 'employee.full_name'),
+                'type_name' => data_get($item, 'type.name'),
+                'type_kind' => data_get($item, 'type.kind'),
+                'amount' => (float) $item->amount,
+                'description' => $item->description,
+                'status' => $item->status,
+                'attendance_period_id' => $item->attendance_period_id,
+            ])
+            ->all();
+    }
+
     public function openPeriod(array $data): array
     {
         $month = (int) $data['month'];

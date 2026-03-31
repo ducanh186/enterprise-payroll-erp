@@ -188,7 +188,7 @@ export default function ReportsPage() {
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Báo cáo</p>
           <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            Reports Center
+            Trung tâm báo cáo
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">
             Chọn template, thiết lập tham số, preview nhanh hoặc export file.
@@ -376,7 +376,7 @@ export default function ReportsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Format
+                    Định dạng
                   </span>
                   <select
                     value={form.format}
@@ -398,8 +398,8 @@ export default function ReportsPage() {
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                   >
                     <option value="">Tất cả</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Không hoạt động</option>
                   </select>
                 </label>
               </div>
@@ -430,7 +430,7 @@ export default function ReportsPage() {
               {selectedParams.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Template parameters
+                    Tham số template
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {selectedParams.map((param, idx) => (
@@ -445,9 +445,9 @@ export default function ReportsPage() {
                           {textValue(param, ["type"], "string")}
                           {" · "}
                           {String(textValue(param, ["required"], "false")) === "true" ? (
-                            <span className="text-rose-500">required</span>
+                            <span className="text-rose-500">bắt buộc</span>
                           ) : (
-                            "optional"
+                            "tùy chọn"
                           )}
                         </p>
                       </div>
@@ -476,7 +476,7 @@ export default function ReportsPage() {
                   ) : (
                     <FileSearch2 className="h-4 w-4" />
                   )}
-                  Preview
+                  Xem trước
                 </button>
                 <button
                   type="button"
@@ -489,7 +489,7 @@ export default function ReportsPage() {
                   ) : (
                     <Download className="h-4 w-4" />
                   )}
-                  Export
+                  Xuất báo cáo
                 </button>
               </div>
             </div>
@@ -502,7 +502,7 @@ export default function ReportsPage() {
         </Panel>
 
         {/* Preview / Export output panel */}
-        <Panel title="Preview / Export output" subtitle="Kết quả trả về từ controller">
+        <Panel title="Kết quả xem trước / Xuất báo cáo" subtitle="Kết quả trả về từ controller">
           <div className="space-y-5">
             {preview ? (
               <div className="space-y-4">
@@ -555,7 +555,7 @@ export default function ReportsPage() {
                 {/* Raw JSON */}
                 <div className="rounded-2xl overflow-hidden border border-slate-800">
                   <div className="flex items-center justify-between border-b border-slate-700 bg-slate-900 px-4 py-2">
-                    <span className="text-xs font-semibold text-slate-400">JSON response</span>
+                    <span className="text-xs font-semibold text-slate-400">Phản hồi JSON</span>
                     <span className="text-xs text-slate-500">{selectedCode}</span>
                   </div>
                   <pre className="overflow-x-auto bg-slate-950 p-4 text-xs leading-6 text-slate-300 max-h-72">
@@ -566,7 +566,7 @@ export default function ReportsPage() {
             ) : (
               <EmptyState
                 title="Chưa có preview"
-                description="Bấm Preview để xem dữ liệu báo cáo trước khi export."
+                description="Bấm Xem trước để xem dữ liệu báo cáo trước khi xuất."
               />
             )}
 
@@ -631,7 +631,7 @@ export default function ReportsPage() {
                 <th className="px-6 py-4">Tên báo cáo</th>
                 <th className="px-5 py-4">Danh mục</th>
                 <th className="px-5 py-4">Mã</th>
-                <th className="px-5 py-4">Formats</th>
+                <th className="px-5 py-4">Định dạng</th>
                 <th className="px-6 py-4 text-right">Chọn</th>
               </tr>
             </thead>

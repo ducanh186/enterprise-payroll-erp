@@ -39,27 +39,27 @@ export default function PayrollPage() {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 uppercase tracking-tighter">
           <Lock className="h-2.5 w-2.5" />
-          Locked
+          Đã khóa
         </span>
       );
     }
     if (s.includes("final")) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-tighter">
-          Finalized
+          Đã hoàn tất
         </span>
       );
     }
     if (s.includes("preview") || s.includes("preview")) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 uppercase tracking-tighter">
-          Generated
+          Đã tạo
         </span>
       );
     }
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600 uppercase tracking-tighter">
-        {status || "Draft"}
+        {status || "Nháp"}
       </span>
     );
   }
@@ -69,20 +69,20 @@ export default function PayrollPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-950 tracking-tight">Payroll Cycle Dashboard</h1>
-          <p className="text-slate-500 font-medium mt-1">Monitoring the financial heartbeat of {currentMonthLabel}</p>
+          <h1 className="text-3xl font-black text-slate-950 tracking-tight">Tổng quan chu kỳ tính lương</h1>
+          <p className="text-slate-500 font-medium mt-1">Theo dõi tình hình lương tháng {currentMonthLabel}</p>
         </div>
         <div className="flex gap-3">
           <button className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-600 border border-slate-200 font-semibold rounded-lg hover:bg-slate-50 transition-colors text-sm shadow-sm">
             <Download className="h-4 w-4" />
-            Export CSV
+            Xuất CSV
           </button>
           <button
             onClick={() => navigate("/payroll/run")}
             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-slate-950 to-indigo-700 text-white font-bold rounded-lg shadow-lg hover:opacity-90 transition-opacity text-sm"
           >
             <Play className="h-4 w-4" />
-            Start New Run
+            Tạo vòng tính mới
           </button>
         </div>
       </header>
@@ -92,7 +92,7 @@ export default function PayrollPage() {
         {/* Stat 1: Total Periods */}
         <div className="bg-white p-6 rounded-xl border-l-4 border-indigo-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Total Periods</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Tổng kỳ lương</span>
             <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
               <Receipt className="h-5 w-5" />
             </div>
@@ -101,20 +101,20 @@ export default function PayrollPage() {
             <span className="text-3xl font-black tracking-tighter tabular-nums">{formatNumber(periods.length)}</span>
             <span className="text-xs font-bold text-emerald-600">Kỳ lương</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2 font-medium">Loaded from /payroll/periods</p>
+          <p className="text-xs text-slate-500 mt-2 font-medium">Dữ liệu kỳ lương đã tải</p>
         </div>
 
         {/* Stat 2: Cycle Status */}
         <div className="bg-white p-6 rounded-xl border-l-4 border-emerald-600 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Cycle Status</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Trạng thái chu kỳ</span>
             <div className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
               <BarChart2 className="h-5 w-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black tracking-tighter">
-              {openPeriods.length > 0 ? `Open — ${currentMonthLabel}` : "Đang cập nhật"}
+              {openPeriods.length > 0 ? `Đang mở — ${currentMonthLabel}` : "Đang cập nhật"}
             </span>
           </div>
           <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -123,13 +123,13 @@ export default function PayrollPage() {
               style={{ width: `${periods.length ? Math.round((openPeriods.length / periods.length) * 100) : 0}%` }}
             />
           </div>
-          <p className="text-xs text-slate-500 mt-2 font-medium">{openPeriods.length} run đang mở</p>
+          <p className="text-xs text-slate-500 mt-2 font-medium">{openPeriods.length} vòng tính đang mở</p>
         </div>
 
         {/* Stat 3: Payslips */}
         <div className="bg-white p-6 rounded-xl border-l-4 border-sky-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Preview Params</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Tham số xem trước</span>
             <div className="p-2 bg-sky-50 text-sky-700 rounded-lg">
               <FileWarning className="h-5 w-5" />
             </div>
@@ -137,7 +137,7 @@ export default function PayrollPage() {
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-black tracking-tighter tabular-nums">{formatNumber(parameters.length)}</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2 font-medium">Tham số từ preview-parameters</p>
+          <p className="text-xs text-slate-500 mt-2 font-medium">Tham số cấu hình tính lương</p>
         </div>
       </section>
 
@@ -147,13 +147,13 @@ export default function PayrollPage() {
         <div className="flex-1 space-y-6">
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200/60">
             <div className="p-6 flex items-center justify-between border-b border-slate-100">
-              <h3 className="font-bold text-slate-900">Active Payroll Runs</h3>
+              <h3 className="font-bold text-slate-900">Vòng tính lương đang hoạt động</h3>
               <div className="flex items-center gap-2">
                 <select className="pl-3 pr-8 py-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:ring-0 appearance-none text-slate-600">
-                  <option>All Statuses</option>
-                  <option>Draft</option>
-                  <option>Finalized</option>
-                  <option>Locked</option>
+                  <option>Tất cả trạng thái</option>
+                  <option>Nháp</option>
+                  <option>Đã hoàn tất</option>
+                  <option>Đã khóa</option>
                 </select>
               </div>
             </div>
@@ -162,10 +162,10 @@ export default function PayrollPage() {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Run Reference</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Period</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Total Net</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mã vòng tính</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kỳ lương</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Trạng thái</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Tổng thực lĩnh</th>
                     <th className="px-6 py-4 text-center" />
                   </tr>
                 </thead>
@@ -196,7 +196,7 @@ export default function PayrollPage() {
                             <div className="flex flex-col">
                               <span className="font-bold text-indigo-700">{periodCode}</span>
                               <span className="text-xs text-slate-500">
-                                {textValue(period, ["payroll_run.scope_type", "scope_type"], "All Staff")}
+                                {textValue(period, ["payroll_run.scope_type", "scope_type"], "Toàn bộ nhân viên")}
                               </span>
                             </div>
                           </td>
@@ -219,14 +219,14 @@ export default function PayrollPage() {
                     <tr>
                       <td colSpan={5} className="px-6 py-10">
                         <EmptyState
-                          title="No payroll runs found"
-                          description="Adjust your filters or initiate a new payroll run for this period."
+                          title="Chưa có vòng tính lương"
+                          description="Điều chỉnh bộ lọc hoặc tạo vòng tính lương mới cho kỳ này."
                           action={
                             <button
                               onClick={() => navigate("/payroll/run")}
                               className="px-6 py-2 bg-indigo-700 text-white rounded-lg font-bold text-sm hover:bg-indigo-800 transition-colors"
                             >
-                              Create First Run
+                              Tạo vòng tính đầu tiên
                             </button>
                           }
                         />
@@ -240,7 +240,7 @@ export default function PayrollPage() {
             {/* Pagination */}
             <div className="p-4 bg-slate-50/50 flex items-center justify-between border-t border-slate-100">
               <span className="text-xs text-slate-500 font-medium">
-                Showing {Math.min(periods.length, 8)} of {periods.length} runs
+                Hiển thị {Math.min(periods.length, 8)} / {periods.length} vòng tính
               </span>
               <div className="flex gap-2">
                 <button disabled className="p-1 hover:bg-slate-100 rounded disabled:opacity-30">
@@ -258,7 +258,7 @@ export default function PayrollPage() {
         <div className="w-full lg:w-80 space-y-8">
           {/* Quick Actions */}
           <div className="space-y-4">
-            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Quick Actions</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Thao tác nhanh</h4>
             <div className="grid grid-cols-1 gap-3">
               <button
                 onClick={() => navigate("/reports")}
@@ -266,8 +266,8 @@ export default function PayrollPage() {
               >
                 <BarChart2 className="h-5 w-5 text-indigo-700 group-hover:scale-110 transition-transform" />
                 <div>
-                  <span className="block text-sm font-bold">View Reports</span>
-                  <span className="block text-[10px] text-slate-500">Tax summaries &amp; variances</span>
+                  <span className="block text-sm font-bold">Xem báo cáo</span>
+                  <span className="block text-[10px] text-slate-500">Tổng hợp thuế và chênh lệch</span>
                 </div>
               </button>
               <button
@@ -276,7 +276,7 @@ export default function PayrollPage() {
               >
                 <Receipt className="h-5 w-5 text-rose-600 group-hover:scale-110 transition-transform" />
                 <div>
-                  <span className="block text-sm font-bold">Payslip History</span>
+                  <span className="block text-sm font-bold">Lịch sử phiếu lương</span>
                   <span className="block text-[10px] text-slate-500">{formatNumber(payslips.length)} phiếu lương gần nhất</span>
                 </div>
               </button>

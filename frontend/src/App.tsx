@@ -21,6 +21,21 @@ import ContractDetailPage from "./pages/ContractDetailPage";
 import PayslipDetailPage from "./pages/PayslipDetailPage";
 import RolePermissionsPage from "./pages/RolePermissionsPage";
 
+// New real pages
+import EmployeesPage from "./pages/EmployeesPage";
+import ContractTypesPage from "./pages/ContractTypesPage";
+import SalaryLevelsPage from "./pages/SalaryLevelsPage";
+import AllowancesPage from "./pages/AllowancesPage";
+import LateEarlyRulesPage from "./pages/LateEarlyRulesPage";
+import HolidaysPage from "./pages/HolidaysPage";
+import ShiftsPage from "./pages/ShiftsPage";
+import PayrollParametersPage from "./pages/PayrollParametersPage";
+import ShiftAssignmentsPage from "./pages/ShiftAssignmentsPage";
+import LeaveRequestsPage from "./pages/LeaveRequestsPage";
+import ManualAttendancePage from "./pages/ManualAttendancePage";
+import BonusDeductionsPage from "./pages/BonusDeductionsPage";
+import PayrollPeriodsPage from "./pages/PayrollPeriodsPage";
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -34,20 +49,38 @@ export default function App() {
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
 
-                <Route path="attendance" element={<AttendancePage />} />
-                <Route path="attendance/logs" element={<AttendanceLogsPage />} />
-                <Route path="attendance/summary" element={<AttendanceSummaryPage />} />
-
-                <Route path="payroll" element={<PayrollPage />} />
-                <Route path="payroll/run" element={<PayrollRunPage />} />
-                <Route path="payroll/payslips" element={<PayslipsPage />} />
-                <Route path="payroll/payslips/:id" element={<PayslipDetailPage />} />
-
+                {/* Nhân sự & HĐLĐ */}
+                <Route path="employees" element={<EmployeesPage />} />
+                <Route path="reference/contract-types" element={<ContractTypesPage />} />
+                <Route path="reference/salary-levels" element={<SalaryLevelsPage />} />
+                <Route path="reference/allowances" element={<AllowancesPage />} />
                 <Route path="contracts" element={<ContractsPage />} />
                 <Route path="contracts/:id" element={<ContractDetailPage />} />
 
+                {/* Chấm công */}
+                <Route path="reference/late-early-rules" element={<LateEarlyRulesPage />} />
+                <Route path="reference/holidays" element={<HolidaysPage />} />
+                <Route path="reference/shifts" element={<ShiftsPage />} />
+                <Route path="attendance" element={<AttendancePage />} />
+                <Route path="attendance/shift-assignments" element={<ShiftAssignmentsPage />} />
+                <Route path="attendance/logs" element={<AttendanceLogsPage />} />
+                <Route path="attendance/leave-requests" element={<LeaveRequestsPage />} />
+                <Route path="attendance/manual" element={<ManualAttendancePage />} />
+                <Route path="attendance/summary" element={<AttendanceSummaryPage />} />
+
+                {/* Tính lương */}
+                <Route path="payroll" element={<PayrollPage />} />
+                <Route path="payroll/parameters" element={<PayrollParametersPage />} />
+                <Route path="payroll/bonus-deductions" element={<BonusDeductionsPage />} />
+                <Route path="payroll/run" element={<PayrollRunPage />} />
+                <Route path="payroll/periods" element={<PayrollPeriodsPage />} />
+                <Route path="payroll/payslips" element={<PayslipsPage />} />
+                <Route path="payroll/payslips/:id" element={<PayslipDetailPage />} />
+
+                {/* Báo cáo */}
                 <Route path="reports" element={<ReportsPage />} />
 
+                {/* Quản trị */}
                 <Route path="admin" element={<AdminUsersPage />} />
                 <Route path="admin/users" element={<AdminUsersPage />} />
                 <Route path="admin/roles" element={<RolePermissionsPage />} />

@@ -75,9 +75,9 @@ export default function AttendanceLogsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Attendance"
+        eyebrow="Chấm công"
         title="Nhật ký check-in"
-        description="Tra cứu log theo khoảng thời gian, machine number và trạng thái hợp lệ. Có form manual check-in để hỗ trợ nhập tay."
+        description="Tra cứu nhật ký chấm công theo khoảng thời gian, máy chấm công và trạng thái. Hỗ trợ nhập chấm công thủ công."
         actions={
           <button
             type="button"
@@ -90,13 +90,13 @@ export default function AttendanceLogsPage() {
         }
       />
 
-      <Panel title="Bộ lọc" subtitle="Khi backend hoàn thiện, các trường này vẫn bám đúng contract controller.">
+      <Panel title="Bộ lọc" subtitle="Lọc theo ngày, mã nhân viên, máy chấm công">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {[
             ["Từ ngày", "date_from"],
             ["Đến ngày", "date_to"],
-            ["Employee ID", "employee_id"],
-            ["Machine", "machine_number"],
+            ["Mã nhân viên", "employee_id"],
+            ["Máy chấm công", "machine_number"],
             ["Trạng thái", "is_valid"],
           ].map(([label, key]) => (
             <label key={String(key)} className="space-y-2">
@@ -113,7 +113,7 @@ export default function AttendanceLogsPage() {
       </Panel>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Panel title="Kết quả" subtitle="GET /attendance/checkin-logs">
+        <Panel title="Kết quả" subtitle="Danh sách phiên chấm công">
           {logsQuery.isLoading ? (
             <p className="text-sm text-slate-500">Đang tải log...</p>
           ) : logs.length ? (
@@ -124,7 +124,7 @@ export default function AttendanceLogsPage() {
                     <th className="px-3 py-2">Nhân viên</th>
                     <th className="px-3 py-2">Thời gian</th>
                     <th className="px-3 py-2">Loại</th>
-                    <th className="px-3 py-2">Machine</th>
+                    <th className="px-3 py-2">Máy chấm công</th>
                     <th className="px-3 py-2">Trạng thái</th>
                   </tr>
                 </thead>
@@ -180,10 +180,10 @@ export default function AttendanceLogsPage() {
           )}
         </Panel>
 
-        <Panel title="Manual check-in" subtitle="POST /attendance/checkin-logs/manual">
+        <Panel title="Chấm công thủ công" subtitle="Nhập thông tin chấm công thủ công">
           <form className="space-y-4" onSubmit={submitManual}>
             <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Employee ID</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Mã nhân viên</span>
               <input
                 required
                 value={manualForm.employee_id}
@@ -192,7 +192,7 @@ export default function AttendanceLogsPage() {
               />
             </label>
             <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Check time</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Thời gian</span>
               <input
                 type="datetime-local"
                 required
@@ -202,7 +202,7 @@ export default function AttendanceLogsPage() {
               />
             </label>
             <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Check type</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Loại</span>
               <select
                 value={manualForm.check_type}
                 onChange={(event) => setManualForm((current) => ({ ...current, check_type: event.target.value }))}
@@ -213,7 +213,7 @@ export default function AttendanceLogsPage() {
               </select>
             </label>
             <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Reason</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Lý do</span>
               <textarea
                 rows={4}
                 value={manualForm.reason}
@@ -228,7 +228,7 @@ export default function AttendanceLogsPage() {
               className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <UserRoundSearch className="h-4 w-4" />
-              {manualMutation.isPending ? "Đang lưu..." : "Tạo manual log"}
+              {manualMutation.isPending ? "Đang lưu..." : "Ghi nhận"}
             </button>
           </form>
         </Panel>
