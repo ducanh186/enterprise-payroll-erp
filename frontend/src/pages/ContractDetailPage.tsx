@@ -16,12 +16,18 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { apiGet } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { formatCurrency, formatDate } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState, Panel } from "../components/ui";
 
 export default function ContractDetailPage() {
+  const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canEditContract = hasPermissionAccess(permissionSet, "contract.update");
+  const canRenewContract = hasPermissionAccess(permissionSet, "contract.renew");
 
   const contractQuery = useQuery({
     queryKey: ["contracts", id],
@@ -158,13 +164,17 @@ export default function ContractDetailPage() {
             <Printer className="h-4 w-4" />
             Tải PDF
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all bg-white rounded-xl border border-slate-200 shadow-sm active:scale-95">
-            <Pencil className="h-4 w-4" />
-            Chỉnh sửa
-          </button>
-          <button className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white rounded-xl bg-gradient-to-br from-slate-800 to-slate-950 shadow-md active:scale-95 transition-all hover:from-slate-700 hover:to-slate-900">
-            Gia hạn hợp đồng
-          </button>
+          {canEditContract && (
+            <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-all bg-white rounded-xl border border-slate-200 shadow-sm active:scale-95">
+              <Pencil className="h-4 w-4" />
+              Chỉnh sửa
+            </button>
+          )}
+          {canRenewContract && (
+            <button className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white rounded-xl bg-gradient-to-br from-slate-800 to-slate-950 shadow-md active:scale-95 transition-all hover:from-slate-700 hover:to-slate-900">
+              Gia hạn hợp đồng
+            </button>
+          )}
         </div>
       </div>
 
