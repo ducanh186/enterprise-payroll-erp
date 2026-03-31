@@ -4,7 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, UserRoundSearch } from "lucide-react";
 import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
 import { formatDateTime } from "../lib/format";
+import { useAuth } from "../context/AuthContext";
 import { boolValue, textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState, Panel, PageHeader } from "../components/ui";
 
 type LogFilters = {
@@ -24,6 +26,7 @@ const DEFAULT_FILTERS: LogFilters = {
 };
 
 export default function AttendanceLogsPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<LogFilters>(DEFAULT_FILTERS);
   const [manualForm, setManualForm] = useState({
@@ -33,6 +36,8 @@ export default function AttendanceLogsPage() {
     reason: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canCreateManualLog = hasPermissionAccess(permissionSet, "attendance.manage_request");
 
   const logsQuery = useQuery({
     queryKey: ["attendance", "checkin-logs", filters],
@@ -181,56 +186,63 @@ export default function AttendanceLogsPage() {
         </Panel>
 
         <Panel title="Chấm công thủ công" subtitle="Nhập thông tin chấm công thủ công">
-          <form className="space-y-4" onSubmit={submitManual}>
-            <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Mã nhân viên</span>
-              <input
-                required
-                value={manualForm.employee_id}
-                onChange={(event) => setManualForm((current) => ({ ...current, employee_id: event.target.value }))}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-              />
-            </label>
-            <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Thời gian</span>
-              <input
-                type="datetime-local"
-                required
-                value={manualForm.check_time}
-                onChange={(event) => setManualForm((current) => ({ ...current, check_time: event.target.value }))}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-              />
-            </label>
-            <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Loại</span>
-              <select
-                value={manualForm.check_type}
-                onChange={(event) => setManualForm((current) => ({ ...current, check_type: event.target.value }))}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+          {canCreateManualLog ? (
+            <form className="space-y-4" onSubmit={submitManual}>
+              <label className="block space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Mã nhân viên</span>
+                <input
+                  required
+                  value={manualForm.employee_id}
+                  onChange={(event) => setManualForm((current) => ({ ...current, employee_id: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Thời gian</span>
+                <input
+                  type="datetime-local"
+                  required
+                  value={manualForm.check_time}
+                  onChange={(event) => setManualForm((current) => ({ ...current, check_time: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Loại</span>
+                <select
+                  value={manualForm.check_type}
+                  onChange={(event) => setManualForm((current) => ({ ...current, check_type: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                >
+                  <option value="in">in</option>
+                  <option value="out">out</option>
+                </select>
+              </label>
+              <label className="block space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Lý do</span>
+                <textarea
+                  rows={4}
+                  value={manualForm.reason}
+                  onChange={(event) => setManualForm((current) => ({ ...current, reason: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                />
+              </label>
+              {error && <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
+              <button
+                type="submit"
+                disabled={manualMutation.isPending}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <option value="in">in</option>
-                <option value="out">out</option>
-              </select>
-            </label>
-            <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Lý do</span>
-              <textarea
-                rows={4}
-                value={manualForm.reason}
-                onChange={(event) => setManualForm((current) => ({ ...current, reason: event.target.value }))}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-              />
-            </label>
-            {error && <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
-            <button
-              type="submit"
-              disabled={manualMutation.isPending}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <UserRoundSearch className="h-4 w-4" />
-              {manualMutation.isPending ? "Đang lưu..." : "Ghi nhận"}
-            </button>
-          </form>
+                <UserRoundSearch className="h-4 w-4" />
+                {manualMutation.isPending ? "Đang lưu..." : "Ghi nhận"}
+              </button>
+            </form>
+          ) : (
+            <EmptyState
+              title="Không có quyền nhập công thủ công"
+              description="Tài khoản này chỉ được tra cứu log chấm công, không được tạo bản ghi thủ công."
+            />
+          )}
         </Panel>
       </div>
     </div>
