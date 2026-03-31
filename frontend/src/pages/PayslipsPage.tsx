@@ -13,8 +13,10 @@ import {
   Wallet,
 } from "lucide-react";
 import { apiGet } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { formatCurrency } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
+import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { EmptyState, PageHeader } from "../components/ui";
 
 type FilterState = {
@@ -58,6 +60,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function PayslipsPage() {
+  const { user } = useAuth();
   const [filters, setFilters] = useState<FilterState>({
     month: String(current.getMonth() + 1),
     year: String(current.getFullYear()),
@@ -66,6 +69,8 @@ export default function PayslipsPage() {
     status: "",
   });
   const [selectedId, setSelectedId] = useState<string>("");
+  const permissionSet = createPermissionSet(user?.permissions);
+  const canExportReports = hasPermissionAccess(permissionSet, "reports.export");
 
   const payslipsQuery = useQuery({
     queryKey: ["payroll", "payslips", filters],
@@ -157,13 +162,15 @@ export default function PayslipsPage() {
               Làm mới
             </button>
 
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
-            >
-              <Download className="h-4 w-4" />
-              Xuất tất cả
-            </button>
+            {canExportReports && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
+              >
+                <Download className="h-4 w-4" />
+                Xuất tất cả
+              </button>
+            )}
           </div>
         }
       />
