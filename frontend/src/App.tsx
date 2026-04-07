@@ -16,6 +16,7 @@ import PayrollRunPage from "./pages/PayrollRunPage";
 import PayslipsPage from "./pages/PayslipsPage";
 import ContractsPage from "./pages/ContractsPage";
 import ReportsPage from "./pages/ReportsPage";
+import ProceduresPage from "./pages/ProceduresPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import ContractDetailPage from "./pages/ContractDetailPage";
 import PayslipDetailPage from "./pages/PayslipDetailPage";
@@ -79,6 +80,7 @@ export default function App() {
 
                 {/* Báo cáo */}
                 <Route path="reports" element={<ReportsPage />} />
+                <Route path="procedures" element={<ProceduresPage />} />
 
                 {/* Quản trị */}
                 <Route path="admin" element={<AdminUsersPage />} />

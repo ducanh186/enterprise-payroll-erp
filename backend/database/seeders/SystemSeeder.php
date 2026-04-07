@@ -28,6 +28,10 @@ class SystemSeeder extends Seeder
             ['id' => 4, 'code' => 'RPT_PAYSLIP',             'name' => 'Phiếu lương cá nhân',                     'module' => 'payroll',    'sp_name' => 'sp_Report_Payslip',            'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 5, 'code' => 'RPT_INSURANCE',           'name' => 'Báo cáo bảo hiểm xã hội',                 'module' => 'payroll',    'sp_name' => 'sp_Report_Insurance',          'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 6, 'code' => 'RPT_PIT',                 'name' => 'Báo cáo thuế thu nhập cá nhân',           'module' => 'payroll',    'sp_name' => 'sp_Report_PIT',                'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 7, 'code' => 'HRM_ATTENDANCE_COLLECTION', 'name' => 'Tổng hợp công',                           'module' => 'attendance', 'sp_name' => 'usp_Hrm_AttendanceCollection', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 8, 'code' => 'HRM_ATTENDANCE_REPORT',     'name' => 'Bảng chấm công',                          'module' => 'attendance', 'sp_name' => 'usp_Hrm_AttendanceReport',     'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 9, 'code' => 'HRM_ASSIGN_SHIFT',          'name' => 'Bảng phân ca hàng ngày',                  'module' => 'attendance', 'sp_name' => 'usp_Hrm_B30HrmAssignShift',   'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 10, 'code' => 'HRM_LATE_EARLY',           'name' => 'Tổng hợp đi trễ về sớm',                 'module' => 'attendance', 'sp_name' => 'usp_Hrm_InOut_LaterEarly',    'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         // ---------------------------------------------------------------

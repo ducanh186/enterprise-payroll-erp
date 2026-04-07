@@ -99,7 +99,13 @@ export default function ReportsPage() {
     department_id: "",
     active_status: "",
     format: "xlsx",
+    date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+    date_to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10),
+    show_data_type: "0",
+    branch_code: "",
   });
+
+  const isDateRangeReport = selectedCode.startsWith("HRM_");
   const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
   const [exportResult, setExportResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -132,14 +138,25 @@ export default function ReportsPage() {
     }
   }, [selectedCode, selectedTemplate]);
 
+  const buildReportParams = () => {
+    const base: Record<string, unknown> = {};
+    if (isDateRangeReport) {
+      base.date_from = form.date_from;
+      base.date_to = form.date_to;
+      if (form.show_data_type && form.show_data_type !== "0") base.show_data_type = Number(form.show_data_type);
+      if (form.branch_code) base.branch_code = form.branch_code;
+    } else {
+      base.month = Number(form.month);
+      base.year = Number(form.year);
+    }
+    if (form.department_id) base.department_id = isDateRangeReport ? form.department_id : Number(form.department_id);
+    if (form.active_status) base.active_status = form.active_status;
+    return base;
+  };
+
   const previewMutation = useMutation({
     mutationFn: async () =>
-      apiPost<unknown>(`/reports/${selectedCode}/preview`, {
-        month: Number(form.month),
-        year: Number(form.year),
-        ...(form.department_id ? { department_id: Number(form.department_id) } : {}),
-        ...(form.active_status ? { active_status: form.active_status } : {}),
-      }),
+      apiPost<unknown>(`/reports/${selectedCode}/preview`, buildReportParams()),
     onSuccess: (response) => {
       setError(null);
       setPreview((response.data ?? {}) as Record<string, unknown>);
@@ -153,10 +170,7 @@ export default function ReportsPage() {
     mutationFn: async () =>
       apiPost<unknown>(`/reports/${selectedCode}/export`, {
         format: form.format,
-        month: Number(form.month),
-        year: Number(form.year),
-        ...(form.department_id ? { department_id: Number(form.department_id) } : {}),
-        ...(form.active_status ? { active_status: form.active_status } : {}),
+        ...buildReportParams(),
       }),
     onSuccess: (response) => {
       setError(null);
@@ -348,7 +362,67 @@ export default function ReportsPage() {
         >
           {selectedTemplate ? (
             <div className="space-y-5">
-              {/* Month / Year */}
+              {/* Date range for HRM_ reports */}
+              {isDateRangeReport ? (
+                <div className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="space-y-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Từ ngày
+                      </span>
+                      <input
+                        type="date"
+                        value={form.date_from}
+                        onChange={(e) => setForm((c) => ({ ...c, date_from: e.target.value }))}
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                      />
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Đến ngày
+                      </span>
+                      <input
+                        type="date"
+                        value={form.date_to}
+                        onChange={(e) => setForm((c) => ({ ...c, date_to: e.target.value }))}
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                      />
+                    </label>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="space-y-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Mã chi nhánh
+                      </span>
+                      <input
+                        type="text"
+                        value={form.branch_code}
+                        placeholder="VD: A01"
+                        maxLength={3}
+                        onChange={(e) => setForm((c) => ({ ...c, branch_code: e.target.value }))}
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                      />
+                    </label>
+                    {selectedCode === "HRM_ATTENDANCE_REPORT" && (
+                      <label className="space-y-2">
+                        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          Kiểu hiển thị
+                        </span>
+                        <select
+                          value={form.show_data_type}
+                          onChange={(e) => setForm((c) => ({ ...c, show_data_type: e.target.value }))}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                        >
+                          <option value="0">Mặc định</option>
+                          <option value="1">Rút gọn</option>
+                          <option value="2">Đầy đủ</option>
+                        </select>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              ) : (
+              /* Month / Year for standard reports */
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -380,6 +454,7 @@ export default function ReportsPage() {
                   />
                 </label>
               </div>
+              )}
 
               {/* Format / Active status */}
               <div className="grid gap-4 sm:grid-cols-2">

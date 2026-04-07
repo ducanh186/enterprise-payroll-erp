@@ -264,6 +264,76 @@ GO
 CREATE UNIQUE INDEX [attendance_daily_employee_id_work_date_unique] ON [dbo].[attendance_daily] ([employee_id], [work_date]);
 GO
 
+-- =================================================================
+-- Config-driven Stored Procedure Gateway tables
+-- =================================================================
+
+CREATE TABLE [dbo].[procedure_catalog] (
+    [id] BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [code] NVARCHAR(80) NOT NULL,
+    [label] NVARCHAR(200) NOT NULL,
+    [procedure_name] NVARCHAR(200) NOT NULL,
+    [module] NVARCHAR(50) NOT NULL DEFAULT N'general',
+    [description] NVARCHAR(MAX) NULL,
+    [is_active] BIT NOT NULL DEFAULT 1,
+    [created_at] DATETIME2 NULL,
+    [updated_at] DATETIME2 NULL
+);
+GO
+CREATE UNIQUE INDEX [procedure_catalog_code_unique] ON [dbo].[procedure_catalog] ([code]);
+GO
+
+CREATE TABLE [dbo].[procedure_parameters] (
+    [id] BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [procedure_id] BIGINT NOT NULL,
+    [name] NVARCHAR(100) NOT NULL,
+    [sp_param_name] NVARCHAR(100) NOT NULL,
+    [type] NVARCHAR(20) NOT NULL,
+    [label] NVARCHAR(200) NULL,
+    [required] BIT NOT NULL DEFAULT 0,
+    [default_value] NVARCHAR(200) NULL,
+    [sort_order] SMALLINT NOT NULL DEFAULT 0,
+    [created_at] DATETIME2 NULL,
+    [updated_at] DATETIME2 NULL,
+    CONSTRAINT [procedure_parameters_procedure_id_foreign] FOREIGN KEY ([procedure_id]) REFERENCES [dbo].[procedure_catalog] ([id]) ON DELETE CASCADE
+);
+GO
+CREATE UNIQUE INDEX [procedure_parameters_procedure_id_name_unique] ON [dbo].[procedure_parameters] ([procedure_id], [name]);
+GO
+
+CREATE TABLE [dbo].[procedure_columns] (
+    [id] BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [procedure_id] BIGINT NOT NULL,
+    [key] NVARCHAR(100) NOT NULL,
+    [label] NVARCHAR(200) NOT NULL,
+    [type] NVARCHAR(20) NOT NULL DEFAULT N'string',
+    [visible] BIT NOT NULL DEFAULT 1,
+    [exportable] BIT NOT NULL DEFAULT 1,
+    [sort_order] SMALLINT NOT NULL DEFAULT 0,
+    [created_at] DATETIME2 NULL,
+    [updated_at] DATETIME2 NULL,
+    CONSTRAINT [procedure_columns_procedure_id_foreign] FOREIGN KEY ([procedure_id]) REFERENCES [dbo].[procedure_catalog] ([id]) ON DELETE CASCADE
+);
+GO
+CREATE UNIQUE INDEX [procedure_columns_procedure_id_key_unique] ON [dbo].[procedure_columns] ([procedure_id], [key]);
+GO
+
+CREATE TABLE [dbo].[procedure_execution_logs] (
+    [id] BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [procedure_id] BIGINT NOT NULL,
+    [user_id] BIGINT NULL,
+    [parameters] NVARCHAR(MAX) NULL,
+    [row_count] INT NOT NULL DEFAULT 0,
+    [execution_ms] INT NOT NULL DEFAULT 0,
+    [status] NVARCHAR(20) NOT NULL DEFAULT N'success',
+    [error_message] NVARCHAR(MAX) NULL,
+    [ip_address] NVARCHAR(45) NULL,
+    [executed_at] DATETIME2 NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT [procedure_execution_logs_procedure_id_foreign] FOREIGN KEY ([procedure_id]) REFERENCES [dbo].[procedure_catalog] ([id]) ON DELETE CASCADE,
+    CONSTRAINT [procedure_execution_logs_user_id_foreign] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([id]) ON DELETE SET NULL
+);
+GO
+
 CREATE UNIQUE INDEX [attendance_periods_month_year_unique] ON [dbo].[attendance_periods] ([month], [year]);
 GO
 

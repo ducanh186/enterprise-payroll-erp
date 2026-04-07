@@ -234,6 +234,12 @@ const NAV_ITEMS: NavigationItem[] = [
     required: "reports.view",
   },
   {
+    to: "/procedures",
+    label: "SQL Integration",
+    icon: FileText,
+    required: "reports.view",
+  },
+  {
     label: "Quản trị",
     icon: Shield,
     children: [
@@ -352,6 +358,7 @@ const ROUTE_META: RouteMeta[] = [
   },
 
   { pattern: "/reports", title: "Trung tâm báo cáo", subtitle: "Báo cáo", required: "reports.view" },
+  { pattern: "/procedures", title: "SQL Integration", subtitle: "Stored Procedures", required: "reports.view" },
 
   { pattern: "/admin", title: "Quản trị hệ thống", subtitle: "Quản trị", required: ADMIN_ACCESS },
   { pattern: "/admin/users", title: "Quản lý người dùng", subtitle: "Quản trị", required: "admin.users" },

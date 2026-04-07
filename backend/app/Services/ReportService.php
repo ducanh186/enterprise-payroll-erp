@@ -13,11 +13,15 @@ use App\Models\PayslipItem;
 use App\Models\ReportTemplate;
 use App\Models\Shift;
 use App\Models\SystemConfig;
+use App\Repositories\AttendanceReportRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class ReportService
 {
+    public function __construct(
+        private readonly AttendanceReportRepository $attendanceReportRepo = new AttendanceReportRepository()
+    ) {}
     public function getTemplates(): array
     {
         return ReportTemplate::query()
@@ -41,6 +45,10 @@ class ReportService
             'RPT_PAYSLIP' => $this->previewPayslip($month, $year, $parameters, $normalizedCode),
             'RPT_INSURANCE' => $this->previewInsuranceReport($month, $year, $parameters, $normalizedCode),
             'RPT_PIT' => $this->previewPITReport($month, $year, $parameters, $normalizedCode),
+            'HRM_ATTENDANCE_COLLECTION' => $this->previewAttendanceCollection($parameters, $normalizedCode),
+            'HRM_ATTENDANCE_REPORT' => $this->previewAttendanceReportSP($parameters, $normalizedCode),
+            'HRM_ASSIGN_SHIFT' => $this->previewAssignShift($parameters, $normalizedCode),
+            'HRM_LATE_EARLY' => $this->previewLateEarly($parameters, $normalizedCode),
             'EMPLOYEE_LIST' => $this->previewEmployeeList($parameters, $normalizedCode),
             'BANK_TRANSFER' => $this->previewBankTransfer($month, $year, $parameters, $normalizedCode),
             default => [
@@ -158,6 +166,55 @@ class ReportService
                     ['name' => 'month', 'type' => 'integer', 'required' => true],
                     ['name' => 'year', 'type' => 'integer', 'required' => true],
                     ['name' => 'department_id', 'type' => 'integer', 'required' => false],
+                ],
+                'export_formats' => ['xlsx', 'pdf'],
+            ],
+            'HRM_ATTENDANCE_COLLECTION' => [
+                'description' => 'Tổng hợp công theo khoảng thời gian (usp_Hrm_AttendanceCollection).',
+                'category' => 'attendance',
+                'parameters' => [
+                    ['name' => 'date_from', 'type' => 'date', 'required' => true],
+                    ['name' => 'date_to', 'type' => 'date', 'required' => true],
+                    ['name' => 'employee_id', 'type' => 'string', 'required' => false],
+                    ['name' => 'department_id', 'type' => 'string', 'required' => false],
+                    ['name' => 'branch_code', 'type' => 'string', 'required' => false],
+                ],
+                'export_formats' => ['xlsx', 'pdf'],
+            ],
+            'HRM_ATTENDANCE_REPORT' => [
+                'description' => 'Bảng chấm công chi tiết với biểu tượng chấm công (usp_Hrm_AttendanceReport).',
+                'category' => 'attendance',
+                'parameters' => [
+                    ['name' => 'date_from', 'type' => 'date', 'required' => true],
+                    ['name' => 'date_to', 'type' => 'date', 'required' => true],
+                    ['name' => 'department_id', 'type' => 'string', 'required' => false],
+                    ['name' => 'employee_id', 'type' => 'string', 'required' => false],
+                    ['name' => 'show_data_type', 'type' => 'integer', 'required' => false],
+                    ['name' => 'branch_code', 'type' => 'string', 'required' => false],
+                ],
+                'export_formats' => ['xlsx', 'pdf'],
+            ],
+            'HRM_ASSIGN_SHIFT' => [
+                'description' => 'Bảng phân ca hàng ngày (usp_Hrm_B30HrmAssignShift).',
+                'category' => 'attendance',
+                'parameters' => [
+                    ['name' => 'date_from', 'type' => 'date', 'required' => true],
+                    ['name' => 'date_to', 'type' => 'date', 'required' => true],
+                    ['name' => 'employee_id', 'type' => 'string', 'required' => false],
+                    ['name' => 'department_id', 'type' => 'string', 'required' => false],
+                    ['name' => 'branch_code', 'type' => 'string', 'required' => false],
+                ],
+                'export_formats' => ['xlsx', 'pdf'],
+            ],
+            'HRM_LATE_EARLY' => [
+                'description' => 'Bảng tổng hợp đi trễ về sớm (usp_Hrm_InOut_LaterEarly).',
+                'category' => 'attendance',
+                'parameters' => [
+                    ['name' => 'date_from', 'type' => 'date', 'required' => true],
+                    ['name' => 'date_to', 'type' => 'date', 'required' => true],
+                    ['name' => 'employee_id', 'type' => 'string', 'required' => false],
+                    ['name' => 'department_id', 'type' => 'string', 'required' => false],
+                    ['name' => 'branch_code', 'type' => 'string', 'required' => false],
                 ],
                 'export_formats' => ['xlsx', 'pdf'],
             ],
@@ -602,6 +659,151 @@ class ReportService
         ];
     }
 
+    // -----------------------------------------------------------------------
+    // Client SP-backed reports (usp_Hrm_*)
+    // -----------------------------------------------------------------------
+
+    private function previewAttendanceCollection(array $parameters, string $reportCode): array
+    {
+        [$dateFrom, $dateTo] = $this->resolveDateRange($parameters);
+        $employeeId = (string) ($parameters['employee_id'] ?? '');
+        $deptId = (string) ($parameters['department_id'] ?? '');
+        $branchCode = (string) ($parameters['branch_code'] ?? 'A01');
+
+        $rows = $this->attendanceReportRepo->attendanceCollection(
+            $dateFrom, $dateTo, $employeeId, $deptId, $branchCode
+        );
+
+        $records = collect($rows)->map(fn ($row) => (array) $row)->values()->all();
+
+        return [
+            'report_code' => $reportCode,
+            'title' => 'Tổng hợp công từ ' . $dateFrom . ' đến ' . $dateTo,
+            'generated_at' => now()->toISOString(),
+            'summary' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'total_employees' => count($records),
+                'total_workdays' => round(collect($records)->sum('total_workdays'), 1),
+                'total_ot_hours' => round(collect($records)->sum('total_ot_hours'), 1),
+                'total_late_minutes' => (int) collect($records)->sum('total_late_minutes'),
+                'total_early_minutes' => (int) collect($records)->sum('total_early_minutes'),
+            ],
+            'records' => $records,
+        ];
+    }
+
+    private function previewAttendanceReportSP(array $parameters, string $reportCode): array
+    {
+        [$dateFrom, $dateTo] = $this->resolveDateRange($parameters);
+        $deptId = (string) ($parameters['department_id'] ?? '');
+        $employeeId = (string) ($parameters['employee_id'] ?? '');
+        $showDataType = (int) ($parameters['show_data_type'] ?? 0);
+        $branchCode = (string) ($parameters['branch_code'] ?? '');
+
+        $rows = $this->attendanceReportRepo->attendanceReport(
+            $dateFrom, $dateTo,
+            groupDeptLevel: 3,
+            deptId: $deptId,
+            employeeId: $employeeId,
+            showDataType: $showDataType,
+            branchCode: $branchCode
+        );
+
+        $records = collect($rows)->map(fn ($row) => (array) $row)->values()->all();
+        $employees = collect($records)->pluck('employee_code')->unique()->count();
+
+        return [
+            'report_code' => $reportCode,
+            'title' => 'Bảng chấm công từ ' . $dateFrom . ' đến ' . $dateTo,
+            'generated_at' => now()->toISOString(),
+            'summary' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'total_employees' => $employees,
+                'total_records' => count($records),
+                'show_data_type' => $showDataType,
+            ],
+            'records' => $records,
+        ];
+    }
+
+    private function previewAssignShift(array $parameters, string $reportCode): array
+    {
+        [$dateFrom, $dateTo] = $this->resolveDateRange($parameters);
+        $employeeId = isset($parameters['employee_id']) ? (string) $parameters['employee_id'] : null;
+        $deptId = isset($parameters['department_id']) ? (string) $parameters['department_id'] : null;
+        $branchCode = (string) ($parameters['branch_code'] ?? 'A01');
+
+        $rows = $this->attendanceReportRepo->assignShiftReport(
+            $dateFrom, $dateTo, $employeeId, $deptId, branchCode: $branchCode
+        );
+
+        $records = collect($rows)->map(fn ($row) => (array) $row)->values()->all();
+        $employees = collect($records)->pluck('employee_code')->unique()->count();
+
+        return [
+            'report_code' => $reportCode,
+            'title' => 'Bảng phân ca từ ' . $dateFrom . ' đến ' . $dateTo,
+            'generated_at' => now()->toISOString(),
+            'summary' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'total_employees' => $employees,
+                'total_assignments' => count($records),
+            ],
+            'records' => $records,
+        ];
+    }
+
+    private function previewLateEarly(array $parameters, string $reportCode): array
+    {
+        [$dateFrom, $dateTo] = $this->resolveDateRange($parameters);
+        $employeeId = isset($parameters['employee_id']) ? (string) $parameters['employee_id'] : null;
+        $deptId = isset($parameters['department_id']) ? (string) $parameters['department_id'] : null;
+        $branchCode = (string) ($parameters['branch_code'] ?? 'A01');
+
+        $rows = $this->attendanceReportRepo->lateEarlyReport(
+            $dateFrom, $dateTo, $employeeId, $deptId, branchCode: $branchCode
+        );
+
+        $records = collect($rows)->map(fn ($row) => (array) $row)->values()->all();
+
+        return [
+            'report_code' => $reportCode,
+            'title' => 'Tổng hợp đi trễ về sớm từ ' . $dateFrom . ' đến ' . $dateTo,
+            'generated_at' => now()->toISOString(),
+            'summary' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'total_employees' => count($records),
+                'total_late_count' => (int) collect($records)->sum('late_count'),
+                'total_late_minutes' => (int) collect($records)->sum('total_late_minutes'),
+                'total_early_count' => (int) collect($records)->sum('early_count'),
+                'total_early_minutes' => (int) collect($records)->sum('total_early_minutes'),
+            ],
+            'records' => $records,
+        ];
+    }
+
+    private function resolveDateRange(array $parameters): array
+    {
+        if (!empty($parameters['date_from']) && !empty($parameters['date_to'])) {
+            return [
+                Carbon::parse($parameters['date_from'])->format('Y-m-d'),
+                Carbon::parse($parameters['date_to'])->format('Y-m-d'),
+            ];
+        }
+
+        $month = isset($parameters['month']) ? (int) $parameters['month'] : (int) now()->month;
+        $year = isset($parameters['year']) ? (int) $parameters['year'] : (int) now()->year;
+
+        return [
+            Carbon::create($year, $month, 1)->startOfMonth()->format('Y-m-d'),
+            Carbon::create($year, $month, 1)->endOfMonth()->format('Y-m-d'),
+        ];
+    }
+
     private function formatDailyReportRecord(AttendanceDaily $record): array
     {
         $employee = $record->employee;
@@ -651,6 +853,10 @@ class ReportService
             'PAYSLIP' => 'RPT_PAYSLIP',
             'INSURANCE_REPORT' => 'RPT_INSURANCE',
             'PIT_REPORT' => 'RPT_PIT',
+            'ATTENDANCE_COLLECTION' => 'HRM_ATTENDANCE_COLLECTION',
+            'ATTENDANCE_REPORT' => 'HRM_ATTENDANCE_REPORT',
+            'ASSIGN_SHIFT' => 'HRM_ASSIGN_SHIFT',
+            'LATE_EARLY' => 'HRM_LATE_EARLY',
             default => $code,
         };
     }

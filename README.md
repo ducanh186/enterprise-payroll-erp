@@ -36,6 +36,9 @@ Hệ thống quản lý nhân sự, chấm công, tính lương dành cho doanh 
   - [Chấm công](#chấm-công)
   - [Bảng lương](#bảng-lương-1)
   - [Báo cáo & Quản trị](#báo-cáo--quản-trị)
+  - [SQL Integration (Stored Procedures)](#sql-integration-stored-procedures)
+- [Hướng dẫn khách hàng thêm báo cáo SQL mới](#hướng-dẫn-khách-hàng-thêm-báo-cáo-sql-mới)
+- [Tài liệu liên quan](#tài-liệu-liên-quan)
 - [Chạy không dùng Docker (Local)](#chạy-không-dùng-docker-local)
   - [Backend](#backend)
   - [Frontend](#frontend)
@@ -54,8 +57,6 @@ Hệ thống quản lý nhân sự, chấm công, tính lương dành cho doanh 
 - **Docker Desktop** >= 4.x (bật WSL2 trên Windows)
 - **Git**
 - RAM tối thiểu 4GB (SQL Server cần ~2GB)
-
-
 
 ## Cài đặt & Chạy bằng Docker (Khuyến nghị)
 
@@ -276,9 +277,11 @@ enterprise-payroll-erp/
 ```
 
 **Key files:**
-- `backend/routes/api.php` — All 43 API endpoints
+- `backend/routes/api.php` — All API endpoints
 - `frontend/src/App.tsx` — Router & auth flow
 - `docker-compose.yml` — Quick start (all services in one command)
+- `backend/database/sql/` — SQL Server DDL, stored procedures, seed data
+- `backend/database/sql/procedure_template.sql` — Template SQL cho khách thêm procedure mới
 
 
 ## API Endpoints chính
@@ -338,6 +341,78 @@ GET    /api/users                        # Quản lý users (Admin)
 POST   /api/users                        # Tạo user mới
 GET    /api/roles                        # Danh sách vai trò
 ```
+
+#### SQL Integration (Stored Procedures)
+```
+GET    /api/procedures                   # Danh sách procedures đã đăng ký
+GET    /api/procedures/{code}/meta       # Metadata: params + columns
+POST   /api/procedures/{code}/execute    # Thực thi procedure, trả kết quả JSON
+```
+
+Hệ thống **config-driven**: Stored Procedure được đăng ký qua metadata trong SQL Server -> Backend tự động gọi -> Frontend tự dựng form nhập và bảng kết quả. Khách hàng tự thêm procedure mới **mà không cần sửa source code**.
+
+---
+
+## Hướng dẫn khách hàng thêm báo cáo SQL mới
+
+Hệ thống cho phép khách hàng tự thêm Stored Procedure mới vào giao diện web **chỉ bằng thao tác SQL**, không cần chỉnh sửa source code Backend hay Frontend.
+
+### Nguyên tắc hoạt động
+
+```text
+Khách quản lý (SQL Server)              App tự xử lý (không cần sửa)
+────────────────────────────────        ──────────────────────────────────
+1. Tạo Stored Procedure                → Backend gọi procedure, trả JSON
+2. INSERT vào procedure_catalog         → Frontend hiển thị danh sách
+3. INSERT vào procedure_parameters      → Frontend tự dựng form nhập
+4. INSERT vào procedure_columns         → Frontend tự dựng bảng kết quả
+```
+
+### Quy trình 5 bước
+
+1. **Tạo/cập nhật Stored Procedure** trong SQL Server (SSMS)
+2. **Đăng ký procedure** vào bảng `procedure_catalog` (code, tên, tên SP)
+3. **Khai báo tham số** vào bảng `procedure_parameters` (tên param, kiểu, nhãn, bắt buộc?)
+4. **Khai báo cột kết quả** vào bảng `procedure_columns` (tên cột, nhãn, kiểu hiển thị)
+5. **Kiểm tra** trên giao diện web: menu SQL Integration → chọn procedure → nhập filter → bấm Thực thi
+
+### Procedures đã đăng ký sẵn
+
+| Tên trên giao diện | Code | Stored Procedure |
+|---|---|---|
+| Tổng hợp công | `attendance-collection` | `dbo.usp_Hrm_AttendanceCollection` |
+| Bảng chấm công | `attendance-report` | `dbo.usp_Hrm_AttendanceReport` |
+| Bảng phân ca hàng ngày | `assign-shift` | `dbo.usp_Hrm_B30HrmAssignShift` |
+| Tổng hợp đi trễ về sớm | `late-early` | `dbo.usp_Hrm_InOut_LaterEarly` |
+
+### Tài liệu chi tiết
+
+| File | Mô tả |
+|---|---|
+| [`HOW_TO_ADD_NEW_REPORT.md`](HOW_TO_ADD_NEW_REPORT.md) | Hướng dẫn đầy đủ từng bước kèm ví dụ SQL |
+| [`SMOKE_TEST_CHECKLIST.md`](SMOKE_TEST_CHECKLIST.md) | Checklist kiểm tra sau khi thêm procedure mới |
+| [`backend/database/sql/procedure_template.sql`](backend/database/sql/procedure_template.sql) | File SQL mẫu — copy, sửa tên, chạy |
+
+### Lưu ý quan trọng
+
+- Chỉ sử dụng Stored Procedure đã đăng ký — **không nhập raw SQL query**
+- Procedure chỉ trả **1 result set** (1 câu SELECT cuối)
+- Tên cột kết quả phải **cố định** (không đổi theo dữ liệu)
+- Tài khoản DB của app phải có quyền `EXECUTE` trên procedure
+- Nếu thay đổi tham số hoặc cột trả về, cần cập nhật metadata tương ứng
+
+---
+
+## Tài liệu liên quan
+
+- [README.md](README.md): tài liệu tổng quan hệ thống, cài đặt, API và điều hướng tài liệu.
+- [sql_serv_imp.md](sql_serv_imp.md): giải thích ngắn gọn cách SQL Integration hoạt động và ranh giới giữa khách hàng với ứng dụng.
+- [HOW_TO_ADD_NEW_REPORT.md](HOW_TO_ADD_NEW_REPORT.md): hướng dẫn thao tác cho khách khi thêm hoặc cập nhật procedure mới.
+- [SMOKE_TEST_CHECKLIST.md](SMOKE_TEST_CHECKLIST.md): checklist nghiệm thu sau khi khai báo metadata.
+- [backend/database/sql/procedure_template.sql](backend/database/sql/procedure_template.sql): mẫu SQL copy-paste để đăng ký procedure mới.
+- [DEV_GUIDE.md](DEV_GUIDE.md): hướng dẫn chạy dự án cho developer.
+- [backend/README.md](backend/README.md): ghi chú nhanh riêng cho Laravel API.
+- [frontend/README.md](frontend/README.md): ghi chú nhanh riêng cho React frontend.
 
 ---
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\ProcedureController;
 use App\Http\Controllers\Api\ReferenceController;
 use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -112,6 +113,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/templates', [ReportController::class, 'templates'])->middleware('permission:reports.view');
         Route::post('/{code}/preview', [ReportController::class, 'preview'])->middleware('permission:reports.view');
         Route::post('/{code}/export', [ReportController::class, 'export'])->middleware('permission:reports.export');
+    });
+
+    // -----------------------------------------------------------------------
+    // Procedures Module — Config-driven SP Gateway
+    // -----------------------------------------------------------------------
+    Route::prefix('procedures')->middleware('permission:reports.view')->group(function () {
+        Route::get('/', [ProcedureController::class, 'index']);
+        Route::get('/{code}/meta', [ProcedureController::class, 'meta'])->where('code', '[a-z0-9\-]+');
+        Route::post('/{code}/execute', [ProcedureController::class, 'execute'])->where('code', '[a-z0-9\-]+');
     });
 
     // -----------------------------------------------------------------------

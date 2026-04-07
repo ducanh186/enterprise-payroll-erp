@@ -1,58 +1,142 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this directory.
+This file provides guidance to Claude Code (claude.ai/code) when working in `backend/`.
 
-## Backend — Laravel 11 API
+## Backend Overview
 
-43 API endpoints across 7 modules, all returning mock data. Sanctum auth with role/permission middleware.
+Laravel 11 API for Enterprise Payroll ERP.
+
+The backend is DB-backed, not mock-only:
+- API routes are active and grouped by business module
+- Eloquent models exist for the current schema
+- migrations and seeders cover the working schema
+- attendance and payroll services already perform real DB writes and calculations
+- SQL Server scripts are maintained under `database/sql/` for client handoff
+
+## Runtime Architecture
+
+```text
+routes/api.php -> Controller -> Service -> Eloquent/DB facade -> ApiResponse
+```
+
+Preferred future integration for client-owned SQL logic:
+
+```text
+Controller -> Service -> Repository/DB call -> SQL Server view/SP/function
+```
+
+Do not introduce a generic "run any SP" endpoint. Keep domain routes stable and map SQL logic behind services or repositories.
+
+## Main Modules
+
+- Auth
+- Reference
+- Employee
+- Contract
+- Attendance
+- Payroll
+- Reports
+- Admin
+
+## Key Files
+
+- `routes/api.php` - API route surface
+- `app/Http/Controllers/Api/` - module controllers
+- `app/Services/` - core business logic
+- `app/Models/` - Eloquent models
+- `app/Enums/` - status, role, and domain enums
+- `database/migrations/` - schema
+- `database/seeders/` - seeded reference and sample data
+- `database/sql/` - SQL Server handoff scripts
 
 ## Commands
 
 ```bash
 composer install
 php artisan key:generate
-php artisan serve                        # http://localhost:8000
-php artisan route:list --path=api        # list all routes
-php artisan test                         # run PHPUnit tests
-./vendor/bin/pint                        # code formatting (Laravel Pint)
+php artisan serve
+php artisan route:list --path=api
+php artisan test
+./vendor/bin/pint
 ```
 
-## Module Architecture
+Useful project-specific test entrypoints:
 
+```bash
+composer test:sqlite
+composer test:auth
+composer test:services
+composer test:payroll
+composer test:feature
+composer test:unit
 ```
-routes/api.php → Controller → Service (mock data) → [future: Repository → SQL Server]
+
+## Authentication
+
+- Sanctum personal access token flow
+- API clients send `Authorization: Bearer <token>`
+- current app behavior is stateless API login, not SPA cookie auth
+
+## Business Logic Locations
+
+- Auth fallback and mock user compatibility: `app/Services/AuthService.php`
+- Attendance operations and recalculation flows: `app/Services/AttendanceService.php`
+- Payroll period/run logic, payslips, adjustments: `app/Services/PayrollService.php`
+- Reports and report template mapping: `app/Services/ReportService.php`
+- Permission matrix enforcement: middleware and enum/permission mapping
+
+## Response Convention
+
+Controllers use `ApiResponse` and should keep a stable envelope:
+
+```json
+{
+  "success": true,
+  "data": {},
+  "message": "OK",
+  "errors": null
+}
 ```
 
-Each module: Controller + Service + FormRequest(s). No Eloquent models used yet (mock mode).
+Keep response shape consistent when replacing service internals with SQL-backed implementations.
 
-### Services (app/Services/)
+## SQL Server Integration Guidance
 
-All services are stateless classes returning hardcoded arrays. When DB arrives:
-1. Create Eloquent models in `app/Models/`
-2. Optionally create `app/Repositories/` for complex DB queries (views, SPs, functions)
-3. Inject repositories into services, replace mock arrays
+The backend already contains SQL Server-oriented work:
+- `config/database.php` contains `sqlsrv` connection config
+- Docker image enables `sqlsrv` and `pdo_sqlsrv`
+- `database/sql/` contains tables, views, functions, procedures, and seed scripts
+- report templates include `sp_name` metadata
 
-### Key Business Logic Locations
+When integrating client procedures/functions:
+1. preserve the existing route and controller contract
+2. isolate direct DB/SP calls in a repository or clearly bounded service helper
+3. normalize DB results into the existing array/API shapes
+4. avoid leaking SQL-specific column names directly to the frontend unless the FE contract is intentionally updated
 
-- **Payroll calculation**: `PayrollService::previewRun()` — gross, insurance (BHXH 8%, BHYT 1.5%, BHTN 1%), PIT brackets, net
-- **State machine**: `PayrollRunStatus::canTransitionTo()` — draft→previewed→finalized→locked
-- **Permission matrix**: `CheckPermission::PERMISSION_MAP` — module.action → allowed roles
-- **Mock users**: `AuthService::mockUsers` — admin01, hr01, payroll01, manager01 (all pw: "password")
+## Data Model Notes
 
-### Middleware Stack (applied in routes/api.php)
+The backend already includes models for:
+- RBAC: `User`, `Role`, `Permission`
+- HR: `Employee`, `Department`, `Position`, `Dependent`
+- Contract: `LabourContract`, `ContractType`, `PayrollType`, `SalaryLevel`, `ContractAllowance`, `AllowanceType`
+- Attendance: `AttendancePeriod`, `Shift`, `ShiftAssignment`, `TimeLog`, `AttendanceDaily`, `AttendanceMonthlySummary`, `AttendanceRequest`, `AttendanceRequestDetail`, `Holiday`, `LateEarlyRule`
+- Payroll: `PayrollParameter`, `PayrollParameterDetail`, `PayrollRun`, `Payslip`, `PayslipItem`, `BonusDeduction`, `BonusDeductionType`
+- System/reporting: `ReportTemplate`, `SystemConfig`, `Attachment`, `AuditLog`
 
-- `auth:sanctum` — token validation (all authenticated routes)
-- `role:role1,role2` — checks user role against whitelist
-- `permission:module.action` — checks against PERMISSION_MAP
+## Conventions
 
-### Response Trait
+- Controllers in `app/Http/Controllers/Api/`
+- Services in `app/Services/`
+- Models in `app/Models/`
+- Prefer enum-backed statuses where already present
+- Keep business logic in services; controllers stay thin
+- Keep UI-facing labels/messages appropriate for Vietnamese business users
 
-All controllers `use ApiResponse`. Methods: `success()`, `created()`, `error()`, `notFound()`, `forbidden()`, `paginated()`.
+## Caution
 
-### SQL Server Configuration
-
-`.env.example` has `DB_CONNECTION=sqlsrv` placeholder. Current `.env` uses file/array drivers for zero-DB development.
-
-### CORS
-
-Configured in `config/cors.php` and `bootstrap/app.php` for `localhost:5173` (frontend dev server).
+Some repo-level docs still describe an earlier mock phase. In `backend/`, trust:
+1. current routes
+2. current models/services
+3. migrations/seeders
+4. SQL scripts

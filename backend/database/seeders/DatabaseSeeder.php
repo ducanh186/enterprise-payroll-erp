@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             AttendanceSeeder::class,
             PayrollSeeder::class,
             SystemSeeder::class,
+            ProcedureCatalogSeeder::class,
         ]);
     }
 }

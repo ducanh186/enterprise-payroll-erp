@@ -2763,3 +2763,108 @@ GO
 SET IDENTITY_INSERT [dbo].[audit_logs] OFF;
 GO
 
+-- =================================================================
+-- Procedure Catalog — Config-driven SP Gateway
+-- =================================================================
+
+SET IDENTITY_INSERT [dbo].[procedure_catalog] ON;
+GO
+INSERT INTO [dbo].[procedure_catalog] ([id], [code], [label], [procedure_name], [module], [description], [is_active], [created_at], [updated_at])
+VALUES
+    (1, N'attendance-collection', N'Tổng hợp công', N'dbo.usp_Hrm_AttendanceCollection', N'attendance', N'Tổng hợp ngày công của nhân viên theo khoảng thời gian.', 1, GETDATE(), GETDATE()),
+    (2, N'attendance-report', N'Bảng chấm công', N'dbo.usp_Hrm_AttendanceReport', N'attendance', N'Bảng chấm công chi tiết với ký hiệu chấm công hàng ngày.', 1, GETDATE(), GETDATE()),
+    (3, N'assign-shift', N'Bảng phân ca hàng ngày', N'dbo.usp_Hrm_B30HrmAssignShift', N'attendance', N'Bảng phân ca làm việc hàng ngày cho nhân viên.', 1, GETDATE(), GETDATE()),
+    (4, N'late-early', N'Tổng hợp đi trễ về sớm', N'dbo.usp_Hrm_InOut_LaterEarly', N'attendance', N'Bảng tổng hợp số lần và số phút đi trễ, về sớm.', 1, GETDATE(), GETDATE());
+GO
+SET IDENTITY_INSERT [dbo].[procedure_catalog] OFF;
+GO
+
+SET IDENTITY_INSERT [dbo].[procedure_parameters] ON;
+GO
+INSERT INTO [dbo].[procedure_parameters] ([id], [procedure_id], [name], [sp_param_name], [type], [label], [required], [default_value], [sort_order], [created_at], [updated_at])
+VALUES
+    -- attendance-collection
+    (1,  1, N'date_from',     N'@_DocDate1',    N'date',    N'Từ ngày',        1, NULL,  1, GETDATE(), GETDATE()),
+    (2,  1, N'date_to',       N'@_DocDate2',    N'date',    N'Đến ngày',       1, NULL,  2, GETDATE(), GETDATE()),
+    (3,  1, N'employee_id',   N'@_EmployeeId',  N'string',  N'Mã nhân viên',   0, N'',   3, GETDATE(), GETDATE()),
+    (4,  1, N'department_id', N'@_DeptId',       N'string',  N'Mã phòng ban',   0, N'',   4, GETDATE(), GETDATE()),
+    (5,  1, N'branch_code',   N'@_BranchCode',  N'string',  N'Mã chi nhánh',   0, N'',   5, GETDATE(), GETDATE()),
+    (6,  1, N'user_id',       N'@_nUserId',     N'integer', N'User ID',         0, N'0',  6, GETDATE(), GETDATE()),
+    -- attendance-report
+    (7,  2, N'date_from',              N'@_DocDate1',             N'date',    N'Từ ngày',                1, NULL,  1, GETDATE(), GETDATE()),
+    (8,  2, N'date_to',                N'@_DocDate2',             N'date',    N'Đến ngày',               1, NULL,  2, GETDATE(), GETDATE()),
+    (9,  2, N'group_dept_level',       N'@_GroupDeptLevel',       N'tinyint', N'Cấp phòng ban gộp',      0, N'3',  3, GETDATE(), GETDATE()),
+    (10, 2, N'department_id',          N'@_DeptId',               N'string',  N'Mã phòng ban',           0, N'',   4, GETDATE(), GETDATE()),
+    (11, 2, N'employee_id',            N'@_EmployeeId',           N'string',  N'Mã nhân viên',           0, N'',   5, GETDATE(), GETDATE()),
+    (12, 2, N'show_data_type',         N'@_ShowDataType',         N'tinyint', N'Kiểu hiển thị',          0, N'0',  6, GETDATE(), GETDATE()),
+    (13, 2, N'symbol_workday',         N'@_SymbolWorkday',        N'tinyint', N'Ký hiệu ngày công',      0, N'1',  7, GETDATE(), GETDATE()),
+    (14, 2, N'not_in_out_symbol',      N'@_NotInOutSymbol_RowId', N'integer', N'Ký hiệu không vào ra',   0, N'0',  8, GETDATE(), GETDATE()),
+    (15, 2, N'holiday1_symbol',        N'@_Holiday1Symbol',       N'string',  N'Ký hiệu nghỉ lễ (CN)',   0, N'',   9, GETDATE(), GETDATE()),
+    (16, 2, N'holiday2_symbol',        N'@_Holiday2Symbol',       N'string',  N'Ký hiệu nghỉ lễ (T7)',   0, N'',  10, GETDATE(), GETDATE()),
+    (17, 2, N'holiday3_symbol',        N'@_Holiday3Symbol',       N'string',  N'Ký hiệu nghỉ lễ (khác)', 0, N'',  11, GETDATE(), GETDATE()),
+    (18, 2, N'dayoff_by_shift_symbol', N'@_DayOffByShiftSymbol',  N'string',  N'Ký hiệu nghỉ theo ca',   0, N'',  12, GETDATE(), GETDATE()),
+    (19, 2, N'branch_code',            N'@_BranchCode',           N'string',  N'Mã chi nhánh',           0, N'',  13, GETDATE(), GETDATE()),
+    (20, 2, N'user_id',                N'@_nUserId',              N'integer', N'User ID',                0, N'0', 14, GETDATE(), GETDATE()),
+    -- assign-shift
+    (21, 3, N'date_from',     N'@_DocDate1',    N'date',    N'Từ ngày',        1, NULL,  1, GETDATE(), GETDATE()),
+    (22, 3, N'date_to',       N'@_DocDate2',    N'date',    N'Đến ngày',       1, NULL,  2, GETDATE(), GETDATE()),
+    (23, 3, N'employee_id',   N'@_EmployeeId',  N'string',  N'Mã nhân viên',   0, N'',   3, GETDATE(), GETDATE()),
+    (24, 3, N'department_id', N'@_DeptId',       N'string',  N'Mã phòng ban',   0, N'',   4, GETDATE(), GETDATE()),
+    (25, 3, N'user_id',       N'@_nUserId',     N'integer', N'User ID',         0, N'0',  5, GETDATE(), GETDATE()),
+    (26, 3, N'branch_code',   N'@_BranchCode',  N'string',  N'Mã chi nhánh',   0, N'',   6, GETDATE(), GETDATE()),
+    -- late-early
+    (27, 4, N'date_from',     N'@_DocDate1',    N'date',    N'Từ ngày',        1, NULL,  1, GETDATE(), GETDATE()),
+    (28, 4, N'date_to',       N'@_DocDate2',    N'date',    N'Đến ngày',       1, NULL,  2, GETDATE(), GETDATE()),
+    (29, 4, N'employee_id',   N'@_EmployeeId',  N'string',  N'Mã nhân viên',   0, N'',   3, GETDATE(), GETDATE()),
+    (30, 4, N'department_id', N'@_DeptId',       N'string',  N'Mã phòng ban',   0, N'',   4, GETDATE(), GETDATE()),
+    (31, 4, N'user_id',       N'@_nUserId',     N'integer', N'User ID',         0, N'0',  5, GETDATE(), GETDATE()),
+    (32, 4, N'branch_code',   N'@_BranchCode',  N'string',  N'Mã chi nhánh',   0, N'',   6, GETDATE(), GETDATE());
+GO
+SET IDENTITY_INSERT [dbo].[procedure_parameters] OFF;
+GO
+
+SET IDENTITY_INSERT [dbo].[procedure_columns] ON;
+GO
+INSERT INTO [dbo].[procedure_columns] ([id], [procedure_id], [key], [label], [type], [visible], [exportable], [sort_order], [created_at], [updated_at])
+VALUES
+    -- attendance-collection
+    (1,  1, N'employee_code',   N'Mã NV',          N'string', 1, 1, 1, GETDATE(), GETDATE()),
+    (2,  1, N'employee_name',   N'Họ và tên',       N'string', 1, 1, 2, GETDATE(), GETDATE()),
+    (3,  1, N'department_name', N'Phòng ban',       N'string', 1, 1, 3, GETDATE(), GETDATE()),
+    (4,  1, N'total_workdays',  N'Tổng ngày công',  N'number', 1, 1, 4, GETDATE(), GETDATE()),
+    (5,  1, N'total_ot_hours',  N'Giờ tăng ca',     N'number', 1, 1, 5, GETDATE(), GETDATE()),
+    (6,  1, N'total_leave',     N'Ngày nghỉ phép',  N'number', 1, 1, 6, GETDATE(), GETDATE()),
+    (7,  1, N'total_absent',    N'Ngày vắng mặt',   N'number', 1, 1, 7, GETDATE(), GETDATE()),
+    -- attendance-report
+    (8,  2, N'employee_code',   N'Mã NV',          N'string', 1, 1, 1, GETDATE(), GETDATE()),
+    (9,  2, N'employee_name',   N'Họ và tên',       N'string', 1, 1, 2, GETDATE(), GETDATE()),
+    (10, 2, N'department_name', N'Phòng ban',       N'string', 1, 1, 3, GETDATE(), GETDATE()),
+    (11, 2, N'work_date',       N'Ngày',            N'date',   1, 1, 4, GETDATE(), GETDATE()),
+    (12, 2, N'workday_symbol',  N'Ký hiệu',         N'string', 1, 1, 5, GETDATE(), GETDATE()),
+    (13, 2, N'check_in',        N'Giờ vào',         N'string', 1, 1, 6, GETDATE(), GETDATE()),
+    (14, 2, N'check_out',       N'Giờ ra',          N'string', 1, 1, 7, GETDATE(), GETDATE()),
+    (15, 2, N'work_hours',      N'Giờ làm',         N'number', 1, 1, 8, GETDATE(), GETDATE()),
+    (16, 2, N'ot_hours',        N'Giờ tăng ca',     N'number', 1, 1, 9, GETDATE(), GETDATE()),
+    -- assign-shift
+    (17, 3, N'employee_code',   N'Mã NV',          N'string', 1, 1, 1, GETDATE(), GETDATE()),
+    (18, 3, N'employee_name',   N'Họ và tên',       N'string', 1, 1, 2, GETDATE(), GETDATE()),
+    (19, 3, N'department_name', N'Phòng ban',       N'string', 1, 1, 3, GETDATE(), GETDATE()),
+    (20, 3, N'work_date',       N'Ngày',            N'date',   1, 1, 4, GETDATE(), GETDATE()),
+    (21, 3, N'shift_code',      N'Mã ca',           N'string', 1, 1, 5, GETDATE(), GETDATE()),
+    (22, 3, N'shift_name',      N'Tên ca',          N'string', 1, 1, 6, GETDATE(), GETDATE()),
+    (23, 3, N'start_time',      N'Giờ bắt đầu',    N'string', 1, 1, 7, GETDATE(), GETDATE()),
+    (24, 3, N'end_time',        N'Giờ kết thúc',    N'string', 1, 1, 8, GETDATE(), GETDATE()),
+    -- late-early
+    (25, 4, N'employee_code',   N'Mã NV',          N'string', 1, 1, 1, GETDATE(), GETDATE()),
+    (26, 4, N'employee_name',   N'Họ và tên',       N'string', 1, 1, 2, GETDATE(), GETDATE()),
+    (27, 4, N'department_name', N'Phòng ban',       N'string', 1, 1, 3, GETDATE(), GETDATE()),
+    (28, 4, N'late_count',      N'Số lần trễ',      N'number', 1, 1, 4, GETDATE(), GETDATE()),
+    (29, 4, N'late_minutes',    N'Số phút trễ',     N'number', 1, 1, 5, GETDATE(), GETDATE()),
+    (30, 4, N'early_count',     N'Số lần sớm',      N'number', 1, 1, 6, GETDATE(), GETDATE()),
+    (31, 4, N'early_minutes',   N'Số phút sớm',     N'number', 1, 1, 7, GETDATE(), GETDATE()),
+    (32, 4, N'total_count',     N'Tổng số lần',     N'number', 1, 1, 8, GETDATE(), GETDATE()),
+    (33, 4, N'total_minutes',   N'Tổng số phút',    N'number', 1, 1, 9, GETDATE(), GETDATE());
+GO
+SET IDENTITY_INSERT [dbo].[procedure_columns] OFF;
+GO
+

@@ -1,53 +1,88 @@
 # CLAUDE.md
 
-Database layer for Enterprise Payroll ERP.
+This file provides guidance to Claude Code (claude.ai/code) when working in `backend/database/`.
 
-## Migrations
+## Database Overview
 
-35+ migrations covering 8 table groups (see Plan.md Section 4 for full schema):
-1. Identity/RBAC: users, roles, permissions, user_roles, role_permissions
-2. Organization: departments, positions, employees, dependents
-3. Contract: contract_types, payroll_types, salary_levels, labour_contracts, allowance_types, contract_allowances
-4. Attendance Master: shifts, holidays, late_early_rules, attendance_periods
-5. Attendance Transaction: shift_assignments, time_logs, attendance_requests, attendance_request_details
-6. Attendance Calculated: attendance_daily, attendance_monthly_summary
-7. Payroll: payroll_parameters, payroll_parameter_details, bonus_deduction_types, bonus_deductions, payroll_runs, payslips, payslip_items
-8. System: report_templates, audit_logs, attachments, system_configs
+This directory contains the Laravel schema lifecycle and the SQL Server handoff artifacts for Enterprise Payroll ERP.
+
+There are two parallel but related sources here:
+- Laravel migrations and seeders for application development and testing
+- SQL Server scripts for client deployment/integration
+
+Both should stay aligned on business meaning and contract shape.
+
+## Structure
+
+- `migrations/` - application schema definition
+- `seeders/` - reference data and sample business data
+- `factories/` - test/data generation helpers when present
+- `sql/` - SQL Server scripts for tables, views, functions, procedures, and seed data
+
+## Schema Coverage
+
+The schema spans these domains:
+1. Identity and RBAC
+2. Organization and employee master data
+3. Contracts, salary levels, payroll types, allowances
+4. Attendance master data
+5. Attendance transactional data
+6. Attendance calculated data
+7. Payroll parameters, payroll runs, payslips, items, adjustments
+8. Reporting and system tables
+
+## SQL Server Scripts
+
+`database/sql/` currently contains:
+- `01_tables.sql` - table creation snapshot aligned to the app schema
+- `02_views.sql` - reporting and convenience views
+- `03_functions.sql` - SQL scalar/business helper functions
+- `04_stored_procedures.sql` - attendance, payroll, and report procedures
+- `05_seed_data.sql` - SQL seed/master data snapshot
+
+These scripts are intended for the client DB team and for SQL-first integration work.
 
 ## Seeders
 
-Run order (enforced in DatabaseSeeder.php):
-1. RolePermissionSeeder (5 roles, ~25 permissions, role_permissions matrix)
-2. DepartmentPositionSeeder (8 departments + positions)
-3. UserSeeder (admin01, hr01, hr02, payroll01, manager01, emp001-emp010)
-4. EmployeeSeeder (15 employees linked to users)
-5. ContractSeeder (contract types, payroll types, salary levels, labour contracts)
-6. ShiftHolidaySeeder (4 shifts, 6 holidays, 6 late/early rules)
-7. AttendanceSeeder (attendance periods, shift assignments, 400-500 time logs, requests)
-8. PayrollSeeder (payroll parameters, bonus/deduction types, payroll runs, 20 payslips)
-9. ReportTemplateSeeder (6 report templates)
+Seeders populate:
+- roles and permissions
+- departments and positions
+- users and employees
+- contract and salary reference data
+- shifts, holidays, and late/early rules
+- attendance periods, logs, assignments, and requests
+- payroll parameters, runs, and payslips
+- report templates and system configuration
 
-## SQL Scripts (database/sql/)
-
-SQL Server scripts for client's DB team:
-- 01_tables.sql — CREATE TABLE for the current schema snapshot, including base Laravel tables and app tables
-- 02_views.sql — 6 views
-- 03_functions.sql — 6 scalar functions
-- 04_stored_procedures.sql — 14 stored procedures, including 6 `sp_Report_*` wrappers for report templates
-- 05_seed_data.sql — seed/master data aligned to the current seeders snapshot
+Seed ordering matters because many seeders assume parent records already exist.
 
 ## Commands
 
 ```bash
-php artisan migrate:fresh --seed    # reset + seed all
-php artisan migrate                 # run pending migrations
-php artisan db:seed                 # seed only
-php artisan db:seed --class=UserSeeder  # seed specific
+php artisan migrate
+php artisan migrate:fresh --seed
+php artisan db:seed
+php artisan db:seed --class=UserSeeder
 ```
 
-## Conventions
+## SQL Server-Specific Notes
 
-- All money fields: `decimal(18,2)`
-- All status fields: `string(20-30)` with enum values
-- All FKs: `foreignId()->constrained()->onDelete('cascade')` unless nullable
-- Timestamps: `$table->timestamps()` on most tables, except audit_logs (immutable)
+- money fields generally use `decimal(18,2)`
+- identity insert handling exists for seed scenarios on `sqlsrv`
+- SQL seed snapshots include explicit IDs where application data contracts rely on stable seeded records
+- report templates store `sp_name` values for report wrapper procedures
+
+## Alignment Rules
+
+When changing database assets:
+1. keep migrations and SQL scripts semantically aligned
+2. keep seeded report template codes and `sp_name` mappings aligned with backend report logic
+3. do not silently rename columns or status values used by services/frontend contracts
+4. if a stored procedure replaces a service-side calculation, preserve the output shape expected by controllers and pages
+
+## Practical Guidance
+
+- Use migrations for application-owned schema evolution
+- Use `database/sql/` when preparing SQL Server deliverables or procedure/function handoff
+- Prefer additive changes over breaking schema changes
+- When in doubt, verify against current models and service queries before modifying scripts

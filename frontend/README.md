@@ -1,73 +1,35 @@
-# React + TypeScript + Vite
+# Frontend App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite + TypeScript frontend cho Enterprise Payroll ERP.
 
-Currently, two official plugins are available:
+## Tài liệu liên quan
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- [../README.md](../README.md): tổng quan toàn dự án, cài đặt và API.
+- [../DEV_GUIDE.md](../DEV_GUIDE.md): hướng dẫn chạy dự án cho developer.
+- [../sql_serv_imp.md](../sql_serv_imp.md): giải thích cơ chế SQL Integration / Procedures.
+- [../HOW_TO_ADD_NEW_REPORT.md](../HOW_TO_ADD_NEW_REPORT.md): hướng dẫn bàn giao cho khách ở layer SQL metadata.
 
-## React Compiler
+## Lệnh thường dùng
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
+npx tsc --noEmit
+npm run build
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Thư mục quan trọng
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `src/pages`: routed pages của ứng dụng.
+- `src/layouts`: layout chung, hiện có `AppLayout` cho khu vực đăng nhập.
+- `src/context`: auth state và session handling.
+- `src/lib`: API wrapper, formatters, RBAC helpers.
+- `src/components`: shared UI components.
+- `src/pages/ProceduresPage.tsx`: màn hình dynamic để thực thi stored procedure theo metadata.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Ghi chú vận hành
+
+- Toàn bộ text UI nên giữ bằng **tiếng Việt có dấu**, còn identifier trong code giữ bằng tiếng Anh.
+- Frontend không gọi stored procedure trực tiếp; mọi thao tác đi qua API Laravel.
+- SQL Integration render form và bảng theo metadata, nên khi thêm procedure mới thường không cần sửa code React.

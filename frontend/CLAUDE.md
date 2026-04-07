@@ -1,42 +1,102 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this directory.
+This file provides guidance to Claude Code (claude.ai/code) when working in `frontend/`.
 
-## Frontend — React 19 + Vite 8 + Tailwind 4
+## Frontend Overview
 
-Placeholder shell with routing, auth context, and API config. Pages are stubs awaiting real implementation.
+React 19 + Vite + TypeScript + Tailwind CSS 4 frontend for Enterprise Payroll ERP.
+
+This is no longer just a placeholder shell:
+- the app has protected routing
+- auth context and API client are wired
+- multiple real pages already exist for HR, attendance, payroll, reports, and admin
+- frontend depends on stable domain API endpoints from the Laravel backend
+
+## Core Structure
+
+- `src/App.tsx` - route registration
+- `src/lib/api.ts` - Axios client and normalized API helpers
+- `src/lib/query.ts` - React Query client
+- `src/context/AuthContext.tsx` - auth/session state
+- `src/layouts/AppLayout.tsx` - main authenticated layout
+- `src/components/` - shared UI building blocks and guards
+- `src/pages/` - routed pages
+
+## Current Routed Areas
+
+- Login
+- Dashboard
+- Employees
+- Contract reference pages
+- Attendance pages
+- Payroll pages
+- Reports
+- Admin users and role/permission pages
+
+Important page files include:
+- `EmployeesPage.tsx`
+- `AttendanceLogsPage.tsx`
+- `AttendanceSummaryPage.tsx`
+- `PayrollRunPage.tsx`
+- `PayrollPeriodsPage.tsx`
+- `PayslipsPage.tsx`
+- `PayslipDetailPage.tsx`
+- `ReportsPage.tsx`
+
+## API Integration
+
+Frontend talks to the backend through `src/lib/api.ts`.
+
+Behavior:
+- base URL defaults to `http://localhost:8001/api`
+- bearer token is attached automatically
+- helper functions normalize API envelopes
+
+Prefer using:
+- `apiGet`
+- `apiPost`
+- `apiPut`
+- `apiDelete`
+
+Do not scatter raw `fetch` calls unless there is a strong reason.
 
 ## Commands
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173
-npm run build        # production build to dist/
-npm run lint         # ESLint
-npm run preview      # preview production build
+npm run dev
+npm run build
+npm run lint
+npm run preview
 ```
 
-## Structure
+## Styling and UI Conventions
 
-- `src/lib/api.ts` — Axios instance (baseURL: `http://localhost:8000/api`), auto-attaches Bearer token from localStorage
-- `src/lib/query.ts` — React Query client (5min stale time)
-- `src/context/AuthContext.tsx` — Mock auth provider, sessionStorage persistence, `useAuth()` hook
-- `src/layouts/AppLayout.tsx` — Sidebar + Topbar + Outlet
-- `src/components/` — Sidebar (Vietnamese nav), Topbar, ProtectedRoute, PlaceholderPage
-- `src/pages/` — LoginPage, DashboardPage (rest are PlaceholderPage instances)
+- Tailwind 4 is the styling foundation
+- UI copy should be Vietnamese with proper diacritics
+- code identifiers remain English
+- existing app patterns should be preserved instead of inventing a new visual system per page
 
-## Routes (src/App.tsx)
+Use the shared app structure instead of bypassing it:
+- authenticated pages render inside `AppLayout`
+- login stays standalone
+- route titles and navigation should stay consistent with the current information architecture
 
-Public: `/login`. Protected (wrapped in ProtectedRoute + AppLayout): `/`, `/attendance/*`, `/payroll/*`, `/contracts`, `/reports`, `/admin/*`.
+## Data Contract Rules
 
-## Styling
+- trust backend domain endpoints, not ad hoc endpoint invention
+- keep frontend DTO assumptions aligned with the backend response envelope
+- if backend moves from service-side logic to SQL-backed procedures, frontend should ideally not need route changes
+- when API fields change, update page-level typing and formatting together
 
-Tailwind 4 via `@tailwindcss/vite` plugin. Import: `@import "tailwindcss"` in `index.css`. Color scheme: slate/zinc + blue accent.
+## Preferred Implementation Pattern
 
-## API Integration
+For data-driven pages:
+1. call the backend through `src/lib/api.ts`
+2. manage remote state with React Query
+3. normalize and format values close to the UI boundary
+4. keep page components focused on presentation and user flow
 
-Token stored in `localStorage` key `"token"`. Axios interceptor reads it automatically. When building real pages, use React Query + the axios instance from `lib/api.ts`.
+## Caution
 
-## When Building Real Pages
-
-Replace `PlaceholderPage` routes with actual page components. Follow the pattern in `DashboardPage.tsx`. Use React Query for data fetching against the backend API contract defined in the root Plan.md.
+Some older docs may still describe the frontend as mostly placeholder content. In practice, there are already many real pages and route entries. Trust the current `src/App.tsx`, `src/pages/`, and shared API/auth utilities.

@@ -1245,3 +1245,212 @@ BEGIN
     ORDER BY d.name, e.employee_code;
 END;
 GO
+
+
+-- =============================================================================
+-- 15. usp_Hrm_AttendanceCollection
+--    Tổng hợp công: Aggregated attendance summary by date range,
+--    employee, department, and branch.
+--    Client-provided stored procedure.
+-- =============================================================================
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_Hrm_AttendanceCollection
+    @_DocDate1   DATE         = '20240801',
+    @_DocDate2   DATE         = '20240831',
+    @_EmployeeId VARCHAR(512) = '',
+    @_DeptId     VARCHAR(512) = '',
+    @_BranchCode VARCHAR(3)   = 'A01',
+    @_nUserId    INT          = 0
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        e.employee_code,
+        e.full_name                                     AS employee_name,
+        d.code                                          AS department_code,
+        d.name                                          AS department_name,
+        COUNT(DISTINCT ad.work_date)                    AS total_days,
+        SUM(ad.workday_value)                           AS total_workdays,
+        SUM(ad.regular_hours)                           AS total_regular_hours,
+        SUM(ad.ot_hours)                                AS total_ot_hours,
+        SUM(ad.night_hours)                             AS total_night_hours,
+        SUM(ad.late_minutes)                            AS total_late_minutes,
+        SUM(ad.early_minutes)                           AS total_early_minutes,
+        SUM(ad.meal_count)                              AS total_meal_count,
+        SUM(CASE WHEN ad.attendance_status = 'present'    THEN 1 ELSE 0 END) AS present_days,
+        SUM(CASE WHEN ad.attendance_status = 'absent'     THEN 1 ELSE 0 END) AS absent_days,
+        SUM(CASE WHEN ad.attendance_status = 'paid_leave' THEN 1 ELSE 0 END) AS paid_leave_days,
+        SUM(CASE WHEN ad.attendance_status = 'holiday'    THEN 1 ELSE 0 END) AS holiday_days
+    FROM attendance_daily ad
+    JOIN employees e   ON e.id = ad.employee_id
+    LEFT JOIN departments d ON d.id = e.department_id
+    WHERE ad.work_date BETWEEN @_DocDate1 AND @_DocDate2
+      AND (@_EmployeeId = '' OR e.employee_code IN (SELECT value FROM STRING_SPLIT(@_EmployeeId, ',')))
+      AND (@_DeptId     = '' OR CAST(d.id AS VARCHAR) IN (SELECT value FROM STRING_SPLIT(@_DeptId, ',')))
+    GROUP BY e.employee_code, e.full_name, d.code, d.name
+    ORDER BY d.name, e.employee_code;
+END;
+GO
+
+
+-- =============================================================================
+-- 16. usp_Hrm_AttendanceReport
+--    Bảng chấm công: Detailed attendance report with configurable display
+--    options (compact/full), workday symbols, holiday markers, branch filter.
+--    Client-provided stored procedure.
+-- =============================================================================
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_Hrm_AttendanceReport
+    @_DocDate1              DATE         = '20240801',
+    @_DocDate2              DATE         = '20240831',
+    @_GroupDeptLevel        TINYINT      = 3,
+    @_DeptId                VARCHAR(512) = '',
+    @_EmployeeId            VARCHAR(512) = '',
+    @_ShowDataType          TINYINT      = 0,      -- 1: Rút gọn, 2: Đầy đủ
+    @_SymbolWorkday         TINYINT      = 1,      -- Hiển thị biểu tượng chấm công
+    @_NotInOutSymbol_RowId  VARCHAR(24)  = '',     -- Không chấm công vào, ra
+    @_NotInSymbol_RowId     VARCHAR(24)  = '',     -- Không chấm công vào
+    @_NotOutSymbol_RowId    VARCHAR(24)  = '',     -- Không chấm công ra
+    @_Holiday1Symbol        VARCHAR(24)  = '',     -- Ngày nghỉ lễ
+    @_Holiday2Symbol        VARCHAR(24)  = '',     -- Ngày nghỉ lễ bù
+    @_BranchCode            VARCHAR(3)   = '',     -- Mã đơn vị cơ sở
+    @_nUserId               INT          = 0
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        e.employee_code,
+        e.full_name                             AS employee_name,
+        d.code                                  AS department_code,
+        d.name                                  AS department_name,
+        ad.work_date,
+        s.code                                  AS shift_code,
+        s.name                                  AS shift_name,
+        ad.first_in                             AS check_in,
+        ad.last_out                             AS check_out,
+        ad.regular_hours,
+        ad.ot_hours,
+        ad.night_hours,
+        ad.late_minutes,
+        ad.early_minutes,
+        ad.workday_value,
+        ad.meal_count,
+        ad.attendance_status,
+        ad.source_status,
+        CASE
+            WHEN ad.attendance_status = 'holiday'    THEN COALESCE(NULLIF(@_Holiday1Symbol, ''), N'L')
+            WHEN ad.attendance_status = 'paid_leave' THEN COALESCE(NULLIF(@_Holiday2Symbol, ''), N'P')
+            WHEN ad.first_in IS NULL AND ad.last_out IS NULL
+                THEN COALESCE(NULLIF(@_NotInOutSymbol_RowId, ''), N'X')
+            WHEN ad.first_in IS NULL
+                THEN COALESCE(NULLIF(@_NotInSymbol_RowId, ''), N'V')
+            WHEN ad.last_out IS NULL
+                THEN COALESCE(NULLIF(@_NotOutSymbol_RowId, ''), N'R')
+            WHEN @_SymbolWorkday = 1 AND ad.workday_value >= 1.0 THEN N'+'
+            WHEN @_SymbolWorkday = 1 AND ad.workday_value > 0    THEN N'/'
+            ELSE N''
+        END AS workday_symbol,
+        @_ShowDataType AS show_data_type
+    FROM attendance_daily ad
+    JOIN employees e       ON e.id = ad.employee_id
+    LEFT JOIN departments d ON d.id = e.department_id
+    LEFT JOIN shift_assignments sa ON sa.id = ad.shift_assignment_id
+    LEFT JOIN shifts s     ON s.id = sa.shift_id
+    WHERE ad.work_date BETWEEN @_DocDate1 AND @_DocDate2
+      AND (@_EmployeeId = '' OR e.employee_code IN (SELECT value FROM STRING_SPLIT(@_EmployeeId, ',')))
+      AND (@_DeptId     = '' OR CAST(d.id AS VARCHAR) IN (SELECT value FROM STRING_SPLIT(@_DeptId, ',')))
+    ORDER BY d.name, e.employee_code, ad.work_date;
+END;
+GO
+
+
+-- =============================================================================
+-- 17. usp_Hrm_B30HrmAssignShift
+--    Bảng phân ca hàng ngày: Daily shift assignment listing by date range,
+--    employee, department, and branch.
+--    Client-provided stored procedure.
+-- =============================================================================
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_Hrm_B30HrmAssignShift
+    @_DocDate1   DATE          = '20240101',
+    @_DocDate2   DATE          = '20241231',
+    @_EmployeeId VARCHAR(1024) = NULL,
+    @_DeptId     VARCHAR(1024) = NULL,
+    @_nUserId    INT           = 0,
+    @_BranchCode VARCHAR(3)    = 'A01'
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        sa.id                    AS assignment_id,
+        e.employee_code,
+        e.full_name              AS employee_name,
+        d.code                   AS department_code,
+        d.name                   AS department_name,
+        sa.work_date,
+        s.code                   AS shift_code,
+        s.name                   AS shift_name,
+        s.start_time             AS shift_start,
+        s.end_time               AS shift_end,
+        s.is_overnight,
+        sa.source,
+        sa.note
+    FROM shift_assignments sa
+    JOIN employees e       ON e.id = sa.employee_id
+    LEFT JOIN departments d ON d.id = e.department_id
+    JOIN shifts s          ON s.id = sa.shift_id
+    WHERE sa.work_date BETWEEN @_DocDate1 AND @_DocDate2
+      AND (@_EmployeeId IS NULL OR @_EmployeeId = ''
+           OR e.employee_code IN (SELECT value FROM STRING_SPLIT(@_EmployeeId, ',')))
+      AND (@_DeptId IS NULL OR @_DeptId = ''
+           OR CAST(d.id AS VARCHAR) IN (SELECT value FROM STRING_SPLIT(@_DeptId, ',')))
+    ORDER BY sa.work_date, d.name, e.employee_code;
+END;
+GO
+
+
+-- =============================================================================
+-- 18. usp_Hrm_InOut_LaterEarly
+--    Bảng tổng hợp đi trễ về sớm: Late arrival / early departure summary
+--    by date range, employee, department, and branch.
+--    Client-provided stored procedure.
+-- =============================================================================
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_Hrm_InOut_LaterEarly
+    @_DocDate1   DATE          = '20240101',
+    @_DocDate2   DATE          = '20241231',
+    @_EmployeeId VARCHAR(1024) = NULL,
+    @_DeptId     VARCHAR(1024) = NULL,
+    @_nUserId    INT           = 0,
+    @_BranchCode VARCHAR(3)    = 'A01'
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        e.employee_code,
+        e.full_name                         AS employee_name,
+        d.code                              AS department_code,
+        d.name                              AS department_name,
+        COUNT(DISTINCT ad.work_date)        AS total_days,
+        SUM(CASE WHEN ad.late_minutes > 0 THEN 1 ELSE 0 END)  AS late_count,
+        SUM(ad.late_minutes)                AS total_late_minutes,
+        SUM(CASE WHEN ad.early_minutes > 0 THEN 1 ELSE 0 END) AS early_count,
+        SUM(ad.early_minutes)               AS total_early_minutes,
+        SUM(ad.late_minutes + ad.early_minutes) AS total_late_early_minutes
+    FROM attendance_daily ad
+    JOIN employees e       ON e.id = ad.employee_id
+    LEFT JOIN departments d ON d.id = e.department_id
+    WHERE ad.work_date BETWEEN @_DocDate1 AND @_DocDate2
+      AND (ad.late_minutes > 0 OR ad.early_minutes > 0)
+      AND (@_EmployeeId IS NULL OR @_EmployeeId = ''
+           OR e.employee_code IN (SELECT value FROM STRING_SPLIT(@_EmployeeId, ',')))
+      AND (@_DeptId IS NULL OR @_DeptId = ''
+           OR CAST(d.id AS VARCHAR) IN (SELECT value FROM STRING_SPLIT(@_DeptId, ',')))
+    GROUP BY e.employee_code, e.full_name, d.code, d.name
+    ORDER BY total_late_early_minutes DESC, d.name, e.employee_code;
+END;
+GO

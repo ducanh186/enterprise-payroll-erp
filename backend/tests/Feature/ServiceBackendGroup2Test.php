@@ -17,7 +17,7 @@ class ServiceBackendGroup2Test extends TestCase
     {
         $templates = app(ReportService::class)->getTemplates();
 
-        $this->assertCount(6, $templates);
+        $this->assertCount(10, $templates);
         $this->assertSame('RPT_ATTENDANCE_DAILY', $templates[0]['code']);
         $this->assertSame('RPT_PAYROLL_SUMMARY', $templates[2]['code']);
     }
