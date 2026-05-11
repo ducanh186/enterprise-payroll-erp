@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import {
   BarChart3,
   Building2,
@@ -17,7 +18,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
+import { apiDownloadFile, apiGet, apiPost, getApiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { formatDateTime, formatNumber } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
@@ -92,24 +93,25 @@ function categoryIconBg(category: string): string {
 
 export default function ReportsPage() {
   const { user } = useAuth();
-  const [selectedCode, setSelectedCode] = useState<string>("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form, setForm] = useState({
-    month: String(new Date().getMonth() + 1),
-    year: String(new Date().getFullYear()),
+    month: "1",
+    year: "2026",
     department_id: "",
+    department_code: "",
+    employee_code: "",
     active_status: "",
     format: "xlsx",
-    date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
-    date_to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10),
+    date_from: "2026-01-01",
+    date_to: "2026-01-31",
     show_data_type: "0",
     branch_code: "",
   });
 
-  const isDateRangeReport = selectedCode.startsWith("HRM_");
   const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
   const [exportResult, setExportResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.get("category") ?? "all");
   const permissionSet = createPermissionSet(user?.permissions);
   const canExportReports = hasPermissionAccess(permissionSet, "reports.export");
   const canViewDepartments =
@@ -129,14 +131,33 @@ export default function ReportsPage() {
 
   const templates = useMemo(() => toArray<Template>(templatesQuery.data?.data), [templatesQuery.data?.data]);
   const departments = useMemo(() => toArray<Department>(departmentsQuery.data?.data), [departmentsQuery.data?.data]);
+  const selectedCode = searchParams.get("code") || textValue(templates[0], ["code"], "");
+  const isDateRangeReport = selectedCode.startsWith("HRM_") || selectedCode.startsWith("FUJIMART_");
+  const isFujimartReport = selectedCode.startsWith("FUJIMART_");
+  const selectedFormat = isFujimartReport ? "xlsx" : form.format;
   const selectedTemplate = templates.find((t) => textValue(t, ["code"], "") === selectedCode) ?? templates[0] ?? null;
   const selectedParams = useMemo(() => toArray<Record<string, unknown>>(selectedTemplate?.parameters), [selectedTemplate]);
 
-  useEffect(() => {
-    if (!selectedCode && selectedTemplate) {
-      setSelectedCode(textValue(selectedTemplate, ["code"], ""));
+  const selectReportCode = (code: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("code", code);
+    setSearchParams(next);
+  };
+
+  const downloadExportFile = async () => {
+    const fileUrl = textValue(exportResult, ["file_url"], "");
+    const fileName = textValue(exportResult, ["file_name"], "report.xlsx");
+    if (!fileUrl) {
+      return;
     }
-  }, [selectedCode, selectedTemplate]);
+
+    try {
+      setError(null);
+      await apiDownloadFile(fileUrl, fileName);
+    } catch (downloadError) {
+      setError(getApiErrorMessage(downloadError, "Không thể tải file report."));
+    }
+  };
 
   const buildReportParams = () => {
     const base: Record<string, unknown> = {};
@@ -145,6 +166,8 @@ export default function ReportsPage() {
       base.date_to = form.date_to;
       if (form.show_data_type && form.show_data_type !== "0") base.show_data_type = Number(form.show_data_type);
       if (form.branch_code) base.branch_code = form.branch_code;
+      if (form.department_code) base.department_code = form.department_code;
+      if (form.employee_code) base.employee_code = form.employee_code;
     } else {
       base.month = Number(form.month);
       base.year = Number(form.year);
@@ -169,7 +192,7 @@ export default function ReportsPage() {
   const exportMutation = useMutation({
     mutationFn: async () =>
       apiPost<unknown>(`/reports/${selectedCode}/export`, {
-        format: form.format,
+        format: selectedFormat,
         ...buildReportParams(),
       }),
     onSuccess: (response) => {
@@ -308,7 +331,7 @@ export default function ReportsPage() {
                 <button
                   key={template.code}
                   type="button"
-                  onClick={() => setSelectedCode(template.code)}
+                  onClick={() => selectReportCode(template.code)}
                   className={[
                     "group relative rounded-2xl border-l-4 p-5 text-left transition-all duration-150",
                     categoryAccent(template.category),
@@ -397,13 +420,13 @@ export default function ReportsPage() {
                       <input
                         type="text"
                         value={form.branch_code}
-                        placeholder="VD: A01"
-                        maxLength={3}
+                        placeholder="VD: A01 hoặc chuỗi mã từ procedure"
+                        maxLength={100}
                         onChange={(e) => setForm((c) => ({ ...c, branch_code: e.target.value }))}
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                       />
                     </label>
-                    {selectedCode === "HRM_ATTENDANCE_REPORT" && (
+                    {(selectedCode === "HRM_ATTENDANCE_REPORT" || selectedCode === "FUJIMART_ATTENDANCE_REPORT") && (
                       <label className="space-y-2">
                         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                           Kiểu hiển thị
@@ -419,6 +442,32 @@ export default function ReportsPage() {
                         </select>
                       </label>
                     )}
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="space-y-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Mã phòng ban
+                      </span>
+                      <input
+                        type="text"
+                        value={form.department_code}
+                        placeholder="Tùy chọn"
+                        onChange={(e) => setForm((c) => ({ ...c, department_code: e.target.value }))}
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                      />
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Mã nhân viên
+                      </span>
+                      <input
+                        type="text"
+                        value={form.employee_code}
+                        placeholder="Dùng cho phiếu lương cá nhân"
+                        onChange={(e) => setForm((c) => ({ ...c, employee_code: e.target.value }))}
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                      />
+                    </label>
                   </div>
                 </div>
               ) : (
@@ -463,13 +512,13 @@ export default function ReportsPage() {
                     Định dạng
                   </span>
                   <select
-                    value={form.format}
+                    value={selectedFormat}
                     onChange={(e) => setForm((c) => ({ ...c, format: e.target.value }))}
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                   >
                     <option value="xlsx">xlsx</option>
-                    <option value="pdf">pdf</option>
-                    <option value="csv">csv</option>
+                    {!isFujimartReport && <option value="pdf">pdf</option>}
+                    {!isFujimartReport && <option value="csv">csv</option>}
                   </select>
                 </label>
                 <label className="space-y-2">
@@ -670,18 +719,17 @@ export default function ReportsPage() {
                       {textValue(exportResult, ["file_name"], "report")}
                       {" · "}
                       <span className="uppercase font-medium">
-                        {textValue(exportResult, ["format"], form.format)}
+                        {textValue(exportResult, ["format"], selectedFormat)}
                       </span>
                     </p>
                     {textValue(exportResult, ["file_url"], "") && (
-                      <a
-                        href={textValue(exportResult, ["file_url"], "#")}
+                      <button
+                        type="button"
+                        onClick={downloadExportFile}
                         className="mt-2 inline-block text-sm font-semibold text-emerald-700 underline hover:text-emerald-900"
-                        target="_blank"
-                        rel="noreferrer"
                       >
                         Tải file
-                      </a>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -787,7 +835,7 @@ export default function ReportsPage() {
                       <td className="px-6 py-4 text-right">
                         <button
                           type="button"
-                          onClick={() => setSelectedCode(template.code)}
+                          onClick={() => selectReportCode(template.code)}
                           className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
                             isSelected
                               ? "bg-sky-600 text-white"

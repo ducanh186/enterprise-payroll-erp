@@ -49,6 +49,9 @@ class ReportService
             'HRM_ATTENDANCE_REPORT' => $this->previewAttendanceReportSP($parameters, $normalizedCode),
             'HRM_ASSIGN_SHIFT' => $this->previewAssignShift($parameters, $normalizedCode),
             'HRM_LATE_EARLY' => $this->previewLateEarly($parameters, $normalizedCode),
+            'FUJIMART_ATTENDANCE_REPORT' => $this->previewCustomerProcedureReport($parameters, $normalizedCode, 'dbo.usp_AttendanceReport', 'Bảng chấm công'),
+            'FUJIMART_PAYROLL_REPORT' => $this->previewCustomerProcedureReport($parameters, $normalizedCode, 'dbo.usp_PayrollReport', 'Bảng thanh toán lương theo phòng ban'),
+            'FUJIMART_PAYROLL_SLIP' => $this->previewCustomerProcedureReport($parameters, $normalizedCode, 'dbo.usp_PayrollSlip', 'Phiếu lương cá nhân'),
             'EMPLOYEE_LIST' => $this->previewEmployeeList($parameters, $normalizedCode),
             'BANK_TRANSFER' => $this->previewBankTransfer($month, $year, $parameters, $normalizedCode),
             default => [
@@ -65,17 +68,41 @@ class ReportService
         $normalizedCode = $this->normalizeReportCode($code);
         $preview = $this->previewReport($normalizedCode, $parameters);
         $format = strtolower((string) ($parameters['format'] ?? 'xlsx'));
+        $format = $format === 'xlsx' ? 'xlsx' : 'csv';
         $suffix = $this->buildExportSuffix($parameters);
         $fileName = sprintf('%s_%s.%s', $normalizedCode, $suffix, $format);
+        $directory = storage_path('app/public/reports');
+        $path = $directory . DIRECTORY_SEPARATOR . $fileName;
+        $rows = $this->rowsForExport($preview);
+
+        if ($format === 'xlsx') {
+            app(ExcelWorkbookService::class)->writeRows(
+                $path,
+                $rows,
+                $this->templatePathForReport($normalizedCode),
+                $this->sheetNameForReport($normalizedCode)
+            );
+        } else {
+            if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+                throw new \RuntimeException("Cannot create report directory {$directory}.");
+            }
+
+            $handle = fopen($path, 'wb');
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }
 
         return [
             'report_code' => $normalizedCode,
             'format' => $format,
             'file_name' => $fileName,
-            'file_url' => '/storage/reports/' . $fileName,
-            'file_size' => $this->estimateFileSize($preview),
+            'file_url' => url('/api/reports/download/' . rawurlencode($fileName)),
+            'file_size' => is_file($path) ? filesize($path) : $this->estimateFileSize($preview),
             'generated_at' => now()->toISOString(),
             'expires_at' => now()->addHours(24)->toISOString(),
+            'template_used' => $this->templatePathForReport($normalizedCode) !== null,
         ];
     }
 
@@ -148,6 +175,40 @@ class ReportService
                     ['name' => 'payslip_id', 'type' => 'integer', 'required' => false],
                 ],
                 'export_formats' => ['xlsx', 'pdf'],
+            ],
+            'FUJIMART_ATTENDANCE_REPORT' => [
+                'description' => 'Bảng chấm công Fujimart từ dbo.usp_AttendanceReport.',
+                'category' => 'attendance',
+                'parameters' => [
+                    ['name' => 'date_from', 'type' => 'date', 'required' => true],
+                    ['name' => 'date_to', 'type' => 'date', 'required' => true],
+                    ['name' => 'branch_code', 'type' => 'string', 'required' => false],
+                    ['name' => 'department_code', 'type' => 'string', 'required' => false],
+                    ['name' => 'employee_code', 'type' => 'string', 'required' => false],
+                ],
+                'export_formats' => ['xlsx'],
+            ],
+            'FUJIMART_PAYROLL_REPORT' => [
+                'description' => 'Bảng thanh toán lương theo chi nhánh, phòng ban từ dbo.usp_PayrollReport.',
+                'category' => 'payroll',
+                'parameters' => [
+                    ['name' => 'date_from', 'type' => 'date', 'required' => true],
+                    ['name' => 'branch_code', 'type' => 'string', 'required' => false],
+                    ['name' => 'department_code', 'type' => 'string', 'required' => false],
+                    ['name' => 'employee_code', 'type' => 'string', 'required' => false],
+                ],
+                'export_formats' => ['xlsx'],
+            ],
+            'FUJIMART_PAYROLL_SLIP' => [
+                'description' => 'Phiếu lương cá nhân từ dbo.usp_PayrollSlip.',
+                'category' => 'payroll',
+                'parameters' => [
+                    ['name' => 'date_from', 'type' => 'date', 'required' => true],
+                    ['name' => 'employee_code', 'type' => 'string', 'required' => false],
+                    ['name' => 'department_code', 'type' => 'string', 'required' => false],
+                    ['name' => 'branch_code', 'type' => 'string', 'required' => false],
+                ],
+                'export_formats' => ['xlsx'],
             ],
             'RPT_INSURANCE' => [
                 'description' => 'Báo cáo đóng bảo hiểm xã hội, y tế, thất nghiệp.',
@@ -786,6 +847,86 @@ class ReportService
         ];
     }
 
+    private function previewCustomerProcedureReport(array $parameters, string $reportCode, string $procedureName, string $title): array
+    {
+        [$dateFrom, $dateTo] = $this->resolveDateRange($parameters);
+        $docDate = $parameters['doc_date'] ?? $parameters['date_from'] ?? $dateFrom;
+        $procedureParams = match ($reportCode) {
+            'FUJIMART_ATTENDANCE_REPORT' => [
+                '@_DocDate1' => Carbon::parse($dateFrom)->toDateString(),
+                '@_DocDate2' => Carbon::parse($dateTo)->toDateString(),
+                '@_BranchCode' => (string) ($parameters['branch_code'] ?? ''),
+                '@_DeptCode' => (string) ($parameters['department_code'] ?? $parameters['department_id'] ?? ''),
+                '@_EmployeeCode' => (string) ($parameters['employee_code'] ?? ''),
+            ],
+            'FUJIMART_PAYROLL_SLIP' => [
+                '@_DocDate1' => Carbon::parse($docDate)->toDateString(),
+                '@_EmployeeCode' => (string) ($parameters['employee_code'] ?? ''),
+                '@_DeptCode' => (string) ($parameters['department_code'] ?? $parameters['department_id'] ?? ''),
+                '@_BranchCode' => (string) ($parameters['branch_code'] ?? ''),
+                '@_SendEmail' => 0,
+                '@_MailProfile' => '',
+            ],
+            default => [
+                '@_DocDate1' => Carbon::parse($docDate)->toDateString(),
+                '@_BranchCode' => (string) ($parameters['branch_code'] ?? ''),
+                '@_DeptCode' => (string) ($parameters['department_code'] ?? $parameters['department_id'] ?? ''),
+                '@_EmployeeCode' => (string) ($parameters['employee_code'] ?? ''),
+            ],
+        };
+
+        $procedure = app(CustomerProcedureService::class)->execute($procedureName, $procedureParams);
+        $records = $procedure['result_sets'][0] ?? [];
+        $extraSets = array_slice($procedure['result_sets'], 1);
+
+        if (!$procedure['available'] || $procedure['error']) {
+            $fallback = match ($reportCode) {
+                'FUJIMART_ATTENDANCE_REPORT' => $this->previewAttendanceMonthly(
+                    (int) Carbon::parse($dateFrom)->month,
+                    (int) Carbon::parse($dateFrom)->year,
+                    $parameters,
+                    $reportCode
+                ),
+                'FUJIMART_PAYROLL_SLIP' => $this->previewPayslip(
+                    (int) Carbon::parse($docDate)->month,
+                    (int) Carbon::parse($docDate)->year,
+                    $parameters,
+                    $reportCode
+                ),
+                default => $this->previewPayrollSummary(
+                    (int) Carbon::parse($docDate)->month,
+                    (int) Carbon::parse($docDate)->year,
+                    $parameters,
+                    $reportCode
+                ),
+            };
+
+            return array_merge($fallback, [
+                'title' => $title,
+                'execution_mode' => 'laravel_fallback',
+                'procedure' => $procedureName,
+                'procedure_warning' => $procedure['error'],
+            ]);
+        }
+
+        return [
+            'report_code' => $reportCode,
+            'title' => $title,
+            'generated_at' => now()->toISOString(),
+            'execution_mode' => 'stored_procedure',
+            'procedure' => $procedureName,
+            'execution_ms' => $procedure['execution_ms'],
+            'summary' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'row_count' => count($records),
+                'result_sets' => count($procedure['result_sets']),
+            ],
+            'records' => $records,
+            'result_sets' => $extraSets,
+        ];
+    }
+
     private function resolveDateRange(array $parameters): array
     {
         if (!empty($parameters['date_from']) && !empty($parameters['date_to'])) {
@@ -842,6 +983,84 @@ class ReportService
         ];
     }
 
+    /**
+     * @return array<int, array<int, mixed>>
+     */
+    private function rowsForExport(array $preview): array
+    {
+        $records = $preview['records'] ?? $preview['items'] ?? data_get($preview, 'data.records', []);
+        if (!is_array($records) || $records === []) {
+            $records = [$preview['summary'] ?? ['message' => $preview['title'] ?? 'Report']];
+        }
+
+        $flatRecords = collect($records)
+            ->map(fn ($row) => $this->flattenRecord((array) $row))
+            ->values()
+            ->all();
+
+        $headers = collect($flatRecords)
+            ->flatMap(fn ($row) => array_keys($row))
+            ->unique()
+            ->values()
+            ->all();
+
+        $rows = [
+            ['Fujimart HRM'],
+            [$preview['title'] ?? $preview['report_code'] ?? 'Report'],
+            ['Generated at', $preview['generated_at'] ?? now()->toISOString()],
+            [],
+            $headers,
+        ];
+
+        foreach ($flatRecords as $record) {
+            $rows[] = array_map(fn ($header) => $record[$header] ?? null, $headers);
+        }
+
+        return $rows;
+    }
+
+    private function flattenRecord(array $record, string $prefix = ''): array
+    {
+        $flat = [];
+        foreach ($record as $key => $value) {
+            $nextKey = $prefix === '' ? (string) $key : $prefix . '.' . $key;
+
+            if (is_array($value)) {
+                $flat += $this->flattenRecord($value, $nextKey);
+                continue;
+            }
+
+            $flat[$nextKey] = $value instanceof \DateTimeInterface ? $value->format('Y-m-d H:i:s') : $value;
+        }
+
+        return $flat;
+    }
+
+    private function templatePathForReport(string $reportCode): ?string
+    {
+        $base = base_path('resources/report-templates');
+        $file = match ($reportCode) {
+            'FUJIMART_ATTENDANCE_REPORT', 'HRM_ATTENDANCE_REPORT', 'RPT_ATTENDANCE_MONTHLY' => 'Template bang cham cong.xlsx',
+            'FUJIMART_PAYROLL_REPORT', 'RPT_PAYROLL_SUMMARY' => 'Template bang luong.xlsx',
+            'FUJIMART_PAYROLL_SLIP', 'RPT_PAYSLIP' => 'Template phieu luong ca nhan.xlsx',
+            default => null,
+        };
+
+        $path = $file ? $base . DIRECTORY_SEPARATOR . $file : null;
+
+        return $path && is_file($path) ? $path : null;
+    }
+
+    private function sheetNameForReport(string $reportCode): string
+    {
+        return match ($reportCode) {
+            'FUJIMART_ATTENDANCE_REPORT', 'HRM_ATTENDANCE_REPORT', 'RPT_ATTENDANCE_MONTHLY' => 'Bảng chấm công',
+            'FUJIMART_PAYROLL_REPORT', 'RPT_PAYROLL_SUMMARY' => 'Bảng lương',
+            'FUJIMART_PAYROLL_SLIP', 'RPT_PAYSLIP' => 'Phiếu lương cá nhân',
+            default => 'Report',
+        };
+    }
+
     private function normalizeReportCode(string $code): string
     {
         $code = strtoupper(trim($code));
@@ -857,6 +1076,9 @@ class ReportService
             'ATTENDANCE_REPORT' => 'HRM_ATTENDANCE_REPORT',
             'ASSIGN_SHIFT' => 'HRM_ASSIGN_SHIFT',
             'LATE_EARLY' => 'HRM_LATE_EARLY',
+            'FUJIMART_BANG_CHAM_CONG' => 'FUJIMART_ATTENDANCE_REPORT',
+            'FUJIMART_BANG_LUONG' => 'FUJIMART_PAYROLL_REPORT',
+            'FUJIMART_PHIEU_LUONG' => 'FUJIMART_PAYROLL_SLIP',
             default => $code,
         };
     }

@@ -7,6 +7,7 @@ use App\Services\AttendanceService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AttendanceController extends Controller
 {
@@ -44,6 +45,19 @@ class AttendanceController extends Controller
         $result = $this->attendanceService->createManualCheckin($request->all());
 
         return $this->created($result, 'Manual check-in created successfully.');
+    }
+
+    public function importCheckinLogs(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:10240',
+        ]);
+
+        $path = $request->file('file')->store('imports');
+        $fullPath = Storage::path($path);
+        $result = $this->attendanceService->importCheckinLogsFromExcel($fullPath, $request->user()?->id);
+
+        return $this->success($result, 'Check-in/out Excel import completed.');
     }
 
     public function daily(Request $request): JsonResponse

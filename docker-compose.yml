@@ -19,6 +19,7 @@ services:
       - DB_DATABASE=enterprise_payroll_erp
       - DB_USERNAME=sa
       - DB_PASSWORD=${DB_PASSWORD:-YourStrong!Passw0rd}
+      - CUSTOMER_DB_DATABASE=fujimart_hrm_source
       - FRONTEND_URL=http://localhost:5173
       - SESSION_DRIVER=file
       - CACHE_STORE=file
@@ -46,7 +47,7 @@ services:
       - payroll-net
 
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2025-latest
     container_name: payroll-sqlserver
     ports:
       - "1433:1433"
@@ -56,6 +57,7 @@ services:
       - MSSQL_PID=Developer
     volumes:
       - sqlserver-data:/var/opt/mssql
+      - ./docker/data/fujimart:/var/opt/mssql/backup
     healthcheck:
       test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
       interval: 10s

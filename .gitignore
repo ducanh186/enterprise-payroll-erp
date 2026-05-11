@@ -27,6 +27,7 @@ Thumbs.db
 
 # Docker volumes
 docker/data/
+*.bak
 
 # Claude Code (local config)
 .claude/

@@ -131,6 +131,7 @@ class RolePermissionSeeder extends Seeder
                 'contract.view', 'contract.create', 'contract.update', 'contract.renew', 'contract.terminate',
                 'attendance.view', 'attendance.manage_period', 'attendance.import_logs',
                 'attendance.calculate', 'attendance.manage_request', 'attendance.confirm',
+                'payroll.view',
                 'reports.view', 'reports.export',
             ],
             'accountant' => [
@@ -146,14 +147,23 @@ class RolePermissionSeeder extends Seeder
             'management' => [
                 'dashboard.view',
                 'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+                'reference.view',
+                'employee.view',
+                'payroll.view',
                 'reports.view', 'reports.export',
             ],
             'employee' => [
                 'dashboard.view',
                 'auth.login', 'auth.logout', 'auth.profile', 'auth.change_password',
+                'reference.view',
+                'employee.view',
+                'payroll.view',
+                'reports.view',
                 'self.attendance.view', 'self.request.manage', 'self.payslip.view',
             ],
         ];
+
+        $rolePermissionCodes['system_admin'] = $permMap->keys()->all();
 
         $rolePermissions = [];
         $rpId = 1;

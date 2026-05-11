@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, RefreshCcw, Search } from "lucide-react";
+import { Plus, RefreshCcw, Search, UsersRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { apiGet } from "../lib/api";
 import { useDetachedEditor } from "../lib/detachedEditor";
@@ -40,6 +40,8 @@ export default function EmployeesPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Record<string, unknown> | null>(null);
+  const [detailTab, setDetailTab] = useState<"profile" | "dependents">("profile");
   const { editorAction, openCreateTab, closeDetachedEditor } = useDetachedEditor("/employees");
   const permissionSet = useMemo(() => createPermissionSet(user?.permissions), [user?.permissions]);
   const canCreateEmployee = hasPermissionAccess(permissionSet, "employee.create");
@@ -62,6 +64,17 @@ export default function EmployeesPage() {
   const employees = useMemo(
     () => toArray<Record<string, unknown>>(query.data?.data),
     [query.data?.data],
+  );
+
+  const selectedEmployeeId = selectedEmployee ? textValue(selectedEmployee, ["id"], "") : "";
+  const dependentsQuery = useQuery({
+    queryKey: ["employees", selectedEmployeeId, "dependents"],
+    queryFn: async () => apiGet<unknown>(`/employees/${selectedEmployeeId}/dependents`),
+    enabled: Boolean(selectedEmployeeId) && detailTab === "dependents",
+  });
+  const dependents = useMemo(
+    () => toArray<Record<string, unknown>>(dependentsQuery.data?.data),
+    [dependentsQuery.data?.data],
   );
 
   const filtered = useMemo(() => {
@@ -128,6 +141,7 @@ export default function EmployeesPage() {
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Chức vụ</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ngày vào làm</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái</th>
+              <th className="px-4 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Chi tiết</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -145,6 +159,7 @@ export default function EmployeesPage() {
                   <td className="px-4 py-4"><div className="h-3.5 w-24 rounded bg-slate-200" /></td>
                   <td className="px-4 py-4"><div className="h-3.5 w-20 rounded bg-slate-200" /></td>
                   <td className="px-4 py-4"><div className="h-5 w-20 rounded-full bg-slate-200" /></td>
+                  <td className="px-4 py-4"><div className="ml-auto h-8 w-20 rounded bg-slate-200" /></td>
                 </tr>
               ))
             ) : filtered.length ? (
@@ -174,12 +189,25 @@ export default function EmployeesPage() {
                     <td className="px-4 py-4 text-sm text-slate-700">{position}</td>
                     <td className="px-4 py-4 text-sm tabular-nums text-slate-700">{startDate ? formatDate(startDate) : "—"}</td>
                     <td className="px-4 py-4">{statusBadge(status)}</td>
+                    <td className="px-4 py-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedEmployee(emp);
+                          setDetailTab("profile");
+                        }}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                      >
+                        <UsersRound className="h-3.5 w-3.5" />
+                        Tab chi tiết
+                      </button>
+                    </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={6} className="py-10">
+                <td colSpan={7} className="py-10">
                   <EmptyState
                     title="Không có nhân viên"
                     description="Dữ liệu nhân viên chưa được backend trả về hoặc không khớp bộ lọc."
@@ -239,6 +267,87 @@ export default function EmployeesPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(selectedEmployee)}
+        onClose={() => setSelectedEmployee(null)}
+        title={selectedEmployee ? textValue(selectedEmployee, ["full_name", "name"], "Chi tiết nhân viên") : "Chi tiết nhân viên"}
+        size="xl"
+      >
+        {selectedEmployee && (
+          <div className="space-y-5">
+            <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5">
+              {[
+                { key: "profile", label: "Hồ sơ" },
+                { key: "dependents", label: "Người phụ thuộc" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setDetailTab(tab.key as "profile" | "dependents")}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+                    detailTab === tab.key
+                      ? "bg-slate-950 text-white"
+                      : "text-slate-600 hover:bg-white"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {detailTab === "profile" ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  ["Mã NV", textValue(selectedEmployee, ["employee_code", "code"], "N/A")],
+                  ["Họ tên", textValue(selectedEmployee, ["full_name", "name"], "—")],
+                  ["Phòng ban", textValue(selectedEmployee, ["department.name", "department_name"], "—")],
+                  ["Chức vụ", textValue(selectedEmployee, ["position.name", "position_name", "position", "job_title"], "—")],
+                  ["Ngày vào làm", textValue(selectedEmployee, ["hire_date", "start_date", "joined_at"], "")],
+                  ["Trạng thái", textValue(selectedEmployee, ["status"], "active")],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{value || "—"}</p>
+                  </div>
+                ))}
+              </div>
+            ) : dependentsQuery.isLoading ? (
+              <p className="text-sm text-slate-500">Đang tải người phụ thuộc...</p>
+            ) : dependents.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      <th className="px-4 py-3">Họ tên</th>
+                      <th className="px-4 py-3">Quan hệ</th>
+                      <th className="px-4 py-3">Ngày sinh</th>
+                      <th className="px-4 py-3">Mã số thuế</th>
+                      <th className="px-4 py-3">Giảm trừ từ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {dependents.map((dependent, index) => (
+                      <tr key={`${textValue(dependent, ["id"], String(index))}-${index}`}>
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900">{textValue(dependent, ["full_name", "name"], "—")}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{textValue(dependent, ["relationship"], "—")}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{textValue(dependent, ["date_of_birth", "dob"], "") || "—"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{textValue(dependent, ["tax_code", "tax_no"], "—")}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{textValue(dependent, ["tax_reduction_from"], "") || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState
+                title="Chưa có người phụ thuộc"
+                description="Backend không trả về dữ liệu người phụ thuộc cho nhân viên này."
+              />
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );

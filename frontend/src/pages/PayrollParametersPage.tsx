@@ -9,6 +9,7 @@ import { EmptyState, Modal, PageHeader } from "../components/ui";
 export default function PayrollParametersPage() {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [activeView, setActiveView] = useState<"value" | "salaryType">("value");
 
   const query = useQuery({
     queryKey: ["reference", "payroll-parameters"],
@@ -22,20 +23,42 @@ export default function PayrollParametersPage() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return items;
-    return items.filter((item) => {
+    const viewItems = items.filter((item) => {
+      const code = textValue(item, ["code", "param_code", "group"], "").toLowerCase();
+      const type = textValue(item, ["type", "param_type", "category"], "").toLowerCase();
+      const salaryTypeMatch = code.includes("salary") || code.includes("allowance") || code.includes("bonus") || code.includes("deduction") || type.includes("salary");
+
+      if (activeView === "salaryType") {
+        return salaryTypeMatch || !items.some((candidate) => {
+          const candidateCode = textValue(candidate, ["code", "param_code", "group"], "").toLowerCase();
+          const candidateType = textValue(candidate, ["type", "param_type", "category"], "").toLowerCase();
+          return candidateCode.includes("salary") || candidateCode.includes("allowance") || candidateCode.includes("bonus") || candidateCode.includes("deduction") || candidateType.includes("salary");
+        });
+      }
+
+      return !salaryTypeMatch || !items.some((candidate) => {
+        const candidateCode = textValue(candidate, ["code", "param_code", "group"], "").toLowerCase();
+        const candidateType = textValue(candidate, ["type", "param_type", "category"], "").toLowerCase();
+        return candidateCode.includes("salary") || candidateCode.includes("allowance") || candidateCode.includes("bonus") || candidateCode.includes("deduction") || candidateType.includes("salary");
+      });
+    });
+
+    if (!q) return viewItems;
+    return viewItems.filter((item) => {
       const code = textValue(item, ["code", "param_code"], "").toLowerCase();
       const name = textValue(item, ["name", "param_name", "label"], "").toLowerCase();
       return code.includes(q) || name.includes(q);
     });
-  }, [items, search]);
+  }, [activeView, items, search]);
+
+  const activeViewName = activeView === "value" ? "vD20PayrollPara_ValuePara" : "vD20PayrollPara_SalaryType";
 
   return (
     <div className="space-y-8 pb-10">
       <PageHeader
         eyebrow="Tính lương"
         title="Bộ công thức và tham số lương"
-        description="Quản lý các tham số tính lương, BHXH, BHYT, BHTN và thuế TNCN."
+        description="Tra cứu tham số theo đúng 2 view Fujimart: ValuePara và SalaryType."
         actions={
           <>
             <button
@@ -58,6 +81,26 @@ export default function PayrollParametersPage() {
         }
       />
 
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+        {[
+          { key: "value", label: "vD20PayrollPara_ValuePara" },
+          { key: "salaryType", label: "vD20PayrollPara_SalaryType" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveView(tab.key as "value" | "salaryType")}
+            className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+              activeView === tab.key
+                ? "bg-slate-950 text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Search */}
       <div className="relative w-full max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -72,6 +115,9 @@ export default function PayrollParametersPage() {
 
       {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+        <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-3">
+          <p className="text-[11px] font-bold text-slate-500">Nguồn view: {activeViewName}</p>
+        </div>
         <table className="w-full border-collapse text-left">
           <thead className="bg-slate-50/50">
             <tr>

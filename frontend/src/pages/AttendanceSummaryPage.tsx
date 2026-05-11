@@ -111,6 +111,7 @@ export default function AttendanceSummaryPage() {
     department_id: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const permissionSet = createPermissionSet(user?.permissions);
   const canRecalculateAttendance = hasPermissionAccess(permissionSet, "attendance.calculate");
   const canConfirmAttendance = hasPermissionAccess(permissionSet, "attendance.confirm");
@@ -134,18 +135,17 @@ export default function AttendanceSummaryPage() {
       }),
     onSuccess: async () => {
       setError(null);
+      setSuccess(`Đã chạy tính công cho tháng ${filters.month}/${filters.year}.`);
       await queryClient.invalidateQueries({ queryKey: ["attendance", "monthly-summary"] });
     },
     onError: (mutationError) => {
+      setSuccess(null);
       setError(getApiErrorMessage(mutationError, "Không thể chạy recalculation."));
     },
   });
 
   const rows = useMemo(() => toArray<Record<string, unknown>>(summaryQuery.data?.data), [summaryQuery.data?.data]);
-  const totals = useMemo(() => {
-    const first = rows[0] ?? (summaryQuery.data?.data && typeof summaryQuery.data.data === "object" ? (summaryQuery.data.data as Record<string, unknown>) : {});
-    return first;
-  }, [rows, summaryQuery.data?.data]);
+  const totals = rows[0] ?? (summaryQuery.data?.data && typeof summaryQuery.data.data === "object" ? (summaryQuery.data.data as Record<string, unknown>) : {});
 
   const totalEmployees = formatNumber(numberValue(totals, ["total_employees", "employee_count"], rows.length));
   const readyCount = formatNumber(numberValue(totals, ["ready_count", "approved_count"], 0));
@@ -214,6 +214,11 @@ export default function AttendanceSummaryPage() {
       {error && (
         <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
+        </p>
+      )}
+      {success && (
+        <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+          {success}
         </p>
       )}
 

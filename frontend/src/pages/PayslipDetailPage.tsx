@@ -14,6 +14,7 @@ import { apiGet } from "../lib/api";
 import { formatCurrency, formatDate } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
 import { Badge, EmptyState } from "../components/ui";
+import fujimartLogo from "../assets/fujimart_logo_highres_transparent.png";
 
 export default function PayslipDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -166,11 +167,11 @@ export default function PayslipDetailPage() {
               <div className="space-y-5">
                 {/* Company identity */}
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950">
-                    <span className="text-xs font-black text-white">HR</span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white ring-1 ring-slate-200">
+                    <img src={fujimartLogo} alt="Fujimart" className="h-8 w-8 object-contain" />
                   </div>
                   <span className="text-base font-black uppercase tracking-widest text-slate-950">
-                    Enterprise Payroll ERP
+                    Fujimart HRM
                   </span>
                 </div>
 
@@ -426,7 +427,7 @@ export default function PayslipDetailPage() {
 
           {/* ── Footer meta ── */}
           <div className="no-print flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            <span>© Enterprise Payroll ERP</span>
+            <span>© Fujimart HRM</span>
             <span>Phiếu lương #{id}</span>
           </div>
         </div>

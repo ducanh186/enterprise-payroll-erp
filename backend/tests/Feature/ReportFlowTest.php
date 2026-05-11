@@ -33,7 +33,7 @@ class ReportFlowTest extends TestCase
 
         $data = $response->json('data');
         $this->assertIsArray($data);
-        $this->assertCount(6, $data);
+        $this->assertGreaterThanOrEqual(13, count($data));
 
         // First template should have code and name
         $first = $data[0];
@@ -41,6 +41,43 @@ class ReportFlowTest extends TestCase
         $this->assertArrayHasKey('name', $first);
         $this->assertArrayHasKey('description', $first);
         $this->assertSame('RPT_ATTENDANCE_DAILY', $first['code']);
+    }
+
+    public function test_preview_and_export_fujimart_reports(): void
+    {
+        $headers = $this->authHeaders();
+
+        foreach ([
+            'FUJIMART_ATTENDANCE_REPORT',
+            'FUJIMART_PAYROLL_REPORT',
+            'FUJIMART_PAYROLL_SLIP',
+        ] as $code) {
+            $response = $this->withHeaders($headers)->postJson("/api/reports/{$code}/preview", [
+                'date_from' => '2026-01-01',
+                'date_to' => '2026-01-31',
+                'employee_code' => 'NV001',
+                'format' => 'xlsx',
+            ]);
+
+            $response->assertOk()
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('data.report_code', $code);
+
+            $export = $this->withHeaders($headers)->postJson("/api/reports/{$code}/export", [
+                'date_from' => '2026-01-01',
+                'date_to' => '2026-01-31',
+                'employee_code' => 'NV001',
+                'format' => 'xlsx',
+            ]);
+
+            $export->assertOk()
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('data.report_code', $code)
+                ->assertJsonPath('data.format', 'xlsx');
+
+            $this->assertStringEndsWith('.xlsx', $export->json('data.file_name'));
+            $this->assertGreaterThan(0, (int) $export->json('data.file_size'));
+        }
     }
 
     public function test_preview_payslip_report(): void

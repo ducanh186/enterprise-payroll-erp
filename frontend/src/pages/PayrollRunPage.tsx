@@ -57,6 +57,27 @@ export default function PayrollRunPage() {
     },
   });
 
+  const calculateMutation = useMutation({
+    mutationFn: async () =>
+      apiPost<unknown>("/payroll/runs/calculate", {
+        month: Number(form.month),
+        year: Number(form.year),
+        scope: form.scope,
+        ...(form.department_id ? { department_id: Number(form.department_id) } : {}),
+        parameters: {},
+        adjustments: [],
+      }),
+    onSuccess: async (response) => {
+      setError(null);
+      setResult((response.data ?? {}) as Record<string, unknown>);
+      await queryClient.invalidateQueries({ queryKey: ["payroll", "periods"] });
+      setCurrentStep(2);
+    },
+    onError: (mutationError) => {
+      setError(getApiErrorMessage(mutationError, "Không thể chạy tính lương."));
+    },
+  });
+
   const openPeriodMutation = useMutation({
     mutationFn: async () =>
       apiPost<unknown>("/payroll/periods/open", {
@@ -297,14 +318,24 @@ export default function PayrollRunPage() {
                     <ShieldCheck className="h-4 w-4 inline mr-1" />
                     {openPeriodMutation.isPending ? "Đang mở..." : "Mở kỳ lương"}
                   </button>
-                  <button
-                    type="submit"
-                    disabled={previewMutation.isPending}
-                    className="bg-gradient-to-br from-slate-950 to-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-sm shadow-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center gap-2"
-                  >
-                    {previewMutation.isPending ? "Đang tạo bản xem trước..." : "Tiếp tục bước tiếp theo"}
-                    {!previewMutation.isPending && <ArrowRight className="h-4 w-4" />}
-                  </button>
+                  <div className="flex flex-wrap justify-end gap-3">
+                    <button
+                      type="submit"
+                      disabled={previewMutation.isPending}
+                      className="border border-slate-200 bg-white px-6 py-3 rounded-lg font-bold text-sm text-slate-700 shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-60 flex items-center gap-2"
+                    >
+                      {previewMutation.isPending ? "Đang tạo bản xem trước..." : "Xem trước"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => calculateMutation.mutate()}
+                      disabled={calculateMutation.isPending}
+                      className="bg-gradient-to-br from-slate-950 to-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-sm shadow-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center gap-2"
+                    >
+                      {calculateMutation.isPending ? "Đang chạy tính lương..." : "Chạy tính lương"}
+                      {!calculateMutation.isPending && <ArrowRight className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

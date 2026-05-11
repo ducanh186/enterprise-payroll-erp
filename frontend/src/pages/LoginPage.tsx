@@ -2,8 +2,9 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowRight, CircleAlert, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { ArrowRight, CircleAlert, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { useAuth, readAuthError } from "../context/AuthContext";
+import fujimartLogo from "../assets/fujimart_logo_highres_transparent.png";
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
@@ -46,21 +47,15 @@ export default function LoginPage() {
         backgroundSize: "24px 24px",
       }}
     >
-      {/* Decorative blobs */}
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute -top-[10%] -right-[10%] h-96 w-96 rounded-full bg-indigo-900 opacity-40 blur-[120px]" />
-        <div className="absolute -bottom-[5%] left-[10%] h-64 w-64 rounded-full bg-emerald-600 opacity-20 blur-[100px]" />
-      </div>
-
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
-            <ShieldCheck className="h-7 w-7 text-sky-300" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 ring-1 ring-white/10">
+            <img src={fujimartLogo} alt="Fujimart" className="h-full w-full object-contain" />
           </div>
           <h1 className="text-2xl font-black uppercase tracking-tight text-white">
-            Payroll ERP
+            Fujimart HRM
           </h1>
         </div>
 

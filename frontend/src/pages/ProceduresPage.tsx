@@ -227,7 +227,7 @@ export default function ProceduresPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="SQL Integration"
+        eyebrow="Thủ tục SQL"
         title="Stored Procedures"
         description="Thực thi stored procedures từ SQL Server. Khách tự quản lý SQL, hệ thống gọi theo cấu hình metadata."
         actions={

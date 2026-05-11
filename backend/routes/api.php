@@ -74,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // -----------------------------------------------------------------------
     Route::prefix('attendance')->group(function () {
         Route::get('/checkin-logs', [AttendanceController::class, 'checkinLogs'])->middleware('permission:attendance.import_logs');
+        Route::post('/checkin-logs/import', [AttendanceController::class, 'importCheckinLogs'])->middleware('permission:attendance.import_logs');
         Route::post('/checkin-logs/manual', [AttendanceController::class, 'manualCheckin'])->middleware('permission:attendance.manage_request');
         Route::get('/daily', [AttendanceController::class, 'daily'])->middleware('permission:attendance.view');
         Route::get('/monthly-summary', [AttendanceController::class, 'monthlySummary'])->middleware('permission:attendance.view');
@@ -94,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/periods/open', [PayrollController::class, 'openPeriod'])->middleware('permission:payroll.run');
         Route::get('/runs/preview-parameters', [PayrollController::class, 'previewParameters'])->middleware('permission:payroll.run');
         Route::post('/runs/preview', [PayrollController::class, 'previewRun'])->middleware('permission:payroll.run');
+        Route::post('/runs/calculate', [PayrollController::class, 'calculateRun'])->middleware('permission:payroll.run');
         Route::get('/runs/{runId}', [PayrollController::class, 'showRun'])->middleware('permission:payroll.view');
         Route::post('/runs/{runId}/finalize', [PayrollController::class, 'finalizeRun'])->middleware('permission:payroll.finalize');
         Route::post('/runs/{runId}/lock', [PayrollController::class, 'lockRun'])->middleware('permission:payroll.lock');
@@ -111,6 +113,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // -----------------------------------------------------------------------
     Route::prefix('reports')->group(function () {
         Route::get('/templates', [ReportController::class, 'templates'])->middleware('permission:reports.view');
+        Route::get('/download/{fileName}', [ReportController::class, 'download'])->where('fileName', '[A-Za-z0-9_\\-]+\\.(xlsx|csv)')->middleware('permission:reports.export');
         Route::post('/{code}/preview', [ReportController::class, 'preview'])->middleware('permission:reports.view');
         Route::post('/{code}/export', [ReportController::class, 'export'])->middleware('permission:reports.export');
     });

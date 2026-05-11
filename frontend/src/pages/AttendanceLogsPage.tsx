@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, UserRoundSearch } from "lucide-react";
-import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
+import { RefreshCw, Upload, UserRoundSearch } from "lucide-react";
+import { apiGet, apiPost, apiUpload, getApiErrorMessage } from "../lib/api";
 import { formatDateTime } from "../lib/format";
 import { useAuth } from "../context/AuthContext";
 import { boolValue, textValue, toArray } from "../lib/records";
@@ -35,6 +35,8 @@ export default function AttendanceLogsPage() {
     check_type: "in",
     reason: "",
   });
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importResult, setImportResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const permissionSet = createPermissionSet(user?.permissions);
   const canCreateManualLog = hasPermissionAccess(permissionSet, "attendance.manage_request");
@@ -68,6 +70,24 @@ export default function AttendanceLogsPage() {
     },
   });
 
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      if (!importFile) {
+        throw new Error("Vui lòng chọn file Excel.");
+      }
+
+      return apiUpload<unknown>("/attendance/checkin-logs/import", importFile);
+    },
+    onSuccess: async (response) => {
+      setError(null);
+      setImportResult((response.data ?? {}) as Record<string, unknown>);
+      await queryClient.invalidateQueries({ queryKey: ["attendance", "checkin-logs"] });
+    },
+    onError: (mutationError) => {
+      setError(getApiErrorMessage(mutationError, "Không thể import file check-in/out."));
+    },
+  });
+
   function updateFilter<K extends keyof LogFilters>(key: K, value: string) {
     setFilters((current) => ({ ...current, [key]: value }));
   }
@@ -75,6 +95,11 @@ export default function AttendanceLogsPage() {
   function submitManual(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     manualMutation.mutate();
+  }
+
+  function submitImport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    importMutation.mutate();
   }
 
   return (
@@ -185,9 +210,41 @@ export default function AttendanceLogsPage() {
           )}
         </Panel>
 
-        <Panel title="Chấm công thủ công" subtitle="Nhập thông tin chấm công thủ công">
-          {canCreateManualLog ? (
-            <form className="space-y-4" onSubmit={submitManual}>
+        <div className="space-y-6">
+          <Panel title="Import check-in/out Excel" subtitle="Nhập file mẫu Fujimart: cột Thời gian và Mã NV">
+            <form className="space-y-4" onSubmit={submitImport}>
+              <label className="block space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">File Excel</span>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(event) => setImportFile(event.target.files?.[0] ?? null)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={importMutation.isPending || !importFile}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Upload className="h-4 w-4" />
+                {importMutation.isPending ? "Đang import..." : "Import Excel"}
+              </button>
+              {importResult && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  <p className="font-semibold">Import hoàn tất</p>
+                  <p>
+                    Đã nhập {textValue(importResult, ["imported"], "0")} dòng, bỏ qua{" "}
+                    {textValue(importResult, ["skipped"], "0")} dòng.
+                  </p>
+                </div>
+              )}
+            </form>
+          </Panel>
+
+          <Panel title="Chấm công thủ công" subtitle="Nhập thông tin chấm công thủ công">
+            {canCreateManualLog ? (
+              <form className="space-y-4" onSubmit={submitManual}>
               <label className="block space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Mã nhân viên</span>
                 <input
@@ -237,13 +294,14 @@ export default function AttendanceLogsPage() {
                 {manualMutation.isPending ? "Đang lưu..." : "Ghi nhận"}
               </button>
             </form>
-          ) : (
-            <EmptyState
-              title="Không có quyền nhập công thủ công"
-              description="Tài khoản này chỉ được tra cứu log chấm công, không được tạo bản ghi thủ công."
-            />
-          )}
-        </Panel>
+            ) : (
+              <EmptyState
+                title="Không có quyền nhập công thủ công"
+                description="Tài khoản này chỉ được tra cứu log chấm công, không được tạo bản ghi thủ công."
+              />
+            )}
+          </Panel>
+        </div>
       </div>
     </div>
   );

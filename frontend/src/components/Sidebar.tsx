@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getNavigationForPermissions } from "../lib/rbac";
+import fujimartLogo from "../assets/fujimart_logo_highres_transparent.png";
 
 const activeClass = "bg-white/12 text-white shadow-[0_10px_20px_rgba(15,23,42,0.2)]";
 const inactiveClass = "text-slate-300 hover:bg-white/6 hover:text-white";
@@ -52,11 +53,14 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
         <div className={`mb-6 flex items-center ${collapsed ? "justify-center" : "justify-between px-2"}`}>
           {!collapsed && (
             <>
-              <div>
-                <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight text-white">
-                  Payroll ERP
-                </p>
-                <p className="text-xs text-slate-400">Chấm công, tính lương, hợp đồng</p>
+              <div className="flex min-w-0 items-center gap-3">
+                <img src={fujimartLogo} alt="Fujimart" className="h-10 w-10 shrink-0 rounded bg-white object-contain p-1" />
+                <div className="min-w-0">
+                  <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight text-white">
+                    Fujimart HRM
+                  </p>
+                  <p className="text-xs text-slate-400">Chấm công, tính lương, hợp đồng</p>
+                </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-300">
                 Trực tuyến
@@ -64,7 +68,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
             </>
           )}
           {collapsed && (
-            <p className="font-[family-name:var(--font-display)] text-lg font-bold text-white">P</p>
+            <img src={fujimartLogo} alt="Fujimart" className="h-9 w-9 rounded bg-white object-contain p-1" />
           )}
         </div>
 

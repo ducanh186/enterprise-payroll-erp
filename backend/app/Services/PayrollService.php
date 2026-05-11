@@ -21,7 +21,6 @@ use App\Models\Payslip;
 use App\Models\PayslipItem;
 use App\Models\SystemConfig;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -167,6 +166,39 @@ class PayrollService
 
             return $this->formatRun($run->fresh(['attendancePeriod', 'payslips.employee.department', 'payslips.items', 'payslips.contract.allowances.allowanceType']));
         });
+    }
+
+    public function calculateRun(array $data): array
+    {
+        $procedureResult = $this->tryCustomerPayrollProcedure($data);
+
+        if ($procedureResult['available'] && !$procedureResult['error']) {
+            return [
+                'message' => 'Tính lương hoàn tất từ stored procedure.',
+                'execution_mode' => 'stored_procedure',
+                'procedure' => $procedureResult['procedure'],
+                'row_count' => $procedureResult['row_count'],
+                'execution_ms' => $procedureResult['execution_ms'],
+                'result_sets' => $procedureResult['result_sets'],
+                'summary' => [
+                    'row_count' => $procedureResult['row_count'],
+                    'result_set_count' => count($procedureResult['result_sets']),
+                ],
+            ];
+        }
+
+        $preview = $this->previewRun(array_merge([
+            'scope' => 'all',
+            'parameters' => [],
+            'adjustments' => [],
+        ], $data));
+
+        return array_merge($preview, [
+            'message' => 'Stored procedure chưa sẵn sàng, hệ thống đã chạy payroll bằng Laravel fallback.',
+            'execution_mode' => 'laravel_fallback',
+            'procedure' => $procedureResult['procedure'],
+            'procedure_warning' => $procedureResult['error'],
+        ]);
     }
 
     public function getRun(string $runId): ?array
@@ -379,6 +411,42 @@ class PayrollService
             'to_date' => Carbon::create($year, $month, 1)->endOfMonth()->toDateString(),
             'status' => AttendancePeriodStatus::DRAFT->value,
         ]);
+    }
+
+    private function tryCustomerPayrollProcedure(array $data): array
+    {
+        $month = (int) ($data['month'] ?? Carbon::now()->month);
+        $year = (int) ($data['year'] ?? Carbon::now()->year);
+        $docDate = $data['doc_date'] ?? sprintf('%04d-%02d-01', $year, $month);
+        $parameters = [
+            '@_DocDate1' => Carbon::parse($docDate)->toDateString(),
+            '@_BranchCode' => (string) ($data['branch_code'] ?? ''),
+            '@_DeptCode' => (string) ($data['department_code'] ?? $data['department_id'] ?? ''),
+            '@_EmployeeCode' => (string) ($data['employee_code'] ?? ''),
+        ];
+
+        $lastResult = null;
+        foreach ([
+            'dbo.usp_CreateAndCalculatePayroll',
+            'dbo.usp_CalculatePayroll',
+            'dbo.usp_PayrollCalculation',
+        ] as $procedureName) {
+            $result = app(CustomerProcedureService::class)->execute($procedureName, $parameters);
+            if ($result['available'] && !$result['error']) {
+                return $result;
+            }
+
+            $lastResult = $result;
+        }
+
+        return $lastResult ?? [
+            'available' => false,
+            'procedure' => 'dbo.usp_CreateAndCalculatePayroll',
+            'result_sets' => [],
+            'row_count' => 0,
+            'execution_ms' => 0,
+            'error' => 'No payroll procedure candidate was executed.',
+        ];
     }
 
     protected function resolvePayrollRun(AttendancePeriod $period, string $scopeType = 'all', ?string $scopeValue = null, bool $draftOnly = false): PayrollRun
@@ -1357,7 +1425,7 @@ class PayrollService
         ];
     }
 
-    protected function aggregateAttendanceFromDaily(AttendancePeriod $period, EloquentCollection $dailyRows): array
+    protected function aggregateAttendanceFromDaily(AttendancePeriod $period, Collection $dailyRows): array
     {
         return [
             'period_id' => $period->id,

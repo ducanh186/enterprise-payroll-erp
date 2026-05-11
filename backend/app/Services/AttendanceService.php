@@ -8,7 +8,9 @@ use App\Models\AttendanceMonthlySummary;
 use App\Models\AttendancePeriod;
 use App\Models\AttendanceRequest;
 use App\Models\AttendanceRequestDetail;
+use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Position;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\SystemConfig;
@@ -22,6 +24,103 @@ use Illuminate\Support\Str;
 
 class AttendanceService
 {
+    public function importCheckinLogsFromExcel(string $path, ?int $userId = null): array
+    {
+        $rows = app(ExcelWorkbookService::class)->readFirstSheet($path);
+
+        if (count($rows) < 2) {
+            return [
+                'imported' => 0,
+                'skipped' => 0,
+                'errors' => ['File không có dòng dữ liệu để import.'],
+            ];
+        }
+
+        $headers = array_map(fn ($value) => $this->normalizeHeader((string) $value), $rows[0]);
+        $timeIndex = $this->findHeaderIndex($headers, ['thoigian', 'checktime', 'time']);
+        $employeeCodeIndex = $this->findHeaderIndex($headers, ['manv', 'employee', 'employeecode', 'code']);
+
+        if ($timeIndex === null || $employeeCodeIndex === null) {
+            return [
+                'imported' => 0,
+                'skipped' => count($rows) - 1,
+                'errors' => ['File cần có cột Thời gian và Mã NV.'],
+            ];
+        }
+
+        $employeeIdsByCode = Employee::query()
+            ->pluck('id', 'employee_code')
+            ->mapWithKeys(fn ($id, $code) => [Str::upper((string) $code) => (int) $id])
+            ->all();
+
+        $imported = 0;
+        $skipped = 0;
+        $errors = [];
+
+        DB::transaction(function () use ($rows, $timeIndex, $employeeCodeIndex, $employeeIdsByCode, $path, &$imported, &$skipped, &$errors) {
+            foreach (array_slice($rows, 1) as $offset => $row) {
+                $rowNumber = $offset + 2;
+                $employeeCode = Str::upper(trim((string) ($row[$employeeCodeIndex] ?? '')));
+                $rawTime = $row[$timeIndex] ?? null;
+
+                if ($employeeCode === '' || $rawTime === null || $rawTime === '') {
+                    $skipped++;
+                    continue;
+                }
+
+                $employeeId = $employeeIdsByCode[$employeeCode] ?? $this->syncCustomerEmployee($employeeCode, $employeeIdsByCode);
+                if (!$employeeId) {
+                    $skipped++;
+                    if (count($errors) < 10) {
+                        $errors[] = "Dòng {$rowNumber}: Không tìm thấy nhân viên {$employeeCode}.";
+                    }
+                    continue;
+                }
+
+                try {
+                    $logTime = $this->parseExcelDateTime($rawTime);
+                } catch (\Throwable) {
+                    $skipped++;
+                    if (count($errors) < 10) {
+                        $errors[] = "Dòng {$rowNumber}: Thời gian không hợp lệ.";
+                    }
+                    continue;
+                }
+
+                $logType = (int) $logTime->format('H') < 12 ? 'check_in' : 'check_out';
+                $rawRef = 'excel-' . sha1(basename($path) . '|' . $rowNumber . '|' . $employeeCode . '|' . $logTime->toISOString());
+
+                $log = TimeLog::query()->firstOrCreate(
+                    ['raw_ref' => $rawRef],
+                    [
+                        'employee_id' => $employeeId,
+                        'log_time' => $logTime,
+                        'machine_number' => 'excel',
+                        'log_type' => $logType,
+                        'source' => 'excel',
+                        'is_valid' => true,
+                        'invalid_reason' => null,
+                        'created_at' => now(),
+                    ]
+                );
+
+                if ($log->wasRecentlyCreated) {
+                    $imported++;
+                } else {
+                    $skipped++;
+                }
+            }
+        });
+
+        return [
+            'imported' => $imported,
+            'skipped' => $skipped,
+            'errors' => $errors,
+            'file_name' => basename($path),
+            'imported_by' => $userId,
+        ];
+    }
+
     public function getCheckinLogs(array $filters = []): array
     {
         $dateFrom = $filters['date_from'] ?? null;
@@ -177,6 +276,18 @@ class AttendanceService
 
     public function recalculate(array $data): array
     {
+        $procedureResult = $this->tryCustomerAttendanceProcedure($data);
+        if ($procedureResult['available'] && !$procedureResult['error']) {
+            return [
+                'message' => 'Tính và tổng hợp công hoàn tất từ stored procedure.',
+                'execution_mode' => 'stored_procedure',
+                'procedure' => $procedureResult['procedure'],
+                'row_count' => $procedureResult['row_count'],
+                'execution_ms' => $procedureResult['execution_ms'],
+                'result_sets' => count($procedureResult['result_sets']),
+            ];
+        }
+
         [$period, $fromDate, $toDate] = $this->resolveAttendancePeriod($data, true);
         $now = now();
 
@@ -256,6 +367,8 @@ class AttendanceService
             'year' => (int) $data['year'],
             'employees_processed' => $employees->count(),
             'records_updated' => $recordsUpdated,
+            'execution_mode' => 'laravel_fallback',
+            'procedure_warning' => $procedureResult['error'],
             'started_at' => $now->copy()->subSeconds(2)->toISOString(),
             'completed_at' => $now->toISOString(),
         ];
@@ -613,6 +726,57 @@ class AttendanceService
         ];
     }
 
+    private function tryCustomerAttendanceProcedure(array $data): array
+    {
+        $month = (int) ($data['month'] ?? Carbon::now()->month);
+        $year = (int) ($data['year'] ?? Carbon::now()->year);
+        $docDate = $data['doc_date'] ?? sprintf('%04d-%02d-01', $year, $month);
+
+        return app(CustomerProcedureService::class)->execute('dbo.usp_CreateAndCalculateAttendance', [
+            '@_DocDate1' => Carbon::parse($docDate)->toDateString(),
+            '@_BranchCode' => $data['branch_code'] ?? 'A01,A02',
+            '@_DeptCode' => $data['department_code'] ?? '',
+            '@_EmployeeCode' => $data['employee_code'] ?? '',
+        ]);
+    }
+
+    private function normalizeHeader(string $value): string
+    {
+        return preg_replace('/[^a-z0-9]/', '', Str::lower(Str::ascii(trim($value)))) ?? '';
+    }
+
+    /**
+     * @param array<int, string> $headers
+     * @param array<int, string> $candidates
+     */
+    private function findHeaderIndex(array $headers, array $candidates): ?int
+    {
+        foreach ($headers as $index => $header) {
+            foreach ($candidates as $candidate) {
+                if ($header === $candidate || str_contains($header, $candidate)) {
+                    return $index;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function parseExcelDateTime(mixed $value): Carbon
+    {
+        if (is_numeric($value)) {
+            $serial = (float) $value;
+            $days = (int) floor($serial);
+            $seconds = (int) round(($serial - $days) * 86400);
+
+            return Carbon::create(1899, 12, 30, 0, 0, 0)
+                ->addDays($days)
+                ->addSeconds($seconds);
+        }
+
+        return Carbon::parse((string) $value);
+    }
+
     private function resolveAttendancePeriod(array $filters, bool $allowCreate = false): array
     {
         $month = isset($filters['month']) ? (int) $filters['month'] : null;
@@ -672,6 +836,191 @@ class AttendanceService
             'check_in', 'in' => 'in',
             'check_out', 'out' => 'out',
             default => 'unknown',
+        };
+    }
+
+    /**
+     * Customer check-in/out files use D20Employee.Code from the restored SQL Server
+     * database. When a code is missing in the app DB, create the minimal local
+     * employee/department records needed to attach imported logs.
+     *
+     * @param array<string, int> $employeeIdsByCode
+     */
+    private function syncCustomerEmployee(string $employeeCode, array &$employeeIdsByCode): ?int
+    {
+        $connectionName = $this->customerConnectionName();
+        if (!$connectionName) {
+            return null;
+        }
+
+        $customerEmployee = $this->findCustomerEmployee($connectionName, $employeeCode);
+        if (!$customerEmployee) {
+            return null;
+        }
+
+        $departmentId = $this->syncCustomerDepartment(
+            $connectionName,
+            trim((string) ($customerEmployee->DeptCode ?? '')),
+        );
+        $positionId = $this->syncCustomerPosition(
+            $connectionName,
+            trim((string) ($customerEmployee->PositionCode ?? '')),
+            $departmentId,
+        );
+        $userId = $this->syncCustomerUser($employeeCode, $customerEmployee);
+
+        $employee = Employee::query()->updateOrCreate(
+            ['employee_code' => $employeeCode],
+            [
+                'user_id' => $userId,
+                'full_name' => trim((string) ($customerEmployee->FullName ?? $employeeCode)) ?: $employeeCode,
+                'dob' => $this->nullableDate($customerEmployee->BirthDate ?? null),
+                'gender' => $this->customerGender($customerEmployee->Gender ?? null),
+                'national_id' => $this->nullableString($customerEmployee->IdCardNo ?? null),
+                'tax_code' => $this->nullableString($customerEmployee->TaxRegNo ?? null),
+                'email' => $this->nullableString($customerEmployee->Email ?? null),
+                'phone' => $this->nullableString($customerEmployee->Mobile ?? null),
+                'bank_account_no' => $this->nullableString($customerEmployee->BankAccountNo ?? null),
+                'bank_name' => $this->nullableString($customerEmployee->BankName ?? null),
+                'department_id' => $departmentId,
+                'position_id' => $positionId,
+                'join_date' => $this->nullableDate($customerEmployee->FirstWorkingDate ?? null),
+                'employment_status' => ((bool) ($customerEmployee->IsActive ?? true)) ? 'active' : 'inactive',
+            ],
+        );
+
+        $employeeIdsByCode[Str::upper($employeeCode)] = (int) $employee->id;
+
+        return (int) $employee->id;
+    }
+
+    private function customerConnectionName(): ?string
+    {
+        return config('database.connections.customer_sqlsrv.database') ? 'customer_sqlsrv' : null;
+    }
+
+    private function findCustomerEmployee(string $connectionName, string $employeeCode): ?object
+    {
+        $candidates = [Str::upper($employeeCode)];
+        if (str_contains($employeeCode, '-')) {
+            $candidates[] = Str::upper(Str::before($employeeCode, '-'));
+        }
+
+        try {
+            foreach (array_unique($candidates) as $code) {
+                $employee = DB::connection($connectionName)
+                    ->table('D20Employee')
+                    ->where('Code', $code)
+                    ->first();
+
+                if ($employee) {
+                    return $employee;
+                }
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return null;
+    }
+
+    private function syncCustomerDepartment(string $connectionName, string $deptCode): ?int
+    {
+        if ($deptCode === '') {
+            return null;
+        }
+
+        $name = $deptCode;
+        try {
+            $department = DB::connection($connectionName)
+                ->table('D20Department')
+                ->where('Code', $deptCode)
+                ->first();
+            $name = trim((string) ($department->Name ?? $deptCode)) ?: $deptCode;
+        } catch (\Throwable) {
+            // Keep the code as the display name when customer metadata is unavailable.
+        }
+
+        return (int) Department::query()->firstOrCreate(
+            ['code' => $deptCode],
+            ['name' => $name, 'status' => 'active'],
+        )->id;
+    }
+
+    private function syncCustomerPosition(string $connectionName, string $positionCode, ?int $departmentId): ?int
+    {
+        if ($positionCode === '') {
+            return null;
+        }
+
+        if (!$departmentId) {
+            $departmentId = (int) Department::query()->firstOrCreate(
+                ['code' => 'FUJIMART'],
+                ['name' => 'Fujimart', 'status' => 'active'],
+            )->id;
+        }
+
+        $name = $positionCode;
+        try {
+            $position = DB::connection($connectionName)
+                ->table('D20Position')
+                ->where('Code', $positionCode)
+                ->first();
+            $name = trim((string) ($position->Name ?? $positionCode)) ?: $positionCode;
+        } catch (\Throwable) {
+            // Keep the code as the display name when customer metadata is unavailable.
+        }
+
+        return (int) Position::query()->firstOrCreate(
+            ['code' => $positionCode],
+            ['name' => $name, 'department_id' => $departmentId, 'status' => 'active'],
+        )->id;
+    }
+
+    private function syncCustomerUser(string $employeeCode, object $customerEmployee): int
+    {
+        $slug = Str::lower((string) preg_replace('/[^A-Za-z0-9]+/', '_', $employeeCode));
+        $slug = trim($slug, '_') ?: Str::lower(Str::random(8));
+        $username = 'fjm_' . substr($slug, 0, 40);
+
+        return (int) User::query()->firstOrCreate(
+            ['username' => $username],
+            [
+                'name' => trim((string) ($customerEmployee->FullName ?? $employeeCode)) ?: $employeeCode,
+                'email' => $username . '@fujimart.local',
+                'password' => Str::random(32),
+                'phone' => $this->nullableString($customerEmployee->Mobile ?? null),
+                'is_active' => false,
+            ],
+        )->id;
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        $text = trim((string) $value);
+
+        return $text === '' ? null : $text;
+    }
+
+    private function nullableDate(mixed $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->toDateString();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function customerGender(mixed $value): ?string
+    {
+        return match ((int) $value) {
+            1 => 'male',
+            2 => 'female',
+            default => null,
         };
     }
 

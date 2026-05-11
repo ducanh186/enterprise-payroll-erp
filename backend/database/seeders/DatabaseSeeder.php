@@ -34,9 +34,9 @@ class DatabaseSeeder extends Seeder
             ShiftHolidaySeeder::class,
             AttendanceSeeder::class,
             PayrollSeeder::class,
+            CustomerEmployeeSeeder::class,
             SystemSeeder::class,
             ProcedureCatalogSeeder::class,
         ]);
     }
 }
-

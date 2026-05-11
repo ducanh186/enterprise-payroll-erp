@@ -19,10 +19,6 @@ export default function AppLayout() {
   });
 
   useEffect(() => {
-    setMobileNavOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
     try {
       localStorage.setItem("sidebar-collapsed", String(collapsed));
     } catch {
@@ -35,8 +31,8 @@ export default function AppLayout() {
   const permissionsLoading = user !== null && user.permissions === undefined;
   const hasAccess = permissionsLoading ? true : canAccessRoute(location.pathname, permissionSet);
 
-  const title = routeMeta?.title ?? "Payroll ERP";
-  const subtitle = routeMeta?.subtitle ?? "Payroll ERP";
+  const title = routeMeta?.title ?? "Fujimart HRM";
+  const subtitle = routeMeta?.subtitle ?? "Fujimart HRM";
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.14),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(99,102,241,0.12),_transparent_24%),linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_100%)] text-slate-900">

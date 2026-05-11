@@ -55,6 +55,25 @@ class PayrollController extends Controller
         return $this->success($result, 'Payroll preview generated.');
     }
 
+    public function calculateRun(Request $request): JsonResponse
+    {
+        $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2020|max:2030',
+            'scope' => 'nullable|string|in:all,department',
+            'department_id' => 'nullable|integer',
+            'branch_code' => 'nullable|string|max:100',
+            'department_code' => 'nullable|string|max:100',
+            'employee_code' => 'nullable|string|max:100',
+            'parameters' => 'nullable|array',
+            'adjustments' => 'nullable|array',
+        ]);
+
+        $result = $this->payrollService->calculateRun($request->all());
+
+        return $this->success($result, 'Payroll calculation completed.');
+    }
+
     public function showRun(string $runId): JsonResponse
     {
         $result = $this->payrollService->getRun($runId);

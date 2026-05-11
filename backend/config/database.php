@@ -114,6 +114,21 @@ return [
             'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'true'),
         ],
 
+        'customer_sqlsrv' => [
+            'driver' => 'sqlsrv',
+            'url' => env('CUSTOMER_DB_URL'),
+            'host' => env('CUSTOMER_DB_HOST', env('DB_HOST', 'localhost')),
+            'port' => env('CUSTOMER_DB_PORT', env('DB_PORT', '1433')),
+            'database' => env('CUSTOMER_DB_DATABASE'),
+            'username' => env('CUSTOMER_DB_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('CUSTOMER_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'encrypt' => env('DB_ENCRYPT', 'yes'),
+            'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'true'),
+        ],
+
     ],
 
     /*

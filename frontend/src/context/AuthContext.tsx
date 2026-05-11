@@ -31,6 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(hydrateSession);
 
   useEffect(() => {
+    const handleSessionCleared = () => setSession(null);
+    window.addEventListener("auth:session-cleared", handleSessionCleared);
+    return () => window.removeEventListener("auth:session-cleared", handleSessionCleared);
+  }, []);
+
+  useEffect(() => {
     if (!session?.token || session.user.permissions !== undefined) {
       return;
     }
@@ -119,12 +125,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function readAuthError(error: unknown): string {
   return getApiErrorMessage(error, "Email hoặc mật khẩu không đúng.");
 }

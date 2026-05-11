@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -14,11 +15,11 @@ return new class extends Migration
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
             $table->string('employee_code', 20)->unique();
-            $table->foreignId('user_id')->nullable()->unique()->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('full_name', 100);
             $table->date('dob')->nullable();
             $table->string('gender', 10)->nullable();
-            $table->string('national_id', 20)->nullable()->unique();
+            $table->string('national_id', 20)->nullable();
             $table->string('tax_code', 20)->nullable();
             $table->string('email', 100)->nullable();
             $table->string('phone', 20)->nullable();
@@ -37,6 +38,18 @@ return new class extends Migration
             $table->date('join_date')->nullable();
             $table->string('employment_status', 20)->default('active');
             $table->timestamps();
+        });
+
+        if (DB::connection()->getDriverName() === 'sqlsrv') {
+            DB::statement('CREATE UNIQUE INDEX employees_user_id_unique ON employees (user_id) WHERE user_id IS NOT NULL');
+            DB::statement('CREATE UNIQUE INDEX employees_national_id_unique ON employees (national_id) WHERE national_id IS NOT NULL');
+
+            return;
+        }
+
+        Schema::table('employees', function (Blueprint $table) {
+            $table->unique('user_id');
+            $table->unique('national_id');
         });
     }
 

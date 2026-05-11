@@ -1,7 +1,6 @@
 import {
   CircleDollarSign,
   Clock,
-  FileText,
   LayoutDashboard,
   Shield,
   Users,
@@ -176,7 +175,7 @@ const NAV_ITEMS: NavigationItem[] = [
             required: allOf("attendance.view", "reports.view"),
           },
           {
-            to: "/reports?category=attendance&code=monthly",
+            to: "/reports?category=attendance&code=FUJIMART_ATTENDANCE_REPORT",
             label: "Bảng chấm công",
             required: allOf("attendance.view", "reports.view"),
           },
@@ -217,27 +216,19 @@ const NAV_ITEMS: NavigationItem[] = [
       {
         heading: "Báo cáo",
         items: [
-          { to: "/payroll/payslips", label: "Phiếu lương", required: "payroll.view" },
           {
-            to: "/reports?category=payroll",
-            label: "Bảng tổng hợp thanh toán lương",
+            to: "/reports?category=payroll&code=FUJIMART_PAYROLL_SLIP",
+            label: "Phiếu lương cá nhân",
+            required: allOf("payroll.view", "reports.view"),
+          },
+          {
+            to: "/reports?category=payroll&code=FUJIMART_PAYROLL_REPORT",
+            label: "Bảng thanh toán lương theo chi nhánh/phòng ban",
             required: allOf("payroll.view", "reports.view"),
           },
         ],
       },
     ],
-  },
-  {
-    to: "/reports",
-    label: "Báo cáo",
-    icon: FileText,
-    required: "reports.view",
-  },
-  {
-    to: "/procedures",
-    label: "SQL Integration",
-    icon: FileText,
-    required: "reports.view",
   },
   {
     label: "Quản trị",
@@ -358,10 +349,10 @@ const ROUTE_META: RouteMeta[] = [
   },
 
   { pattern: "/reports", title: "Trung tâm báo cáo", subtitle: "Báo cáo", required: "reports.view" },
-  { pattern: "/procedures", title: "SQL Integration", subtitle: "Stored Procedures", required: "reports.view" },
+  { pattern: "/procedures", title: "Thủ tục SQL", subtitle: "Stored Procedures", required: "reports.view" },
 
   { pattern: "/admin", title: "Quản trị hệ thống", subtitle: "Quản trị", required: ADMIN_ACCESS },
-  { pattern: "/admin/users", title: "Quản lý người dùng", subtitle: "Quản trị", required: "admin.users" },
+  { pattern: "/admin/users", title: "Người dùng", subtitle: "Quản trị", required: "admin.users" },
   { pattern: "/admin/roles", title: "Phân quyền", subtitle: "Quản trị", required: "admin.roles" },
 ];
 

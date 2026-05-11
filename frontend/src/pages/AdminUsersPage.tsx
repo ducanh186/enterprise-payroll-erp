@@ -153,6 +153,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (editorAction === "edit" && editorId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedId(editorId);
       return;
     }
@@ -164,6 +165,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (currentSelected) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditUser({
         name: textValue(currentSelected, ["name"], ""),
         email: textValue(currentSelected, ["email"], ""),

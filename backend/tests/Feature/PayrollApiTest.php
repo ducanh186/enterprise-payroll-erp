@@ -86,6 +86,19 @@ class PayrollApiTest extends TestCase
         $this->assertNotNull($detail->json('data.attendance'));
     }
 
+    public function test_payroll_calculate_handles_period_without_attendance_rows(): void
+    {
+        $response = $this->withHeaders($this->authHeaders())->postJson('/api/payroll/runs/calculate', [
+            'month' => 5,
+            'year' => 2026,
+            'scope' => 'all',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.period.period_code', '2026-05');
+    }
+
     private function authHeaders(): array
     {
         $login = $this->postJson('/api/auth/login', [
