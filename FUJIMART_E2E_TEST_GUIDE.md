@@ -1,19 +1,19 @@
-# Fujimart HRM E2E Test Guide
+# Hướng dẫn kiểm thử E2E Fujimart HRM
 
-## Muc tieu
+## Mục tiêu
 
-Tai lieu nay dung de test lai scope Fujimart HRM theo Google Doc "The 3" va database khach hang. Nguyen tac la moi requirement quan trong phai co mot UI check ro rang: thao tac tren man hinh, ket qua mong doi, va lenh de chay lai.
+Tài liệu này dùng để kiểm thử lại phạm vi Fujimart HRM theo Google Doc "The 3" và cơ sở dữ liệu khách hàng. Nguyên tắc là mỗi yêu cầu quan trọng phải có một bước kiểm tra UI rõ ràng: thao tác trên màn hình, kết quả mong đợi và lệnh để chạy lại.
 
-## Source of truth
+## Nguồn đối chiếu chính
 
-- Google Doc: "The 3" va bang "Chu thich bang".
-- Google Drive: folder `HRM_Fujimart`, gom logo, sample Excel, UML.
-- SQL Server backup: `docker/data/fujimart/DUNGNTN_HRM.bak`, restore thanh database `fujimart_hrm_source`.
-- Neu Google Doc va restored DB khac nhau, uu tien restored DB va ghi lai mismatch khi bao cao.
+- Google Doc: "The 3" và bảng "Chú thích bảng".
+- Google Drive: thư mục `HRM_Fujimart`, gồm logo, file Excel mẫu và UML.
+- Bản sao lưu SQL Server: `docker/data/fujimart/DUNGNTN_HRM.bak`, restore thành cơ sở dữ liệu `fujimart_hrm_source`.
+- Nếu Google Doc và cơ sở dữ liệu đã restore khác nhau, ưu tiên cơ sở dữ liệu đã restore và ghi lại phần lệch khi báo cáo.
 
-## Cach chay loop day du
+## Cách chạy toàn bộ vòng kiểm tra
 
-Chay cac lenh tu root repo `D:\CODE\enterprise-payroll-erp`.
+Chạy các lệnh từ thư mục gốc của repo `D:\CODE\enterprise-payroll-erp`.
 
 ```powershell
 docker compose up -d --build
@@ -45,54 +45,54 @@ $env:E2E_BASE_URL = "http://localhost:5173"
 npm run test:e2e:smoke
 ```
 
-Neu mot check fail: sua dung layer dang fail, rebuild Docker, chay lai check nho nhat truoc, sau do chay lai full loop.
+Nếu một bước kiểm tra bị lỗi: sửa đúng tầng đang hỏng, build lại Docker, chạy lại bước kiểm tra nhỏ nhất trước, sau đó mới chạy lại toàn bộ vòng kiểm tra.
 
-## Tai khoan smoke
+## Tài khoản smoke test
 
-- `admin01` / `password`: dung de test full flow.
-- `hr01` / `password`: test login role HR.
-- `payroll01` / `password`: test login role payroll.
-- `manager01` / `password`: test login role manager.
-- `emp001` / `password`: test login employee seeded tu Fujimart.
+- `admin01` / `password`: dùng để test toàn bộ luồng chính.
+- `hr01` / `password`: test đăng nhập vai trò HR.
+- `payroll01` / `password`: test đăng nhập vai trò payroll.
+- `manager01` / `password`: test đăng nhập vai trò quản lý.
+- `emp001` / `password`: test đăng nhập nhân viên được seed từ dữ liệu Fujimart.
 
-## Mapping requirement -> UI test
+## Ánh xạ yêu cầu sang UI test
 
-| Requirement | UI test trong `frontend/e2e/app-smoke.spec.ts` | Thao tac UI | Expected result |
+| Yêu cầu | UI test trong `frontend/e2e/app-smoke.spec.ts` | Thao tác UI | Kết quả mong đợi |
 | --- | --- | --- | --- |
-| Hien thi `Fujimart HRM` va logo Fujimart | `admin can use Fujimart HRM customer flows...` | Login `admin01`, vao dashboard | Title la `Fujimart HRM`, logo alt `Fujimart` hien thi |
-| Sidebar theo BFD 3 cap, an tu "Quan ly" | Step `Sidebar exposes the Fujimart BFD structure` | Mo nhom `Nhan su & HDLD`, `Cham cong`, `Tinh luong` | Co cac link dung nghiep vu, khong co label `Quan ly` |
-| Employee detail co tab nguoi phu thuoc | Step `Employee detail includes dependents tab` | Vao `/employees`, mo chi tiet nhan vien, chon `Nguoi phu thuoc` | Tab va noi dung nguoi phu thuoc hien thi |
-| Payroll parameter co 2 view khach hang | Step `Payroll parameters expose Fujimart source views` | Vao `/payroll/parameters`, click 2 tab | Hien `vD20PayrollPara_ValuePara` va `vD20PayrollPara_SalaryType` |
-| Import Excel check-in/out cua khach | Step `Import customer check-in/out Excel` | Vao `/attendance/logs`, upload `Data checkinout.xlsx`, bam `Import Excel` | Hien `Import hoan tat` va so dong da nhap lon hon 0 |
-| Chay tinh cong | Step `Run attendance procedure` | Vao `/attendance/summary`, chon thang 1 nam 2026, bam tinh lai | Hien thong bao da chay tinh cong, khong co API 4xx/5xx |
-| Chay tinh luong | Step `Run payroll procedure` | Vao `/payroll/run`, chon thang 1 nam 2026, bam `Chay tinh luong` | Hien preview nhan vien/bang luong, khong co API 4xx/5xx |
-| Preview/export Bang cham cong | Step `Preview and export Bang cham cong` | Vao report `FUJIMART_ATTENDANCE_REPORT`, bam `Xem truoc`, `Xuat bao cao`, `Tai file` | Preview co JSON, download file `.xlsx` |
-| Preview/export Bang thanh toan luong | Step `Preview and export Bang thanh toan luong...` | Vao report `FUJIMART_PAYROLL_REPORT`, bam `Xem truoc`, `Xuat bao cao`, `Tai file` | Preview co JSON, download file `.xlsx` |
-| Preview/export Phieu luong ca nhan | Step `Preview and export Phieu luong ca nhan` | Vao report `FUJIMART_PAYROLL_SLIP`, nhap `NV001`, export | Preview co JSON, download file `.xlsx` |
-| Token cu bi reject thi quay ve login | Test `stale stored session is cleared...` | Mo `/payroll/run` voi stale token, bam action | App ve `/login`, khong de loi console/API treo UI |
-| Login cac role seeded | Test `seed user ... can log in through the UI` | Login tung user seeded | Moi role vao duoc dashboard |
+| Hiển thị `Fujimart HRM` và logo Fujimart | `admin can use Fujimart HRM customer flows...` | Đăng nhập `admin01`, vào dashboard | Tiêu đề là `Fujimart HRM`, logo có alt `Fujimart` được hiển thị |
+| Sidebar theo BFD 3 cấp, ẩn từ `Quản lý` | Step `Sidebar exposes the Fujimart BFD structure` | Mở các nhóm `Nhân sự & HĐLĐ`, `Chấm công`, `Tính lương` | Có các liên kết đúng nghiệp vụ, không còn nhãn `Quản lý` |
+| Chi tiết nhân viên có tab người phụ thuộc | Step `Employee detail includes dependents tab` | Vào `/employees`, mở chi tiết nhân viên, chọn `Người phụ thuộc` | Tab và nội dung người phụ thuộc hiển thị đúng |
+| Tham số lương có 2 view của khách hàng | Step `Payroll parameters expose Fujimart source views` | Vào `/payroll/parameters`, bấm 2 tab | Hiển thị `vD20PayrollPara_ValuePara` và `vD20PayrollPara_SalaryType` |
+| Import file Excel check-in/check-out của khách hàng | Step `Import customer check-in/out Excel` | Vào `/attendance/logs`, tải lên `Data checkinout.xlsx`, bấm `Import Excel` | Hiển thị `Import hoàn tất` và số dòng đã nhập lớn hơn 0 |
+| Chạy tính công | Step `Run attendance procedure` | Vào `/attendance/summary`, chọn tháng 1 năm 2026, bấm tính lại | Hiển thị thông báo đã chạy tính công, không có API 4xx/5xx |
+| Chạy tính lương | Step `Run payroll procedure` | Vào `/payroll/run`, chọn tháng 1 năm 2026, bấm `Chạy tính lương` | Hiển thị phần xem trước nhân viên/bảng lương, không có API 4xx/5xx |
+| Xem trước/xuất Bảng chấm công | Step `Preview and export Bang cham cong` | Vào báo cáo `FUJIMART_ATTENDANCE_REPORT`, bấm `Xem trước`, `Xuất báo cáo`, `Tải file` | Phần xem trước có JSON, tải được file `.xlsx` |
+| Xem trước/xuất Bảng thanh toán lương | Step `Preview and export Bang thanh toan luong...` | Vào báo cáo `FUJIMART_PAYROLL_REPORT`, bấm `Xem trước`, `Xuất báo cáo`, `Tải file` | Phần xem trước có JSON, tải được file `.xlsx` |
+| Xem trước/xuất Phiếu lương cá nhân | Step `Preview and export Phieu luong ca nhan` | Vào báo cáo `FUJIMART_PAYROLL_SLIP`, nhập `NV001`, export | Phần xem trước có JSON, tải được file `.xlsx` |
+| Token cũ bị từ chối thì quay về login | Test `stale stored session is cleared...` | Mở `/payroll/run` với stale token, bấm thao tác bất kỳ | Ứng dụng quay về `/login`, không để lỗi console hoặc API làm treo UI |
+| Đăng nhập các vai trò đã seed | Test `seed user ... can log in through the UI` | Đăng nhập từng user đã seed | Mỗi vai trò đều vào được dashboard |
 
-Ghi chu: cac feature import -> tinh cong -> tinh luong -> report phu thuoc du lieu lien tiep, nen Playwright gom vao mot user journey va dung `test.step` nhu mot UI test cap requirement. Khi them requirement doc lap, tao mot `test(...)` rieng; khi requirement can du lieu tu buoc truoc, tao mot `test.step(...)` ten ro nghiep vu.
+Ghi chú: các tính năng import -> tính công -> tính lương -> báo cáo phụ thuộc dữ liệu liên tiếp, nên Playwright nên gom vào một user journey và dùng `test.step` như một UI test cấp yêu cầu. Khi thêm yêu cầu độc lập, tạo một `test(...)` riêng; khi yêu cầu cần dữ liệu từ bước trước, tạo một `test.step(...)` với tên nghiệp vụ rõ ràng.
 
-## Checklist browser-use manual
+## Checklist kiểm thử thủ công bằng browser-use
 
-Sau khi Playwright pass, dung browser-use/in-app browser de smoke bang mat nguoi:
+Sau khi Playwright chạy pass, dùng browser-use hoặc in-app browser để kiểm tra thủ công bằng mắt:
 
-1. Mo `http://localhost:5173/login`.
-2. Login `admin01` / `password`.
-3. Xac nhan header/sidebar hien `Fujimart HRM`, co logo, khong co label `Quan ly`.
-4. Mo `Nhan su & HDLD` -> `Ho so can bo nhan vien` -> chi tiet -> `Nguoi phu thuoc`.
-5. Mo `Cham cong` -> `Du lieu thoi gian vao - ra`, upload sample Excel, bam `Import Excel`.
-6. Mo `Bang cham cong`, chon `01/2026`, bam tinh lai.
-7. Mo `Tinh luong` -> `Bo cong thuc va tham so luong`, click ca 2 tab view.
-8. Mo `Trinh chay bang luong`, chon `01/2026`, bam `Chay tinh luong`.
-9. Mo `Bao cao`, preview/export 3 report Fujimart va tai file `.xlsx`.
-10. Mo DevTools/console neu co the; khong duoc con page error, console error, hoac API 4xx/5xx trong smoke.
+1. Mở `http://localhost:5173/login`.
+2. Đăng nhập `admin01` / `password`.
+3. Xác nhận header và sidebar hiển thị `Fujimart HRM`, có logo và không còn nhãn `Quản lý`.
+4. Mở `Nhân sự & HĐLĐ` -> `Hồ sơ cán bộ nhân viên` -> chi tiết -> `Người phụ thuộc`.
+5. Mở `Chấm công` -> `Dữ liệu thời gian vào - ra`, tải lên file Excel mẫu, bấm `Import Excel`.
+6. Mở `Bảng chấm công`, chọn `01/2026`, bấm tính lại.
+7. Mở `Tính lương` -> `Bộ công thức và tham số lương`, bấm cả 2 tab view.
+8. Mở `Trình chạy bảng lương`, chọn `01/2026`, bấm `Chạy tính lương`.
+9. Mở `Báo cáo`, xem trước/xuất 3 báo cáo Fujimart và tải file `.xlsx`.
+10. Mở DevTools hoặc console nếu có thể; không được còn page error, console error hoặc API 4xx/5xx trong smoke test.
 
-## Expected files and boundaries
+## Tệp kỳ vọng và ranh giới phạm vi
 
-- `.bak` khong commit vao git.
-- Sample import Excel nam trong runtime storage; chi dung de test.
-- Logo va Excel templates duoc commit vi runtime can chung de hien thi/export.
-- Local Docker SQL Server can co `DUNGNTN_HRM.bak` trong `docker/data/fujimart/` truoc khi restore.
-- Report payslip preview/export goi `dbo.usp_PayrollSlip` voi `_SendEmail = 0` trong smoke de khong phu thuoc cau hinh Database Mail cua may local.
+- Không commit file `.bak` vào git.
+- File Excel import mẫu nằm trong runtime storage; chỉ dùng để test.
+- Logo và các Excel template được commit vì runtime cần để hiển thị và export.
+- SQL Server Docker cục bộ phải có `DUNGNTN_HRM.bak` trong `docker/data/fujimart/` trước khi restore.
+- Report phiếu lương khi preview/export gọi `dbo.usp_PayrollSlip` với `_SendEmail = 0` trong smoke test để không phụ thuộc cấu hình Database Mail của máy local.
