@@ -93,6 +93,16 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
   await expect(page.getByText(/Fujimart\s*HRM/i).first()).toBeVisible();
   await expect(page.getByText("Quản lý", { exact: false })).toHaveCount(0);
 
+  await test.step("Sidebar can be collapsed and expanded", async () => {
+    await expect(page.getByRole("button", { name: "Thu gọn sidebar" })).toBeVisible();
+    await page.getByRole("button", { name: "Thu gọn sidebar" }).click();
+    await expect(page.getByRole("button", { name: "Mở rộng sidebar" })).toBeVisible();
+    await expect(page.getByText(/Fujimart\s*HRM/i).first()).toBeHidden();
+    await page.getByRole("button", { name: "Mở rộng sidebar" }).click();
+    await expect(page.getByRole("button", { name: "Thu gọn sidebar" })).toBeVisible();
+    await expect(page.getByText(/Fujimart\s*HRM/i).first()).toBeVisible();
+  });
+
   await test.step("Sidebar exposes the Fujimart BFD structure", async () => {
     await page.getByRole("button", { name: "Nhân sự & HĐLĐ" }).click();
     await expect(page.getByRole("link", { name: "Hồ sơ cán bộ nhân viên" })).toBeVisible();

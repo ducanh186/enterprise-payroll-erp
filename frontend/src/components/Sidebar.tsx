@@ -175,11 +175,16 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="absolute bottom-5 left-1/2 hidden -translate-x-1/2 items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-400 transition hover:bg-white/10 hover:text-white lg:flex"
+          className={`absolute bottom-5 hidden items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white lg:flex ${
+            collapsed
+              ? "left-1/2 -translate-x-1/2 p-2"
+              : "left-4 right-4 px-3 py-2 text-sm font-semibold"
+          }`}
           aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
           title={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
         >
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          {!collapsed && <span>Thu gọn</span>}
         </button>
       </aside>
     </>
