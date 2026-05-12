@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $department_id
  * @property int|null $position_id
  * @property \Illuminate\Support\Carbon|null $join_date
+ * @property \Illuminate\Support\Carbon|null $resign_date
  * @property EmploymentStatus $employment_status
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -76,6 +77,7 @@ class Employee extends Model
         'department_id',
         'position_id',
         'join_date',
+        'resign_date',
         'employment_status',
     ];
 
@@ -89,6 +91,7 @@ class Employee extends Model
         return [
             'dob' => 'date',
             'join_date' => 'date',
+            'resign_date' => 'date',
             'employment_status' => EmploymentStatus::class,
         ];
     }

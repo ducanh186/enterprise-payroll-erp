@@ -53,3 +53,32 @@ export function formatCompactDate(value: string | Date | null | undefined): stri
   });
 }
 
+export function isoToDisplayDate(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  if (value instanceof Date) {
+    const day = String(value.getDate()).padStart(2, "0");
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    return `${day}/${month}/${value.getFullYear()}`;
+  }
+
+  const text = String(value);
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+  }
+
+  return text;
+}
+
+export function displayDateToIso(value: string): string {
+  const text = value.trim();
+  if (!text) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+
+  const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return text;
+
+  const day = match[1].padStart(2, "0");
+  const month = match[2].padStart(2, "0");
+  return `${match[3]}-${month}-${day}`;
+}

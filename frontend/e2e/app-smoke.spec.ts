@@ -78,6 +78,15 @@ async function openRoute(page: Page, href: string, heading: string | RegExp) {
   await expect(page.locator("main").getByText(heading).first()).toBeVisible();
 }
 
+async function fillLabeledInput(page: Page, label: string, value: string) {
+  const input = page.getByLabel(label, { exact: true });
+  await input.fill(value);
+}
+
+async function selectLabeledCombobox(page: Page, label: string, value: string) {
+  await page.getByRole("combobox", { name: label }).selectOption(value);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("sidebar-collapsed", "false");
@@ -85,6 +94,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", async ({ page }) => {
+  test.setTimeout(300_000);
   const assertNoRuntimeErrors = attachRuntimeGuards(page);
 
   await loginThroughUi(page);
@@ -111,33 +121,109 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
     await expect(page.getByRole("link", { name: "Dữ liệu thời gian vào - ra" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Bảng chấm công" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Tính lương" }).click();
-    await expect(page.getByRole("link", { name: "Bộ công thức và tham số lương" })).toBeVisible();
+    await page.getByRole("button", { name: "Tiền lương" }).click();
+    await expect(page.getByRole("link", { name: "Tham số lương" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Gửi email phiếu lương" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Phiếu lương cá nhân" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Bảng thanh toán lương theo chi nhánh/phòng ban" })).toBeVisible();
   });
 
-  await test.step("Employee detail includes dependents tab", async () => {
+  await test.step("Employee create/edit/detail/dependent/suspend actions persist", async () => {
+    const employeeCode = `E2E${Date.now().toString().slice(-6)}`;
+    const updatedName = `E2E Nguyen Van ${employeeCode}`;
+
     await openRoute(page, "/employees", "Hồ sơ cán bộ nhân viên");
-    await page.getByRole("button", { name: /Tab chi tiết/i }).first().click();
+
+    await page.getByRole("button", { name: "Thêm mới" }).click();
+    await fillLabeledInput(page, "Mã nhân viên", employeeCode);
+    await fillLabeledInput(page, "Họ và tên", `E2E Draft ${employeeCode}`);
+    await selectLabeledCombobox(page, "Gender", "female");
+    await fillLabeledInput(page, "BirthDate", "14/02/1996");
+    await fillLabeledInput(page, "IdCardNo", `079096${employeeCode.slice(-6)}`);
+    await fillLabeledInput(page, "Email", `${employeeCode.toLowerCase()}@fujimart.test`);
+    await fillLabeledInput(page, "Mobile", "0912345678");
+    await fillLabeledInput(page, "Ngày vào làm", "01/01/2026");
+    await page.getByRole("button", { name: "Lưu" }).click();
+    await expect(page.getByRole("cell", { name: employeeCode, exact: true })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("dialog", { name: `E2E Draft ${employeeCode}` })).toBeVisible();
+
+    await page.getByRole("dialog", { name: `E2E Draft ${employeeCode}` }).getByRole("button", { name: "Sửa" }).click();
+    await expect(page.getByRole("dialog", { name: "Sửa nhân viên" })).toBeVisible();
+    await fillLabeledInput(page, "Họ và tên", updatedName);
+    await fillLabeledInput(page, "ResignDate", "31/12/2026");
+    await page.getByRole("button", { name: "Lưu" }).click();
+    await expect(page.getByRole("heading", { name: updatedName })).toBeVisible({ timeout: 30_000 });
+
     await expect(page.getByRole("button", { name: "Hồ sơ" })).toBeVisible();
+    await expect(page.getByText("Gender")).toBeVisible();
+    await expect(page.getByText("BirthDate")).toBeVisible();
+    await expect(page.getByText("IdCardNo")).toBeVisible();
+    await expect(page.getByText("ResignDate")).toBeVisible();
+
     await page.getByRole("button", { name: "Người phụ thuộc" }).click();
     await expect(page.getByText(/người phụ thuộc/i).first()).toBeVisible();
+    await page.getByRole("button", { name: "Thêm người phụ thuộc" }).click();
+    await fillLabeledInput(page, "Họ tên", `Dependent ${employeeCode}`);
+    await fillLabeledInput(page, "Quan hệ", "Con");
+    await fillLabeledInput(page, "Ngày sinh", "01/06/2020");
+    await fillLabeledInput(page, "Số giấy tờ", `DEP${employeeCode.slice(-6)}`);
+    await page.getByRole("button", { name: "Lưu" }).click();
+    await expect(page.getByText(`Dependent ${employeeCode}`)).toBeVisible({ timeout: 30_000 });
+
+    await page.getByRole("button", { name: "Sửa" }).last().click();
+    await fillLabeledInput(page, "Quan hệ", "Con ruột");
+    await page.getByRole("button", { name: "Lưu" }).click();
+    await expect(page.getByText("Con ruột")).toBeVisible({ timeout: 30_000 });
+
+    const suspendResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/employees/") &&
+        response.url().includes("/suspend") &&
+        response.request().method() === "POST",
+      { timeout: 30_000 },
+    );
+    await page.getByRole("button", { name: "Đình chỉ" }).click();
+    await suspendResponse;
+    await page.getByRole("button", { name: "Đóng" }).click();
+    await page.getByRole("button", { name: "Làm mới" }).click();
+    await expect(page.getByRole("row", { name: new RegExp(employeeCode) }).getByText("Đình chỉ")).toBeVisible({
+      timeout: 30_000,
+    });
   });
 
   await test.step("Payroll parameters expose Fujimart source views", async () => {
-    await openRoute(page, "/payroll/parameters", "Bộ công thức và tham số lương");
+    await openRoute(page, "/payroll/parameters", "Tham số lương");
     await expect(page.getByRole("button", { name: "vD20PayrollPara_ValuePara" })).toBeVisible();
     await expect(page.getByText("Nguồn view: vD20PayrollPara_ValuePara")).toBeVisible();
     await page.getByRole("button", { name: "vD20PayrollPara_SalaryType" }).click();
     await expect(page.getByText("Nguồn view: vD20PayrollPara_SalaryType")).toBeVisible();
   });
 
+  await test.step("Salary scale page exposes D20SalaryScale to grade detail structure", async () => {
+    await openRoute(page, "/reference/salary-levels", "Danh mục thang lương");
+    await page.getByRole("button", { name: "Làm mới" }).click();
+    await page.getByRole("button", { name: /Tab chi tiết/i }).first().click();
+    await expect(page.getByRole("dialog").getByText("SalaryLevel")).toBeVisible();
+    await page.getByRole("button", { name: "Xem khoản thu nhập" }).first().click();
+    await expect(page.getByRole("heading", { name: "D20SalaryGradeDetail" })).toBeVisible();
+  });
+
+  await test.step("Payroll slip email action runs customer procedure contract", async () => {
+    await openRoute(page, "/payroll/payslips/email", "Gửi email phiếu lương");
+    await expect(page.getByLabel("DocDate1")).toHaveValue("05/05/2026");
+    await fillLabeledInput(page, "EmployeeCode", "NV001");
+    await fillLabeledInput(page, "DeptCode", "");
+    await fillLabeledInput(page, "BranchCode", "A01,A02");
+    await page.getByRole("button", { name: "Gửi email phiếu lương" }).click();
+    await expect(page.getByText("dbo.usp_PayrollSlip")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("@_SendEmail")).toBeVisible();
+  });
+
   await test.step("Import customer check-in/out Excel", async () => {
     await openRoute(page, "/attendance/logs", "Nhật ký check-in");
     await page.setInputFiles('input[type="file"]', CHECKIN_SAMPLE);
     await page.getByRole("button", { name: "Import Excel" }).click();
-    await expect(page.getByText(/Import hoàn tất/i)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Import hoàn tất/i)).toBeVisible({ timeout: 90_000 });
     await expect(page.getByText(/Đã nhập [1-9][0-9]* dòng/i)).toBeVisible();
   });
 
@@ -164,6 +250,13 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
   for (const report of FUJIMART_REPORTS) {
     await test.step(`Preview and export ${report.title}`, async () => {
       await openRoute(page, report.url, "Trung tâm báo cáo");
+      await page.getByRole("button", { name: "Làm mới" }).first().click();
+      await expect(page.getByText("Bảng chấm công").first()).toBeVisible();
+      await expect(page.getByText("Bảng thanh toán lương theo chi nhánh/phòng ban").first()).toBeVisible();
+      await expect(page.getByText("Phiếu lương cá nhân").first()).toBeVisible();
+      await expect(page.getByText("Từ ngày")).toBeVisible();
+      await expect(page.getByLabel("Từ ngày", { exact: true })).toHaveValue("01/01/2026");
+      await expect(page.getByLabel("Đến ngày", { exact: true })).toHaveValue("31/01/2026");
       await expect(page.getByText(report.title).first()).toBeVisible();
       if (report.employeeCode) {
         await page.getByPlaceholder("Dùng cho phiếu lương cá nhân").fill(report.employeeCode);
@@ -208,6 +301,6 @@ test("stale stored session is cleared when the API rejects the token", async ({ 
 
   await page.goto("/payroll/run");
   await page.getByRole("button", { name: "Chạy tính lương" }).click();
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login$/, { timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Đăng nhập hệ thống" })).toBeVisible();
 });

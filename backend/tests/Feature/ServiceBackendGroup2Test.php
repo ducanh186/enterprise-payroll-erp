@@ -13,13 +13,14 @@ class ServiceBackendGroup2Test extends TestCase
 
     protected $seed = true;
 
-    public function test_report_templates_come_from_database(): void
+    public function test_report_templates_follow_fujimart_bfd_scope(): void
     {
         $templates = app(ReportService::class)->getTemplates();
 
-        $this->assertCount(13, $templates);
-        $this->assertSame('RPT_ATTENDANCE_DAILY', $templates[0]['code']);
-        $this->assertSame('RPT_PAYROLL_SUMMARY', $templates[2]['code']);
+        $this->assertCount(3, $templates);
+        $this->assertSame('FUJIMART_ATTENDANCE_REPORT', $templates[0]['code']);
+        $this->assertSame('FUJIMART_PAYROLL_REPORT', $templates[1]['code']);
+        $this->assertSame('FUJIMART_PAYROLL_SLIP', $templates[2]['code']);
     }
 
     public function test_attendance_checkin_logs_keep_paginated_shape(): void

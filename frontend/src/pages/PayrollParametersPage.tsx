@@ -57,7 +57,7 @@ export default function PayrollParametersPage() {
     <div className="space-y-8 pb-10">
       <PageHeader
         eyebrow="Tính lương"
-        title="Bộ công thức và tham số lương"
+        title="Tham số lương"
         description="Tra cứu tham số theo đúng 2 view Fujimart: ValuePara và SalaryType."
         actions={
           <>

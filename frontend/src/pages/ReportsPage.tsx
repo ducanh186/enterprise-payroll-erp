@@ -24,6 +24,7 @@ import { formatDateTime, formatNumber } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
 import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState, Panel } from "../components/ui";
+import DateInput from "../components/DateInput";
 
 type Template = Record<string, unknown>;
 type Department = Record<string, unknown>;
@@ -131,6 +132,17 @@ export default function ReportsPage() {
 
   const templates = useMemo(() => toArray<Template>(templatesQuery.data?.data), [templatesQuery.data?.data]);
   const departments = useMemo(() => toArray<Department>(departmentsQuery.data?.data), [departmentsQuery.data?.data]);
+
+  const refreshReports = async () => {
+    setPreview(null);
+    setExportResult(null);
+    setError(null);
+    await Promise.all([
+      templatesQuery.refetch(),
+      canViewDepartments ? departmentsQuery.refetch() : Promise.resolve(),
+    ]);
+  };
+
   const selectedCode = searchParams.get("code") || textValue(templates[0], ["code"], "");
   const isDateRangeReport = selectedCode.startsWith("HRM_") || selectedCode.startsWith("FUJIMART_");
   const isFujimartReport = selectedCode.startsWith("FUJIMART_");
@@ -264,7 +276,7 @@ export default function ReportsPage() {
           </div>
           <button
             type="button"
-            onClick={() => templatesQuery.refetch()}
+            onClick={refreshReports}
             className="flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             <RefreshCcw className="h-3.5 w-3.5" />
@@ -393,10 +405,9 @@ export default function ReportsPage() {
                       <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         Từ ngày
                       </span>
-                      <input
-                        type="date"
+                      <DateInput
                         value={form.date_from}
-                        onChange={(e) => setForm((c) => ({ ...c, date_from: e.target.value }))}
+                        onChange={(value) => setForm((c) => ({ ...c, date_from: value }))}
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                       />
                     </label>
@@ -404,10 +415,9 @@ export default function ReportsPage() {
                       <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         Đến ngày
                       </span>
-                      <input
-                        type="date"
+                      <DateInput
                         value={form.date_to}
-                        onChange={(e) => setForm((c) => ({ ...c, date_to: e.target.value }))}
+                        onChange={(value) => setForm((c) => ({ ...c, date_to: value }))}
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                       />
                     </label>
@@ -751,7 +761,7 @@ export default function ReportsPage() {
           </div>
           <button
             type="button"
-            onClick={() => templatesQuery.refetch()}
+            onClick={refreshReports}
             className="text-sm font-semibold text-sky-600 hover:text-sky-800 transition-colors"
           >
             Tải lại

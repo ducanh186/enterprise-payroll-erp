@@ -74,6 +74,21 @@ class PayrollController extends Controller
         return $this->success($result, 'Payroll calculation completed.');
     }
 
+    public function emailPayslip(Request $request): JsonResponse
+    {
+        $request->validate([
+            'doc_date' => 'required|string|max:20',
+            'employee_code' => 'nullable|string|max:100',
+            'department_code' => 'nullable|string|max:100',
+            'dept_code' => 'nullable|string|max:100',
+            'branch_code' => 'nullable|string|max:100',
+        ]);
+
+        $result = $this->payrollService->emailPayslip($request->all());
+
+        return $this->success($result, 'Payroll slip email procedure executed.');
+    }
+
     public function showRun(string $runId): JsonResponse
     {
         $result = $this->payrollService->getRun($runId);

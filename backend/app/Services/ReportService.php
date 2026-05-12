@@ -19,6 +19,12 @@ use Illuminate\Support\Collection;
 
 class ReportService
 {
+    private const FUJIMART_BFD_REPORT_CODES = [
+        'FUJIMART_ATTENDANCE_REPORT',
+        'FUJIMART_PAYROLL_REPORT',
+        'FUJIMART_PAYROLL_SLIP',
+    ];
+
     public function __construct(
         private readonly AttendanceReportRepository $attendanceReportRepo = new AttendanceReportRepository()
     ) {}
@@ -26,8 +32,10 @@ class ReportService
     {
         return ReportTemplate::query()
             ->active()
+            ->whereIn('code', self::FUJIMART_BFD_REPORT_CODES)
             ->orderBy('id')
             ->get()
+            ->sortBy(fn (ReportTemplate $template) => array_search($template->code, self::FUJIMART_BFD_REPORT_CODES, true))
             ->map(fn (ReportTemplate $template) => $this->formatTemplate($template))
             ->values()
             ->all();

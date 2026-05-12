@@ -201,6 +201,39 @@ class PayrollService
         ]);
     }
 
+    public function emailPayslip(array $data): array
+    {
+        $docDate = Carbon::parse((string) ($data['doc_date'] ?? $data['date_from'] ?? now()->toDateString()))->toDateString();
+        $procedureName = 'dbo.usp_PayrollSlip';
+        $parameters = [
+            '@_DocDate1' => $docDate,
+            '@_EmployeeCode' => (string) ($data['employee_code'] ?? ''),
+            '@_DeptCode' => (string) ($data['department_code'] ?? $data['dept_code'] ?? ''),
+            '@_BranchCode' => (string) ($data['branch_code'] ?? 'A01,A02'),
+            '@_SendEmail' => 1,
+            '@_MailProfile' => '',
+        ];
+
+        $procedureResult = app(CustomerProcedureService::class)->execute($procedureName, $parameters);
+        $message = $procedureResult['available'] && !$procedureResult['error']
+            ? 'Đã chạy gửi email phiếu lương.'
+            : 'Stored procedure gửi email chưa sẵn sàng, đã ghi nhận tham số thực thi.';
+
+        return [
+            'report_code' => 'FUJIMART_PAYROLL_SLIP',
+            'message' => $message,
+            'execution_mode' => $procedureResult['available'] && !$procedureResult['error']
+                ? 'stored_procedure'
+                : 'procedure_unavailable',
+            'procedure' => $procedureName,
+            'parameters' => $parameters,
+            'row_count' => $procedureResult['row_count'],
+            'execution_ms' => $procedureResult['execution_ms'],
+            'result_sets' => $procedureResult['result_sets'],
+            'procedure_warning' => $procedureResult['error'],
+        ];
+    }
+
     public function getRun(string $runId): ?array
     {
         $run = PayrollRun::query()

@@ -147,12 +147,14 @@ export function Modal({
   title,
   children,
   size = "md",
+  zIndexClass = "z-50",
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  zIndexClass?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -167,11 +169,14 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4"
+      className={`fixed inset-0 ${zIndexClass} flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4`}
       onClick={onClose}
     >
       <div
         className={`relative w-full ${MODAL_SIZE_CLASSES[size]} rounded-2xl border border-slate-200 bg-white shadow-2xl`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

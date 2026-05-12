@@ -58,6 +58,83 @@ class EmployeeContractFlowTest extends TestCase
         $this->assertArrayHasKey('position', $data);
         $this->assertArrayHasKey('email', $data);
         $this->assertArrayHasKey('phone', $data);
+        $this->assertArrayHasKey('gender', $data);
+        $this->assertArrayHasKey('birth_date', $data);
+        $this->assertArrayHasKey('id_card_no', $data);
+        $this->assertArrayHasKey('mobile', $data);
+        $this->assertArrayHasKey('resign_date', $data);
+    }
+
+    public function test_create_update_and_suspend_employee_persists_to_database(): void
+    {
+        $headers = $this->authHeaders();
+
+        $create = $this->withHeaders($headers)->postJson('/api/employees', [
+            'employee_code' => 'NV999',
+            'full_name' => 'Nguyen Thi Test',
+            'gender' => 'female',
+            'birth_date' => '1999-01-15',
+            'id_card_no' => '079199900001',
+            'email' => 'nv999@fujimart.local',
+            'mobile' => '0909999999',
+            'hire_date' => '2026-01-01',
+            'resign_date' => null,
+            'status' => 'active',
+        ]);
+
+        $create->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.employee_code', 'NV999')
+            ->assertJsonPath('data.birth_date', '1999-01-15')
+            ->assertJsonPath('data.id_card_no', '079199900001')
+            ->assertJsonPath('data.mobile', '0909999999');
+
+        $id = $create->json('data.id');
+
+        $update = $this->withHeaders($headers)->putJson("/api/employees/{$id}", [
+            'full_name' => 'Nguyen Thi Test Updated',
+            'mobile' => '0911111111',
+            'resign_date' => '2026-12-31',
+        ]);
+
+        $update->assertOk()
+            ->assertJsonPath('data.full_name', 'Nguyen Thi Test Updated')
+            ->assertJsonPath('data.mobile', '0911111111')
+            ->assertJsonPath('data.resign_date', '2026-12-31');
+
+        $suspend = $this->withHeaders($headers)->postJson("/api/employees/{$id}/suspend");
+
+        $suspend->assertOk()
+            ->assertJsonPath('data.status', 'inactive')
+            ->assertJsonPath('data.active_status', false);
+    }
+
+    public function test_employee_dependent_can_be_created_and_updated_from_detail_tab(): void
+    {
+        $headers = $this->authHeaders();
+
+        $create = $this->withHeaders($headers)->postJson('/api/employees/1/dependents', [
+            'full_name' => 'Nguyen Dependent Test',
+            'relationship' => 'Con',
+            'date_of_birth' => '2020-02-20',
+            'identity_number' => '020202020202',
+            'tax_deduction_from' => '2026-01-01',
+        ]);
+
+        $create->assertCreated()
+            ->assertJsonPath('data.full_name', 'Nguyen Dependent Test')
+            ->assertJsonPath('data.date_of_birth', '2020-02-20');
+
+        $dependentId = $create->json('data.id');
+
+        $update = $this->withHeaders($headers)->putJson("/api/employees/1/dependents/{$dependentId}", [
+            'full_name' => 'Nguyen Dependent Updated',
+            'relationship' => 'Con ruot',
+        ]);
+
+        $update->assertOk()
+            ->assertJsonPath('data.full_name', 'Nguyen Dependent Updated')
+            ->assertJsonPath('data.relationship', 'Con ruot');
     }
 
     public function test_employee_not_found_returns_404(): void

@@ -23,6 +23,7 @@ services:
       - FRONTEND_URL=http://localhost:5173
       - SESSION_DRIVER=file
       - CACHE_STORE=file
+      - PHP_CLI_SERVER_WORKERS=8
     command: sh -lc "php artisan optimize:clear && php artisan serve --host=0.0.0.0 --port=8000"
     depends_on:
       sqlserver:

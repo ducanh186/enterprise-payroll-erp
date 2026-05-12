@@ -36,6 +36,7 @@ import LeaveRequestsPage from "./pages/LeaveRequestsPage";
 import ManualAttendancePage from "./pages/ManualAttendancePage";
 import BonusDeductionsPage from "./pages/BonusDeductionsPage";
 import PayrollPeriodsPage from "./pages/PayrollPeriodsPage";
+import PayrollEmailPayslipsPage from "./pages/PayrollEmailPayslipsPage";
 
 export default function App() {
   return (
@@ -74,6 +75,7 @@ export default function App() {
                 <Route path="payroll/parameters" element={<PayrollParametersPage />} />
                 <Route path="payroll/bonus-deductions" element={<BonusDeductionsPage />} />
                 <Route path="payroll/run" element={<PayrollRunPage />} />
+                <Route path="payroll/payslips/email" element={<PayrollEmailPayslipsPage />} />
                 <Route path="payroll/periods" element={<PayrollPeriodsPage />} />
                 <Route path="payroll/payslips" element={<PayslipsPage />} />
                 <Route path="payroll/payslips/:id" element={<PayslipDetailPage />} />

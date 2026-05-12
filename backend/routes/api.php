@@ -48,6 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/late-early-rules', [ReferenceController::class, 'lateEarlyRules']);
         Route::get('/departments', [ReferenceController::class, 'departments']);
         Route::get('/salary-levels', [ReferenceController::class, 'salaryLevels']);
+        Route::get('/salary-scales', [ReferenceController::class, 'salaryScales']);
         Route::get('/allowances', [ReferenceController::class, 'allowances']);
     });
 
@@ -56,9 +57,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // -----------------------------------------------------------------------
     Route::prefix('employees')->middleware('permission:employee.view')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
+        Route::post('/', [EmployeeController::class, 'store'])->middleware('permission:employee.create');
         Route::get('/{id}', [EmployeeController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}', [EmployeeController::class, 'update'])->where('id', '[0-9]+')->middleware('permission:employee.update');
+        Route::post('/{id}/suspend', [EmployeeController::class, 'suspend'])->where('id', '[0-9]+')->middleware('permission:employee.delete');
         Route::get('/{id}/active-contract', [EmployeeController::class, 'activeContract'])->where('id', '[0-9]+');
         Route::get('/{id}/dependents', [EmployeeController::class, 'dependents'])->where('id', '[0-9]+');
+        Route::post('/{id}/dependents', [EmployeeController::class, 'storeDependent'])->where('id', '[0-9]+')->middleware('permission:employee.update');
+        Route::put('/{id}/dependents/{dependentId}', [EmployeeController::class, 'updateDependent'])
+            ->where(['id' => '[0-9]+', 'dependentId' => '[0-9]+'])
+            ->middleware('permission:employee.update');
     });
 
     // -----------------------------------------------------------------------
@@ -100,6 +108,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/runs/{runId}/finalize', [PayrollController::class, 'finalizeRun'])->middleware('permission:payroll.finalize');
         Route::post('/runs/{runId}/lock', [PayrollController::class, 'lockRun'])->middleware('permission:payroll.lock');
         Route::get('/payslips', [PayrollController::class, 'payslips'])->middleware('permission:payroll.view');
+        Route::post('/payslips/email', [PayrollController::class, 'emailPayslip'])->middleware('permission:payroll.run');
         Route::get('/payslips/{id}', [PayrollController::class, 'showPayslip'])->where('id', '[0-9]+')->middleware('permission:payroll.view');
         Route::get('/payslips/{id}/details', [PayrollController::class, 'payslipDetails'])->where('id', '[0-9]+')->middleware('permission:payroll.view');
         Route::post('/adjustments', [PayrollController::class, 'createAdjustment'])->middleware('permission:payroll.adjust');

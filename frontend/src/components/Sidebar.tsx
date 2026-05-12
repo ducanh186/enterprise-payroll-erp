@@ -72,7 +72,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           )}
         </div>
 
-        <nav className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
+        <nav className="flex flex-col gap-2 overflow-y-auto pb-20" style={{ maxHeight: "calc(100vh - 128px)" }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isExpanded = expandedModules[item.label];

@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Models\LabourContract;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class EmployeeService
@@ -45,6 +46,47 @@ class EmployeeService
         }
 
         return $this->formatEmployee($employee, true);
+    }
+
+    public function createEmployee(array $data): array
+    {
+        return DB::transaction(function () use ($data) {
+            $employee = Employee::query()->create($this->employeePayload($data));
+
+            return $this->formatEmployee($employee->fresh(['department', 'position']), true);
+        });
+    }
+
+    public function updateEmployee(int $id, array $data): ?array
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $employee = Employee::query()->with(['department', 'position'])->find($id);
+
+            if (!$employee) {
+                return null;
+            }
+
+            $employee->fill($this->employeePayload($data, true));
+            $employee->save();
+
+            return $this->formatEmployee($employee->fresh(['department', 'position']), true);
+        });
+    }
+
+    public function suspendEmployee(int $id): ?array
+    {
+        return DB::transaction(function () use ($id) {
+            $employee = Employee::query()->with(['department', 'position'])->find($id);
+
+            if (!$employee) {
+                return null;
+            }
+
+            $employee->employment_status = EmploymentStatus::INACTIVE;
+            $employee->save();
+
+            return $this->formatEmployee($employee->fresh(['department', 'position']), true);
+        });
     }
 
     public function getActiveContract(int $employeeId): ?array
@@ -128,6 +170,35 @@ class EmployeeService
             ->all();
     }
 
+    public function createDependent(int $employeeId, array $data): ?array
+    {
+        $employee = Employee::query()->find($employeeId);
+
+        if (!$employee) {
+            return null;
+        }
+
+        $dependent = $employee->dependents()->create($this->dependentPayload($data));
+
+        return $this->formatDependent($dependent);
+    }
+
+    public function updateDependent(int $employeeId, int $dependentId, array $data): ?array
+    {
+        $dependent = Dependent::query()
+            ->where('employee_id', $employeeId)
+            ->find($dependentId);
+
+        if (!$dependent) {
+            return null;
+        }
+
+        $dependent->fill($this->dependentPayload($data, true));
+        $dependent->save();
+
+        return $this->formatDependent($dependent->fresh());
+    }
+
     protected function applyEmployeeFilters(Builder $query, array $filters): void
     {
         if (!empty($filters['keyword'])) {
@@ -185,6 +256,113 @@ class EmployeeService
         };
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function employeePayload(array $data, bool $partial = false): array
+    {
+        $fields = [
+            'employee_code' => ['employee_code', 'code'],
+            'full_name' => ['full_name', 'name'],
+            'gender' => ['gender'],
+            'dob' => ['birth_date', 'date_of_birth', 'dob'],
+            'national_id' => ['id_card_no', 'identity_number', 'national_id'],
+            'tax_code' => ['tax_code'],
+            'email' => ['email'],
+            'phone' => ['mobile', 'phone'],
+            'bank_account_no' => ['bank_account_no', 'bank_account'],
+            'bank_name' => ['bank_name'],
+            'department_id' => ['department_id'],
+            'position_id' => ['position_id'],
+            'join_date' => ['hire_date', 'join_date', 'start_date'],
+            'resign_date' => ['resign_date'],
+            'employment_status' => ['status', 'employment_status'],
+        ];
+
+        $payload = [];
+        foreach ($fields as $column => $aliases) {
+            [$found, $value] = $this->firstPresent($data, $aliases);
+            if (!$found) {
+                continue;
+            }
+
+            if (in_array($column, ['dob', 'join_date', 'resign_date'], true)) {
+                $payload[$column] = $this->nullableDate($value);
+            } elseif (in_array($column, ['department_id', 'position_id'], true)) {
+                $payload[$column] = $value === null || $value === '' ? null : (int) $value;
+            } elseif ($column === 'employment_status') {
+                $payload[$column] = $this->normalizeEmploymentStatusValue($value);
+            } else {
+                $payload[$column] = $value === null ? null : trim((string) $value);
+            }
+        }
+
+        if (!$partial && !array_key_exists('employment_status', $payload)) {
+            $payload['employment_status'] = EmploymentStatus::ACTIVE->value;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function dependentPayload(array $data, bool $partial = false): array
+    {
+        $fields = [
+            'full_name' => ['full_name', 'name'],
+            'relationship' => ['relationship'],
+            'dob' => ['date_of_birth', 'birth_date', 'dob'],
+            'national_id' => ['identity_number', 'id_card_no', 'national_id'],
+            'tax_reduction_from' => ['tax_deduction_from', 'tax_reduction_from'],
+            'tax_reduction_to' => ['tax_deduction_to', 'tax_reduction_to'],
+        ];
+
+        $payload = [];
+        foreach ($fields as $column => $aliases) {
+            [$found, $value] = $this->firstPresent($data, $aliases);
+            if (!$found) {
+                continue;
+            }
+
+            $payload[$column] = in_array($column, ['dob', 'tax_reduction_from', 'tax_reduction_to'], true)
+                ? $this->nullableDate($value)
+                : ($value === null ? null : trim((string) $value));
+        }
+
+        if (!$partial && !array_key_exists('relationship', $payload)) {
+            $payload['relationship'] = '';
+        }
+
+        return $payload;
+    }
+
+    protected function firstPresent(array $data, array $keys): array
+    {
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $data)) {
+                return [true, $data[$key]];
+            }
+        }
+
+        return [false, null];
+    }
+
+    protected function normalizeEmploymentStatusValue(mixed $value): string
+    {
+        if ($value instanceof EmploymentStatus) {
+            return $value->value;
+        }
+
+        $normalized = Str::lower(trim((string) $value));
+
+        return match ($normalized) {
+            'inactive', '0', 'false', 'suspended' => EmploymentStatus::INACTIVE->value,
+            'terminated', 'resigned', 'nghi viec' => EmploymentStatus::TERMINATED->value,
+            default => EmploymentStatus::ACTIVE->value,
+        };
+    }
+
     protected function formatEmployee(Employee $employee, bool $detailed = false): array
     {
         $data = [
@@ -193,19 +371,24 @@ class EmployeeService
             'full_name' => $employee->full_name,
             'gender' => $employee->gender,
             'date_of_birth' => $this->dateValue($employee->dob),
+            'birth_date' => $this->dateValue($employee->dob),
             'phone' => $employee->phone,
+            'mobile' => $employee->phone,
             'email' => $employee->email,
+            'identity_number' => $employee->national_id,
+            'id_card_no' => $employee->national_id,
             'department_id' => $employee->department_id,
             'department_name' => data_get($employee, 'department.name'),
             'position' => data_get($employee, 'position.name'),
             'hire_date' => $this->dateValue($employee->join_date),
+            'resign_date' => $this->dateValue($employee->resign_date),
+            'status' => $this->enumValue($employee->employment_status),
             'active_status' => $this->enumValue($employee->employment_status) === EmploymentStatus::ACTIVE->value,
             'avatar' => null,
         ];
 
         if ($detailed) {
             $data += [
-                'identity_number' => $employee->national_id,
                 'tax_code' => $employee->tax_code,
                 'bank_account' => $employee->bank_account_no,
                 'bank_name' => $employee->bank_name,
@@ -319,6 +502,15 @@ class EmployeeService
     }
 
     protected function dateValue(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return Carbon::parse((string) $value)->toDateString();
+    }
+
+    protected function nullableDate(mixed $value): ?string
     {
         if ($value === null || $value === '') {
             return null;

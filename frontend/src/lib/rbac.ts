@@ -184,7 +184,7 @@ const NAV_ITEMS: NavigationItem[] = [
     ],
   },
   {
-    label: "Tính lương",
+    label: "Tiền lương",
     icon: CircleDollarSign,
     subCategories: [
       {
@@ -192,7 +192,7 @@ const NAV_ITEMS: NavigationItem[] = [
         items: [
           {
             to: "/payroll/parameters",
-            label: "Bộ công thức và tham số lương",
+            label: "Tham số lương",
             required: "payroll.manage_param",
           },
         ],
@@ -206,6 +206,11 @@ const NAV_ITEMS: NavigationItem[] = [
             required: "payroll.adjust",
           },
           { to: "/payroll/run", label: "Tính lương", required: "payroll.run" },
+          {
+            to: "/payroll/payslips/email",
+            label: "Gửi email phiếu lương",
+            required: "payroll.run",
+          },
           {
             to: "/payroll/periods",
             label: "Bảng lương",
@@ -320,31 +325,37 @@ const ROUTE_META: RouteMeta[] = [
     required: "attendance.view",
   },
 
-  { pattern: "/payroll", title: "Tổng quan tính lương", subtitle: "Tính lương", required: PAYROLL_ACCESS },
+  { pattern: "/payroll", title: "Tổng quan tiền lương", subtitle: "Tiền lương", required: PAYROLL_ACCESS },
   {
     pattern: "/payroll/parameters",
-    title: "Bộ công thức và tham số lương",
-    subtitle: "Tính lương • Danh mục",
+    title: "Tham số lương",
+    subtitle: "Tiền lương • Danh mục",
     required: "payroll.manage_param",
   },
   {
     pattern: "/payroll/bonus-deductions",
     title: "Khen thưởng và kỷ luật",
-    subtitle: "Tính lương • Biến động",
+    subtitle: "Tiền lương • Biến động",
     required: "payroll.adjust",
   },
-  { pattern: "/payroll/run", title: "Tính lương", subtitle: "Tính lương • Biến động", required: "payroll.run" },
+  { pattern: "/payroll/run", title: "Tính lương", subtitle: "Tiền lương • Biến động", required: "payroll.run" },
+  {
+    pattern: "/payroll/payslips/email",
+    title: "Gửi email phiếu lương",
+    subtitle: "Tiền lương • Biến động",
+    required: "payroll.run",
+  },
   {
     pattern: "/payroll/periods",
     title: "Bảng lương",
-    subtitle: "Tính lương • Biến động",
+    subtitle: "Tiền lương • Biến động",
     required: anyOf("payroll.view", "payroll.run", "payroll.finalize", "payroll.lock"),
   },
-  { pattern: "/payroll/payslips", title: "Phiếu lương", subtitle: "Tính lương • Báo cáo", required: "payroll.view" },
+  { pattern: "/payroll/payslips", title: "Phiếu lương", subtitle: "Tiền lương • Báo cáo", required: "payroll.view" },
   {
     pattern: "/payroll/payslips/:id",
     title: "Chi tiết phiếu lương",
-    subtitle: "Tính lương • Báo cáo",
+    subtitle: "Tiền lương • Báo cáo",
     required: "payroll.view",
   },
 

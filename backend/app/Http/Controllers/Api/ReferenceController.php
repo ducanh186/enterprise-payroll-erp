@@ -55,6 +55,11 @@ class ReferenceController extends Controller
         return $this->success($this->referenceService->getSalaryLevels());
     }
 
+    public function salaryScales(): JsonResponse
+    {
+        return $this->success($this->referenceService->getSalaryScales());
+    }
+
     public function allowances(): JsonResponse
     {
         return $this->success($this->referenceService->getAllowances());

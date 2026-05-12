@@ -22,7 +22,7 @@ class ReportFlowTest extends TestCase
         return ['Authorization' => 'Bearer ' . $login->json('data.token')];
     }
 
-    public function test_list_report_templates(): void
+    public function test_list_report_templates_returns_only_fujimart_bfd_reports(): void
     {
         $headers = $this->authHeaders();
 
@@ -33,14 +33,13 @@ class ReportFlowTest extends TestCase
 
         $data = $response->json('data');
         $this->assertIsArray($data);
-        $this->assertGreaterThanOrEqual(13, count($data));
+        $this->assertCount(3, $data);
 
-        // First template should have code and name
-        $first = $data[0];
-        $this->assertArrayHasKey('code', $first);
-        $this->assertArrayHasKey('name', $first);
-        $this->assertArrayHasKey('description', $first);
-        $this->assertSame('RPT_ATTENDANCE_DAILY', $first['code']);
+        $this->assertSame([
+            'FUJIMART_ATTENDANCE_REPORT',
+            'FUJIMART_PAYROLL_REPORT',
+            'FUJIMART_PAYROLL_SLIP',
+        ], array_column($data, 'code'));
     }
 
     public function test_preview_and_export_fujimart_reports(): void
@@ -78,6 +77,29 @@ class ReportFlowTest extends TestCase
             $this->assertStringEndsWith('.xlsx', $export->json('data.file_name'));
             $this->assertGreaterThan(0, (int) $export->json('data.file_size'));
         }
+    }
+
+    public function test_send_fujimart_payroll_slip_email_uses_customer_procedure_contract(): void
+    {
+        $headers = $this->authHeaders();
+
+        $response = $this->withHeaders($headers)->postJson('/api/payroll/payslips/email', [
+            'doc_date' => '2026-05-05',
+            'employee_code' => '',
+            'department_code' => '',
+            'branch_code' => 'A01,A02',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.report_code', 'FUJIMART_PAYROLL_SLIP')
+            ->assertJsonPath('data.procedure', 'dbo.usp_PayrollSlip')
+            ->assertJsonPath('data.parameters.@_DocDate1', '2026-05-05')
+            ->assertJsonPath('data.parameters.@_EmployeeCode', '')
+            ->assertJsonPath('data.parameters.@_DeptCode', '')
+            ->assertJsonPath('data.parameters.@_BranchCode', 'A01,A02')
+            ->assertJsonPath('data.parameters.@_SendEmail', 1)
+            ->assertJsonPath('data.parameters.@_MailProfile', '');
     }
 
     public function test_preview_payslip_report(): void
@@ -207,5 +229,32 @@ class ReportFlowTest extends TestCase
         $this->assertArrayHasKey('code', $first);
         $this->assertArrayHasKey('employee_count', $first);
         $this->assertArrayHasKey('is_active', $first);
+    }
+
+    public function test_salary_scales_expose_scale_grade_and_grade_detail_structure(): void
+    {
+        $headers = $this->authHeaders();
+
+        $response = $this->withHeaders($headers)->getJson('/api/reference/salary-scales');
+
+        $response->assertOk()
+            ->assertJsonPath('success', true);
+
+        $data = $response->json('data');
+        $this->assertIsArray($data);
+        $this->assertNotEmpty($data);
+
+        $first = $data[0];
+        $this->assertArrayHasKey('code', $first);
+        $this->assertArrayHasKey('name', $first);
+        $this->assertArrayHasKey('grades', $first);
+        $this->assertNotEmpty($first['grades']);
+
+        $grade = $first['grades'][0];
+        $this->assertArrayHasKey('id', $grade);
+        $this->assertArrayHasKey('salary_level', $grade);
+        $this->assertArrayHasKey('details', $grade);
+        $this->assertNotEmpty($grade['details']);
+        $this->assertArrayHasKey('amount', $grade['details'][0]);
     }
 }

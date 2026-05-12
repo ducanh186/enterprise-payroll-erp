@@ -13,6 +13,9 @@ use App\Models\PayrollType;
 use App\Models\SalaryLevel;
 use App\Models\Shift;
 use Carbon\Carbon;
+use Illuminate\Database\ConnectionInterface;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ReferenceService
@@ -150,6 +153,13 @@ class ReferenceService
                 'effective_to' => $this->dateValue($level->effective_to),
             ])
             ->all();
+    }
+
+    public function getSalaryScales(): array
+    {
+        $customerScales = $this->customerSalaryScales();
+
+        return $customerScales !== null ? $customerScales : $this->localSalaryScales();
     }
 
     public function getAllowances(): array
@@ -303,6 +313,142 @@ class ReferenceService
         }
 
         return Carbon::parse((string) $value)->toDateString();
+    }
+
+    protected function customerSalaryScales(): ?array
+    {
+        $connection = $this->customerConnection();
+
+        if (!$this->tableExists($connection, 'D20SalaryScale') || !$this->tableExists($connection, 'D20SalaryGrade')) {
+            return null;
+        }
+
+        $scales = collect($connection->table('D20SalaryScale')->get());
+        $grades = collect($connection->table('D20SalaryGrade')->get());
+        $details = $this->tableExists($connection, 'D20SalaryGradeDetail')
+            ? collect($connection->table('D20SalaryGradeDetail')->get())
+            : collect();
+
+        return $scales
+            ->map(function (object $scale) use ($grades, $details): array {
+                $code = (string) (data_get($scale, 'Code') ?? data_get($scale, 'code') ?? '');
+                $scaleGrades = $grades
+                    ->filter(fn (object $grade) => (string) (data_get($grade, 'ScaleCode') ?? data_get($grade, 'scale_code') ?? '') === $code)
+                    ->sortBy(fn (object $grade) => (int) (data_get($grade, 'SalaryLevel') ?? data_get($grade, 'salary_level') ?? data_get($grade, 'Id') ?? 0))
+                    ->values()
+                    ->map(fn (object $grade) => $this->formatCustomerSalaryGrade($grade, $details, $code))
+                    ->all();
+
+                return [
+                    'code' => $code,
+                    'name' => (string) (data_get($scale, 'Name') ?? data_get($scale, 'name') ?? $code),
+                    'description' => data_get($scale, 'Description') ?? data_get($scale, 'description'),
+                    'is_active' => (bool) (data_get($scale, 'IsActive') ?? data_get($scale, 'is_active') ?? true),
+                    'grades' => $scaleGrades,
+                    'source' => 'customer_sqlsrv',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    protected function localSalaryScales(): array
+    {
+        return SalaryLevel::query()
+            ->with(['payrollType'])
+            ->orderBy('payroll_type_id')
+            ->orderBy('level_no')
+            ->get()
+            ->groupBy('payroll_type_id')
+            ->map(function (Collection $levels, int|string $payrollTypeId): array {
+                /** @var SalaryLevel $first */
+                $first = $levels->first();
+                $scaleCode = data_get($first, 'payrollType.code') ?? 'PAYROLL_TYPE_' . $payrollTypeId;
+                $scaleName = data_get($first, 'payrollType.name') ?? 'Thang lương ' . $scaleCode;
+
+                return [
+                    'code' => $scaleCode,
+                    'name' => $scaleName,
+                    'description' => 'Fallback từ bảng salary_levels nội bộ.',
+                    'is_active' => true,
+                    'grades' => $levels
+                        ->map(fn (SalaryLevel $level) => [
+                            'id' => $level->id,
+                            'scale_code' => $scaleCode,
+                            'effective_date' => $this->dateValue($level->effective_from),
+                            'salary_level' => (int) $level->level_no,
+                            'description' => $level->code,
+                            'details' => [
+                                [
+                                    'row_id' => 'SL-' . $level->id . '-BASE',
+                                    'parent_id' => (string) $level->id,
+                                    'salary_type' => data_get($level, 'payrollType.code') ?? 'BASE',
+                                    'amount' => $this->numericValue($level->amount),
+                                    'description' => data_get($level, 'payrollType.name') ?? 'Lương cơ bản',
+                                ],
+                            ],
+                        ])
+                        ->values()
+                        ->all(),
+                    'source' => 'laravel_fallback',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    protected function formatCustomerSalaryGrade(object $grade, Collection $details, string $scaleCode): array
+    {
+        $id = (string) (data_get($grade, 'Id') ?? data_get($grade, 'id') ?? '');
+        $gradeDetails = $details
+            ->filter(function (object $detail) use ($id, $scaleCode): bool {
+                $parentId = (string) (data_get($detail, 'ParentId') ?? data_get($detail, 'parent_id') ?? '');
+
+                return $parentId === $id || $parentId === $scaleCode;
+            })
+            ->values()
+            ->map(fn (object $detail) => [
+                'row_id' => (string) (data_get($detail, 'RowId') ?? data_get($detail, 'row_id') ?? ''),
+                'parent_id' => (string) (data_get($detail, 'ParentId') ?? data_get($detail, 'parent_id') ?? ''),
+                'salary_type' => data_get($detail, 'SalaryType') ?? data_get($detail, 'salary_type'),
+                'amount' => $this->numericValue(data_get($detail, 'Amount') ?? data_get($detail, 'amount')),
+                'description' => data_get($detail, 'Description') ?? data_get($detail, 'description'),
+            ])
+            ->all();
+
+        return [
+            'id' => $id !== '' && is_numeric($id) ? (int) $id : $id,
+            'scale_code' => (string) (data_get($grade, 'ScaleCode') ?? data_get($grade, 'scale_code') ?? $scaleCode),
+            'effective_date' => $this->dateValue(data_get($grade, 'EffectiveDate') ?? data_get($grade, 'effective_date')),
+            'salary_level' => (int) (data_get($grade, 'SalaryLevel') ?? data_get($grade, 'salary_level') ?? 0),
+            'description' => data_get($grade, 'Description') ?? data_get($grade, 'description'),
+            'details' => $gradeDetails,
+        ];
+    }
+
+    protected function customerConnection(): ConnectionInterface
+    {
+        $customerDatabase = config('database.connections.customer_sqlsrv.database');
+
+        if ($customerDatabase && DB::connection()->getDriverName() === 'sqlsrv') {
+            return DB::connection('customer_sqlsrv');
+        }
+
+        return DB::connection();
+    }
+
+    protected function tableExists(ConnectionInterface $connection, string $table): bool
+    {
+        try {
+            if ($connection->getDriverName() === 'sqlsrv') {
+                $row = $connection->selectOne('SELECT OBJECT_ID(?) AS object_id', [$table]);
+                return !empty($row?->object_id);
+            }
+
+            return $connection->getSchemaBuilder()->hasTable($table);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     protected function numericValue(mixed $value): float
