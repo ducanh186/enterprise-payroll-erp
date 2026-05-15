@@ -115,6 +115,7 @@ export default function PayrollParametersPage() {
   });
 
   const activeViewName = activeView === "value" ? "vD20PayrollPara_ValuePara" : "vD20PayrollPara_SalaryType";
+  const activeViewLabel = activeView === "value" ? "Tham số giá trị" : "Loại thu nhập, lương thưởng";
 
   const openCreate = () => {
     setEditingId("");
@@ -135,7 +136,7 @@ export default function PayrollParametersPage() {
       <PageHeader
         eyebrow="Tiền lương"
         title="Tham số lương"
-        description="Tra cứu tham số theo đúng 2 view Fujimart: ValuePara và SalaryType."
+        description="Tra cứu tham số theo đúng 2 nhóm nghiệp vụ Fujimart."
         actions={
           <>
             <button type="button" onClick={() => query.refetch()} disabled={query.isFetching} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60">
@@ -154,8 +155,8 @@ export default function PayrollParametersPage() {
 
       <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
         {[
-          { key: "value", label: "vD20PayrollPara_ValuePara" },
-          { key: "salaryType", label: "vD20PayrollPara_SalaryType" },
+          { key: "value", label: "Tham số giá trị" },
+          { key: "salaryType", label: "Loại thu nhập, lương thưởng" },
         ].map((tab) => (
           <button key={tab.key} type="button" onClick={() => setActiveView(tab.key as "value" | "salaryType")} className={`rounded-xl px-4 py-2 text-xs font-bold transition ${activeView === tab.key ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}>
             {tab.label}
@@ -170,7 +171,9 @@ export default function PayrollParametersPage() {
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
         <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-3">
-          <p className="text-[11px] font-bold text-slate-500">Nguồn view: {activeViewName}</p>
+          <p className="text-[11px] font-bold text-slate-500">
+            {activeViewLabel} · Nguồn view: {activeViewName}
+          </p>
         </div>
         <table className="min-w-[1120px] w-full border-collapse text-left">
           <thead className="bg-slate-50/50">

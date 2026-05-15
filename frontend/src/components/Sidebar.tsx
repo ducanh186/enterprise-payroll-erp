@@ -50,26 +50,20 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           open ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "lg:w-16 lg:px-2" : "w-72"}`}
       >
-        <div className={`mb-6 flex items-center ${collapsed ? "justify-center" : "justify-between px-2"}`}>
-          {!collapsed && (
-            <>
-              <div className="flex min-w-0 items-center gap-3">
-                <img src={fujimartLogo} alt="Fujimart" className="h-10 w-10 shrink-0 rounded bg-white object-contain p-1" />
-                <div className="min-w-0">
-                  <p className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight text-white">
-                    Fujimart HRM
-                  </p>
-                  <p className="text-xs text-slate-400">Chấm công, tính lương, hợp đồng</p>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-300">
-                Trực tuyến
-              </div>
-            </>
-          )}
-          {collapsed && (
-            <img src={fujimartLogo} alt="Fujimart" className="h-9 w-9 rounded bg-white object-contain p-1" />
-          )}
+        <div className={`mb-6 flex items-center ${collapsed ? "justify-center" : "px-1"}`}>
+          <div
+            className={
+              collapsed
+                ? "flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5"
+                : "flex h-20 w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
+            }
+          >
+            <img
+              src={fujimartLogo}
+              alt="Fujimart"
+              className={collapsed ? "h-8 w-8 object-contain" : "h-full w-full object-contain"}
+            />
+          </div>
         </div>
 
         <nav className="flex flex-col gap-2 overflow-y-auto pb-20" style={{ maxHeight: "calc(100vh - 128px)" }}>

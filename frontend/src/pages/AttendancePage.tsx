@@ -1,22 +1,21 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   CalendarDays,
   ChevronDown,
   Clock,
-  MoreHorizontal,
+  Pencil,
+  Save,
   TrendingUp,
   Users,
 } from "lucide-react";
-import { apiGet } from "../lib/api";
+import DateInput from "../components/DateInput";
+import { apiGet, apiPut, getApiErrorMessage } from "../lib/api";
 import { formatDate, formatNumber } from "../lib/format";
-import { boolValue, numberValue, textValue, toArray } from "../lib/records";
-import { Badge, EmptyState, PageHeader } from "../components/ui";
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { numberValue, textValue, toArray } from "../lib/records";
+import { Badge, EmptyState, Modal, PageHeader } from "../components/ui";
 
 function extractSummary(source: unknown) {
   if (Array.isArray(source)) return source[0] ?? {};
@@ -68,7 +67,8 @@ function buildCalendar(year: number, month: number) {
 }
 
 export default function AttendancePage() {
-  const date = todayISO();
+  const queryClient = useQueryClient();
+  const [date, setDate] = useState("2026-01-05");
   const todayDay = new Date(date).getDate();
   const [selectedDay, setSelectedDay] = useState<number>(todayDay);
 
@@ -76,10 +76,48 @@ export default function AttendancePage() {
   const currentMonth = Number(date.slice(5, 7));
   const [viewYear, setViewYear] = useState(currentYear);
   const [viewMonth, setViewMonth] = useState(currentMonth);
+  const [editingDaily, setEditingDaily] = useState<Record<string, unknown> | null>(null);
+  const [dailyForm, setDailyForm] = useState({
+    working_hours: "8",
+    overtime_hours: "0",
+    night_hours: "0",
+    workday_value: "1",
+    late_minutes: "0",
+    early_leave_minutes: "0",
+    meal_count: "1",
+    status: "present",
+    note: "",
+  });
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const dailyQuery = useQuery({
     queryKey: ["attendance", "daily", date],
     queryFn: async () => apiGet<unknown>("/attendance/daily", { date }),
+  });
+
+  const updateDailyMutation = useMutation({
+    mutationFn: async () => {
+      const id = textValue(editingDaily ?? {}, ["id"], "");
+      return apiPut<unknown>(`/attendance/daily/${id}`, {
+        regular_hours: Number(dailyForm.working_hours || 0),
+        ot_hours: Number(dailyForm.overtime_hours || 0),
+        night_hours: Number(dailyForm.night_hours || 0),
+        workday_value: Number(dailyForm.workday_value || 0),
+        late_minutes: Number(dailyForm.late_minutes || 0),
+        early_minutes: Number(dailyForm.early_leave_minutes || 0),
+        meal_count: Number(dailyForm.meal_count || 0),
+        attendance_status: dailyForm.status,
+        source_status: dailyForm.note,
+      });
+    },
+    onSuccess: async () => {
+      setSaveError(null);
+      setEditingDaily(null);
+      await queryClient.invalidateQueries({ queryKey: ["attendance", "daily"] });
+    },
+    onError: (mutationError) => {
+      setSaveError(getApiErrorMessage(mutationError, "Không thể lưu bảng công thời gian."));
+    },
   });
 
   const summaryQuery = useQuery({
@@ -131,7 +169,7 @@ export default function AttendancePage() {
   const presentDays = useMemo(() => {
     const s = new Set<number>();
     dailyItems.forEach((item) => {
-      const t = textValue(item, ["check_time", "checkin_time", "time"], "");
+      const t = textValue(item, ["date", "check_time", "checkin_time", "time"], "");
       if (t) {
         // If the date matches current month, mark the day
         const d = new Date(t);
@@ -147,7 +185,7 @@ export default function AttendancePage() {
     const s = new Set<number>();
     dailyItems.forEach((item) => {
       const late = numberValue(item, ["late_minutes", "lateMinutes"], 0);
-      const t = textValue(item, ["check_time", "checkin_time", "time"], "");
+      const t = textValue(item, ["date", "check_time", "checkin_time", "time"], "");
       if (late > 0 && t) {
         const d = new Date(t);
         if (!isNaN(d.getTime()) && d.getMonth() + 1 === viewMonth && d.getFullYear() === viewYear) {
@@ -162,7 +200,7 @@ export default function AttendancePage() {
   const selectedDayISO = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`;
   const selectedDayItems = useMemo(() => {
     return dailyItems.filter((item) => {
-      const t = textValue(item, ["check_time", "checkin_time", "time"], "");
+      const t = textValue(item, ["date", "check_time", "checkin_time", "time"], "");
       if (!t) return false;
       return t.startsWith(selectedDayISO);
     });
@@ -183,13 +221,34 @@ export default function AttendancePage() {
 
   const DAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
+  function openDailyEdit(item: Record<string, unknown>) {
+    setEditingDaily(item);
+    setDailyForm({
+      working_hours: String(numberValue(item, ["working_hours"], 0)),
+      overtime_hours: String(numberValue(item, ["overtime_hours"], 0)),
+      night_hours: String(numberValue(item, ["night_hours"], 0)),
+      workday_value: String(numberValue(item, ["workday_value"], 0)),
+      late_minutes: String(numberValue(item, ["late_minutes"], 0)),
+      early_leave_minutes: String(numberValue(item, ["early_leave_minutes"], 0)),
+      meal_count: String(numberValue(item, ["meal_count"], 0)),
+      status: textValue(item, ["status"], "present"),
+      note: textValue(item, ["note"], ""),
+    });
+    setSaveError(null);
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Chấm công"
         title="Nhật ký chấm công"
-        description="Xem log theo ngày, lịch tháng và lịch sử giao dịch chấm công."
-        actions={<Badge tone="neutral">Hôm nay: {formatDate(date)}</Badge>}
+        description="Xem và chỉnh D30Attendance theo từng ngày trước khi tổng hợp công."
+        actions={
+          <div className="flex items-center gap-3">
+            <DateInput value={date} onChange={setDate} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700" />
+            <Badge tone="neutral">Ngày xem: {formatDate(date)}</Badge>
+          </div>
+        }
       />
 
       {/* Summary Bar — 3 metric cards with left accent border */}
@@ -416,16 +475,16 @@ export default function AttendancePage() {
               <div className="relative space-y-8">
                 <div className="absolute left-[23px] top-2 bottom-2 w-0.5 bg-slate-100" />
                 {selectedDayItems.slice(0, 4).map((item, index) => {
-                  const checkType = textValue(item, ["check_type", "type"], "in").toLowerCase();
-                  const isIn = checkType !== "out";
-                  const time = textValue(item, ["check_time", "checkin_time", "time"], "—");
-                  const valid = boolValue(item, ["is_valid", "valid"], true);
+                  const checkIn = textValue(item, ["check_in", "checkin_time"], "—");
+                  const checkOut = textValue(item, ["check_out", "checkout_time"], "—");
+                  const status = textValue(item, ["status"], "present");
+                  const valid = status !== "absent" && status !== "anomaly";
                   return (
                     <div key={index} className="relative pl-14">
                       <div
                         className={[
                           "absolute left-0 top-0 z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white",
-                          isIn ? "border-slate-950 text-slate-950" : "border-slate-300 text-slate-500",
+                          valid ? "border-slate-950 text-slate-950" : "border-slate-300 text-slate-500",
                         ].join(" ")}
                       >
                         <Clock className="h-5 w-5" />
@@ -433,10 +492,9 @@ export default function AttendancePage() {
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-[family-name:var(--font-display)] text-lg font-black tabular-nums text-slate-900">
-                            {time}
+                            {checkIn} → {checkOut}
                           </p>
                           <p className="text-sm text-slate-500">
-                            {isIn ? "Giờ vào" : "Giờ ra"} —{" "}
                             {textValue(item, ["employee.full_name", "employee_name", "full_name"], "Nhân viên")}
                           </p>
                         </div>
@@ -563,7 +621,7 @@ export default function AttendancePage() {
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  {["Ngày", "Trạng thái", "Giờ vào", "Giờ ra", "Thời lượng", ""].map((h) => (
+                  {["Ngày", "Trạng thái", "Giờ vào", "Giờ ra", "Giờ công", ""].map((h) => (
                     <th
                       key={h}
                       className={[
@@ -583,16 +641,18 @@ export default function AttendancePage() {
                     ["employee.full_name", "employee_name", "full_name"],
                     "Nhân viên",
                   );
-                  const checkTime = textValue(
+                  const workDate = textValue(
                     item,
-                    ["check_time", "checkin_time", "time"],
+                    ["date", "check_time", "checkin_time", "time"],
                     "—",
                   );
-                  const checkType = textValue(item, ["check_type", "type"], "in").toLowerCase();
-                  const valid = boolValue(item, ["is_valid", "valid"], true);
+                  const checkIn = textValue(item, ["check_in", "checkin_time"], "—");
+                  const checkOut = textValue(item, ["check_out", "checkout_time"], "—");
+                  const status = textValue(item, ["status"], "present");
+                  const valid = status !== "absent" && status !== "anomaly";
                   const lateMin = numberValue(item, ["late_minutes", "lateMinutes"], 0);
                   const statusTone = valid ? "success" : lateMin > 0 ? "warning" : "danger";
-                  const statusLabel = valid ? "Xác nhận" : lateMin > 0 ? "Đi trễ" : "Cần kiểm tra";
+                  const statusLabel = lateMin > 0 ? "Đi trễ" : valid ? "Xác nhận" : "Cần kiểm tra";
 
                   return (
                     <tr
@@ -600,23 +660,29 @@ export default function AttendancePage() {
                       className="transition-colors hover:bg-slate-50/50"
                     >
                       <td className="px-6 py-5 text-sm font-bold text-slate-800">
-                        {formatDate(checkTime.slice(0, 10))}
+                        {formatDate(workDate.slice(0, 10))}
                       </td>
                       <td className="px-6 py-5">
                         <Badge tone={statusTone}>{statusLabel}</Badge>
                       </td>
                       <td className="px-6 py-5 tabular-nums text-sm text-slate-700">
-                        {checkType !== "out" ? checkTime : "—"}
+                        {checkIn}
                       </td>
                       <td className="px-6 py-5 tabular-nums text-sm text-slate-700">
-                        {checkType === "out" ? checkTime : "—"}
+                        {checkOut}
                       </td>
                       <td className="px-6 py-5 text-sm font-semibold tabular-nums text-slate-800">
-                        {employeeName}
+                        {numberValue(item, ["working_hours"], 0)}h · {employeeName}
                       </td>
                       <td className="px-6 py-5 text-right">
-                        <button className="text-slate-400 transition-colors hover:text-slate-950">
-                          <MoreHorizontal className="h-5 w-5" />
+                        <button
+                          type="button"
+                          disabled={!textValue(item, ["id"], "")}
+                          onClick={() => openDailyEdit(item)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Sửa
                         </button>
                       </td>
                     </tr>
@@ -696,6 +762,71 @@ export default function AttendancePage() {
           />
         </section>
       )}
+
+      <Modal open={Boolean(editingDaily)} onClose={() => setEditingDaily(null)} title="Sửa bảng công thời gian" size="md">
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            updateDailyMutation.mutate();
+          }}
+        >
+          {saveError && <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{saveError}</p>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              ["Giờ công", "working_hours"],
+              ["Giờ tăng ca", "overtime_hours"],
+              ["Giờ đêm", "night_hours"],
+              ["Ngày công", "workday_value"],
+              ["Phút đi trễ", "late_minutes"],
+              ["Phút về sớm", "early_leave_minutes"],
+              ["Suất ăn", "meal_count"],
+            ].map(([label, key]) => (
+              <label key={key} className="space-y-1 text-xs font-bold text-slate-600">
+                {label}
+                <input
+                  type="number"
+                  value={dailyForm[key as keyof typeof dailyForm]}
+                  onChange={(event) => setDailyForm((current) => ({ ...current, [key]: event.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                />
+              </label>
+            ))}
+            <label className="space-y-1 text-xs font-bold text-slate-600">
+              Trạng thái
+              <select
+                value={dailyForm.status}
+                onChange={(event) => setDailyForm((current) => ({ ...current, status: event.target.value }))}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+              >
+                <option value="present">Đi làm</option>
+                <option value="leave">Nghỉ phép</option>
+                <option value="absent">Vắng</option>
+                <option value="partial">Nửa ngày</option>
+                <option value="holiday">Ngày nghỉ</option>
+                <option value="anomaly">Cần kiểm tra</option>
+              </select>
+            </label>
+            <label className="space-y-1 text-xs font-bold text-slate-600 sm:col-span-2">
+              Ghi chú
+              <input
+                value={dailyForm.note}
+                onChange={(event) => setDailyForm((current) => ({ ...current, note: event.target.value }))}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+              />
+            </label>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={() => setEditingDaily(null)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600">
+              Hủy
+            </button>
+            <button type="submit" disabled={updateDailyMutation.isPending} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-60">
+              <Save className="h-4 w-4" />
+              {updateDailyMutation.isPending ? "Đang lưu..." : "Lưu"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

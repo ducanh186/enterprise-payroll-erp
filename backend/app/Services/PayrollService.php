@@ -387,6 +387,70 @@ class PayrollService
         return $this->getPayslip($id);
     }
 
+    public function updatePayslip(int $id, array $data): ?array
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $payslip = Payslip::query()
+                ->with(['employee.department', 'contract.allowances.allowanceType', 'payrollRun.attendancePeriod', 'items'])
+                ->find($id);
+
+            if (!$payslip) {
+                return null;
+            }
+
+            $allowed = [
+                'base_salary_snapshot',
+                'gross_salary',
+                'taxable_income',
+                'insurance_base',
+                'insurance_employee',
+                'insurance_company',
+                'pit_amount',
+                'bonus_total',
+                'deduction_total',
+                'net_salary',
+                'status',
+            ];
+
+            $payload = Arr::only($data, $allowed);
+            foreach (array_diff($allowed, ['status']) as $field) {
+                if (array_key_exists($field, $payload)) {
+                    $payload[$field] = $this->floatValue($payload[$field]);
+                }
+            }
+
+            $payslip->fill($payload);
+            $payslip->save();
+
+            return $this->formatPayslipDetail($payslip->fresh(['employee.department', 'contract.allowances.allowanceType', 'payrollRun.attendancePeriod', 'items']));
+        });
+    }
+
+    public function updatePayslipItem(int $id, array $data): ?array
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $item = PayslipItem::query()->with('payslip')->find($id);
+
+            if (!$item) {
+                return null;
+            }
+
+            $payload = Arr::only($data, ['item_name', 'item_group', 'qty', 'rate', 'amount']);
+            foreach (['qty', 'rate', 'amount'] as $field) {
+                if (array_key_exists($field, $payload)) {
+                    $payload[$field] = $payload[$field] === null || $payload[$field] === ''
+                        ? null
+                        : $this->floatValue($payload[$field]);
+                }
+            }
+
+            $item->fill($payload);
+            $item->save();
+
+            return $this->formatPayslipItem($item->fresh());
+        });
+    }
+
     public function createAdjustment(array $data): array
     {
         return DB::transaction(function () use ($data) {

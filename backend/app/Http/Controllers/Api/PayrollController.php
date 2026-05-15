@@ -149,6 +149,50 @@ class PayrollController extends Controller
         return $this->success($result);
     }
 
+    public function updatePayslip(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'base_salary_snapshot' => 'nullable|numeric|min:0',
+            'gross_salary' => 'nullable|numeric|min:0',
+            'taxable_income' => 'nullable|numeric|min:0',
+            'insurance_base' => 'nullable|numeric|min:0',
+            'insurance_employee' => 'nullable|numeric|min:0',
+            'insurance_company' => 'nullable|numeric|min:0',
+            'pit_amount' => 'nullable|numeric|min:0',
+            'bonus_total' => 'nullable|numeric|min:0',
+            'deduction_total' => 'nullable|numeric|min:0',
+            'net_salary' => 'nullable|numeric|min:0',
+            'status' => 'nullable|string|in:draft,previewed,finalized,locked',
+        ]);
+
+        $result = $this->payrollService->updatePayslip($id, $request->all());
+
+        if (!$result) {
+            return $this->notFound('Payslip not found.');
+        }
+
+        return $this->success($result, 'Payslip updated.');
+    }
+
+    public function updatePayslipItem(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'item_name' => 'nullable|string|max:255',
+            'item_group' => 'nullable|string|in:earning,deduction,employer',
+            'qty' => 'nullable|numeric|min:0',
+            'rate' => 'nullable|numeric|min:0',
+            'amount' => 'nullable|numeric|min:0',
+        ]);
+
+        $result = $this->payrollService->updatePayslipItem($id, $request->all());
+
+        if (!$result) {
+            return $this->notFound('Payslip item not found.');
+        }
+
+        return $this->success($result, 'Payslip item updated.');
+    }
+
     public function createAdjustment(Request $request): JsonResponse
     {
         $request->validate([

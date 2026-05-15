@@ -96,17 +96,6 @@ const NAV_ITEMS: NavigationItem[] = [
         heading: "Biến động",
         items: [
           { to: "/contracts", label: "Hợp đồng lao động", required: "contract.view" },
-          { to: "/reference/allowances", label: "Phụ cấp", required: "reference.manage" },
-        ],
-      },
-      {
-        heading: "Báo cáo",
-        items: [
-          {
-            to: "/reports?category=employee",
-            label: "DS người lao động theo loại HĐ",
-            required: allOf("employee.view", "reports.view"),
-          },
         ],
       },
     ],
@@ -165,16 +154,6 @@ const NAV_ITEMS: NavigationItem[] = [
         heading: "Báo cáo",
         items: [
           {
-            to: "/reports?category=attendance&code=shift",
-            label: "Bảng phân ca hàng ngày",
-            required: allOf("attendance.view", "reports.view"),
-          },
-          {
-            to: "/reports?category=attendance&code=late",
-            label: "Bảng tổng hợp đi trễ về sớm",
-            required: allOf("attendance.view", "reports.view"),
-          },
-          {
             to: "/reports?category=attendance&code=FUJIMART_ATTENDANCE_REPORT",
             label: "Bảng chấm công",
             required: allOf("attendance.view", "reports.view"),
@@ -188,33 +167,33 @@ const NAV_ITEMS: NavigationItem[] = [
     icon: CircleDollarSign,
     subCategories: [
       {
-        heading: "Danh mục",
-        items: [
-          {
-            to: "/payroll/parameters",
-            label: "Tham số lương",
-            required: "payroll.manage_param",
-          },
-        ],
-      },
-      {
         heading: "Biến động",
         items: [
-          {
-            to: "/payroll/bonus-deductions",
-            label: "Khen thưởng và kỷ luật",
-            required: "payroll.adjust",
-          },
           { to: "/payroll/run", label: "Tính lương", required: "payroll.run" },
+          {
+            to: "/payroll/payslips",
+            label: "Bảng lương",
+            required: anyOf("payroll.view", "payroll.run", "payroll.finalize", "payroll.lock"),
+          },
           {
             to: "/payroll/payslips/email",
             label: "Gửi email phiếu lương",
             required: "payroll.run",
           },
           {
-            to: "/payroll/periods",
-            label: "Bảng lương",
-            required: anyOf("payroll.view", "payroll.run", "payroll.finalize", "payroll.lock"),
+            to: "/payroll/bonus-deductions",
+            label: "Khen thưởng và kỷ luật",
+            required: "payroll.adjust",
+          },
+        ],
+      },
+      {
+        heading: "Danh mục",
+        items: [
+          {
+            to: "/payroll/parameters",
+            label: "Tham số lương",
+            required: "payroll.manage_param",
           },
         ],
       },
@@ -351,11 +330,11 @@ const ROUTE_META: RouteMeta[] = [
     subtitle: "Tiền lương • Biến động",
     required: anyOf("payroll.view", "payroll.run", "payroll.finalize", "payroll.lock"),
   },
-  { pattern: "/payroll/payslips", title: "Phiếu lương", subtitle: "Tiền lương • Báo cáo", required: "payroll.view" },
+  { pattern: "/payroll/payslips", title: "Bảng lương", subtitle: "Tiền lương • Biến động", required: "payroll.view" },
   {
     pattern: "/payroll/payslips/:id",
-    title: "Chi tiết phiếu lương",
-    subtitle: "Tiền lương • Báo cáo",
+    title: "Chi tiết bảng lương",
+    subtitle: "Tiền lương • Biến động",
     required: "payroll.view",
   },
 

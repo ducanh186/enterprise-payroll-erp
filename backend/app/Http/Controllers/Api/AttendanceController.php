@@ -68,6 +68,31 @@ class AttendanceController extends Controller
         return $this->success($result);
     }
 
+    public function updateDaily(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'first_in' => 'nullable|date',
+            'last_out' => 'nullable|date',
+            'late_minutes' => 'nullable|integer|min:0|max:1440',
+            'early_minutes' => 'nullable|integer|min:0|max:1440',
+            'regular_hours' => 'nullable|numeric|min:0|max:24',
+            'ot_hours' => 'nullable|numeric|min:0|max:24',
+            'night_hours' => 'nullable|numeric|min:0|max:24',
+            'workday_value' => 'nullable|numeric|min:0|max:2',
+            'meal_count' => 'nullable|integer|min:0|max:5',
+            'attendance_status' => 'nullable|string|in:present,absent,leave,holiday,partial,anomaly',
+            'source_status' => 'nullable|string|max:100',
+        ]);
+
+        $result = $this->attendanceService->updateDailyAttendance($id, $request->all());
+
+        if (!$result) {
+            return $this->notFound('Attendance daily record not found.');
+        }
+
+        return $this->success($result, 'Attendance daily record updated.');
+    }
+
     public function monthlySummary(Request $request): JsonResponse
     {
         $filters = $request->only(['month', 'year', 'department_id', 'employee_id']);

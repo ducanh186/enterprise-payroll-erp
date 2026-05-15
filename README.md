@@ -45,14 +45,36 @@ Nếu một bước bị lỗi, sửa đúng tầng đang hỏng, build lại Do
 - `manager01` / `password`: test đăng nhập vai trò quản lý.
 - `emp001` / `password`: test đăng nhập nhân viên được seed từ dữ liệu Fujimart.
 
+## Cập nhật dữ liệu demo qua Docker
+
+Dữ liệu demo được seed để có tối thiểu 30 nhân viên, 30 người phụ thuộc, bảng công tháng 01/2026 và bảng lương tháng 01/2026. Chạy các lệnh này khi cần làm mới dữ liệu test:
+
+```powershell
+docker compose up -d --build
+```
+
+```powershell
+docker compose exec -T backend php artisan migrate:fresh --seed --force
+```
+
+Nếu chỉ muốn bổ sung lại bộ dữ liệu 30 record mà không reset toàn bộ database:
+
+```powershell
+docker compose exec -T backend php artisan db:seed --class=DemoVolumeSeeder --force
+```
+
+File `.bak` trong thư mục `docker/data/fujimart/` là nguồn SQL Server của khách hàng. Khi chưa restore được `.bak`, app vẫn dùng seed Laravel để test nhanh các màn HRM. File Excel check-in/out import trên UI cần có cột `Mã NV` và `Thời gian`; các header tương đương như `EmployeeCode`, `Code`, `CheckTime` cũng được nhận.
+
 ## Ánh xạ yêu cầu sang UI test
 
 | Yêu cầu | UI test trong `frontend/e2e/app-smoke.spec.ts` | Thao tác trên UI | Kết quả cần thấy |
 | --- | --- | --- | --- |
-| Hiển thị `Fujimart HRM` và logo Fujimart | `admin can use Fujimart HRM customer flows...` | Đăng nhập `admin01`, vào dashboard | Tiêu đề là `Fujimart HRM`, logo alt `Fujimart` hiển thị đúng |
+| Hiển thị `Fujimart HRM` và logo Fujimart | `admin can use Fujimart HRM customer flows...` | Đăng nhập `admin01`, vào dashboard | Web title là `Fujimart HRM`, sidebar chỉ hiển thị logo Fujimart |
 | Sidebar theo BFD 3 cấp, ẩn từ `Quản lý` | Step `Sidebar exposes the Fujimart BFD structure` | Mở các nhóm `Nhân sự & HĐLĐ`, `Chấm công`, `Tính lương` | Có các liên kết đúng nghiệp vụ, không còn nhãn `Quản lý` |
 | Chi tiết nhân viên có tab người phụ thuộc | Step `Employee detail includes dependents tab` | Vào `/employees`, mở chi tiết nhân viên, chọn `Người phụ thuộc` | Tab và nội dung người phụ thuộc hiển thị đúng |
-| Tham số lương có 2 view của khách hàng | Step `Payroll parameters expose Fujimart source views` | Vào `/payroll/parameters`, bấm 2 tab | Hiển thị `vD20PayrollPara_ValuePara` và `vD20PayrollPara_SalaryType` |
+| Tham số lương có 2 view của khách hàng | Step `Payroll parameters expose Fujimart source views` | Vào `/payroll/parameters`, bấm 2 tab | Hiển thị `Tham số giá trị`, `Loại thu nhập, lương thưởng` và nguồn view tương ứng |
+| Bảng công thời gian D30Attendance sửa được | Manual/browser-use | Vào `/attendance`, chọn ngày 01/2026, bấm `Sửa` ở dòng chấm công | Lưu qua `PUT /attendance/daily/{id}`, reload vẫn thấy dữ liệu mới |
+| Bảng lương D30Payroll/D30PayrollDetail sửa được | Manual/browser-use | Vào `/payroll/payslips`, chọn phiếu, bấm `Sửa` | Lưu đầu phiếu và chi tiết qua API, trước bước gửi email phiếu lương |
 | Import file Excel check-in/check-out của khách hàng | Step `Import customer check-in/out Excel` | Vào `/attendance/logs`, tải lên `Data checkinout.xlsx`, bấm `Import Excel` | Hiển thị `Import hoàn tất` và số dòng đã nhập lớn hơn 0 |
 | Chạy tính công | Step `Run attendance procedure` | Vào `/attendance/summary`, chọn tháng 1 năm 2026, bấm tính lại | Hiển thị thông báo đã chạy tính công, không có API 4xx/5xx |
 | Chạy tính lương | Step `Run payroll procedure` | Vào `/payroll/run`, chọn tháng 1 năm 2026, bấm `Chạy tính lương` | Hiển thị phần xem trước nhân viên/bảng lương, không có API 4xx/5xx |
@@ -70,11 +92,11 @@ Sau khi Playwright đã pass, mở thêm browser-use hoặc in-app browser để
 
 1. Mở `http://localhost:5173/login`.
 2. Đăng nhập `admin01` / `password`.
-3. Xác nhận header và sidebar hiển thị `Fujimart HRM`, có logo và không còn nhãn `Quản lý`.
+3. Xác nhận web title là `Fujimart HRM`, sidebar chỉ có logo Fujimart và không còn nhãn `Quản lý`.
 4. Mở `Nhân sự & HĐLĐ` -> `Hồ sơ cán bộ nhân viên` -> chi tiết -> `Người phụ thuộc`.
 5. Mở `Chấm công` -> `Dữ liệu thời gian vào - ra`, tải lên file Excel mẫu, bấm `Import Excel`.
 6. Mở `Bảng chấm công`, chọn `01/2026`, bấm tính lại.
-7. Mở `Tính lương` -> `Bộ công thức và tham số lương`, bấm cả 2 tab view.
+7. Mở `Tiền lương` -> `Tham số lương`, bấm cả 2 tab view.
 8. Mở `Trình chạy bảng lương`, chọn `01/2026`, bấm `Chạy tính lương`.
 9. Mở `Báo cáo`, xem trước/xuất 3 báo cáo Fujimart và tải file `.xlsx`.
 10. Mở DevTools hoặc console nếu có thể; smoke test không nên còn page error, console error hay API 4xx/5xx.

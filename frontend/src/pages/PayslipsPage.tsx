@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
   ChevronLeft,
@@ -8,11 +8,12 @@ import {
   Download,
   FileText,
   Lock,
+  Save,
   Receipt,
   RefreshCcw,
   Wallet,
 } from "lucide-react";
-import { apiGet } from "../lib/api";
+import { apiGet, apiPut, getApiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { formatCurrency } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
@@ -25,6 +26,15 @@ type FilterState = {
   employee_id: string;
   department_id: string;
   status: string;
+};
+
+type PayslipEditForm = {
+  gross_salary: string;
+  bonus_total: string;
+  deduction_total: string;
+  insurance_employee: string;
+  pit_amount: string;
+  net_salary: string;
 };
 
 const current = new Date();
@@ -61,6 +71,7 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function PayslipsPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<FilterState>({
     month: String(current.getMonth() + 1),
     year: String(current.getFullYear()),
@@ -69,8 +80,21 @@ export default function PayslipsPage() {
     status: "",
   });
   const [selectedId, setSelectedId] = useState<string>("");
+  const [editMode, setEditMode] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  const [payslipForm, setPayslipForm] = useState<PayslipEditForm>({
+    gross_salary: "",
+    bonus_total: "",
+    deduction_total: "",
+    insurance_employee: "",
+    pit_amount: "",
+    net_salary: "",
+  });
+  const [itemEdits, setItemEdits] = useState<Record<string, { amount: string; qty: string; rate: string }>>({});
   const permissionSet = createPermissionSet(user?.permissions);
   const canExportReports = hasPermissionAccess(permissionSet, "reports.export");
+  const canEditPayroll = hasPermissionAccess(permissionSet, "payroll.run");
 
   const payslipsQuery = useQuery({
     queryKey: ["payroll", "payslips", filters],
@@ -102,6 +126,87 @@ export default function PayslipsPage() {
       ? (detailsQuery.data.data as Record<string, unknown>)
       : null;
 
+  const selectedItems = useMemo(
+    () => (selected ? toArray<Record<string, unknown>>(selected.items) : []),
+    [selected],
+  );
+
+  function startEditSelectedPayslip() {
+    if (!selected) return;
+
+    const nextPayslipForm = {
+      gross_salary: String(numberValue(selected, ["gross_salary"], 0)),
+      bonus_total: String(numberValue(selected, ["bonus_total"], 0)),
+      deduction_total: String(numberValue(selected, ["deduction_total"], 0)),
+      insurance_employee: String(numberValue(selected, ["insurance_employee"], 0)),
+      pit_amount: String(numberValue(selected, ["pit_amount"], 0)),
+      net_salary: String(numberValue(selected, ["net_salary"], 0)),
+    };
+
+    const nextItems: Record<string, { amount: string; qty: string; rate: string }> = {};
+    selectedItems.forEach((item, index) => {
+      const id = textValue(item, ["id"], String(index));
+      nextItems[id] = {
+        amount: String(numberValue(item, ["amount"], 0)),
+        qty: String(numberValue(item, ["qty"], 0)),
+        rate: String(numberValue(item, ["rate"], 0)),
+      };
+    });
+
+    setPayslipForm(nextPayslipForm);
+    setItemEdits(nextItems);
+    setSaveError(null);
+    setSaveSuccess(null);
+    setEditMode(true);
+  }
+
+  const savePayslipMutation = useMutation({
+    mutationFn: async () =>
+      apiPut<unknown>(`/payroll/payslips/${selectedId}`, {
+        gross_salary: Number(payslipForm.gross_salary || 0),
+        bonus_total: Number(payslipForm.bonus_total || 0),
+        deduction_total: Number(payslipForm.deduction_total || 0),
+        insurance_employee: Number(payslipForm.insurance_employee || 0),
+        pit_amount: Number(payslipForm.pit_amount || 0),
+        net_salary: Number(payslipForm.net_salary || 0),
+      }),
+    onSuccess: async () => {
+      setSaveError(null);
+      setSaveSuccess("Đã lưu đầu bảng lương.");
+      await queryClient.invalidateQueries({ queryKey: ["payroll", "payslips"] });
+      await detailsQuery.refetch();
+    },
+    onError: (mutationError) => {
+      setSaveSuccess(null);
+      setSaveError(getApiErrorMessage(mutationError, "Không thể lưu đầu bảng lương."));
+    },
+  });
+
+  const saveItemsMutation = useMutation({
+    mutationFn: async () => {
+      const requests = selectedItems.map((item, index) => {
+        const id = textValue(item, ["id"], String(index));
+        const edit = itemEdits[id];
+        return apiPut<unknown>(`/payroll/payslip-items/${id}`, {
+          qty: Number(edit?.qty || 0),
+          rate: Number(edit?.rate || 0),
+          amount: Number(edit?.amount || 0),
+        });
+      });
+      return Promise.all(requests);
+    },
+    onSuccess: async () => {
+      setSaveError(null);
+      setSaveSuccess("Đã lưu chi tiết bảng lương.");
+      await queryClient.invalidateQueries({ queryKey: ["payroll", "payslips"] });
+      await detailsQuery.refetch();
+    },
+    onError: (mutationError) => {
+      setSaveSuccess(null);
+      setSaveError(getApiErrorMessage(mutationError, "Không thể lưu chi tiết bảng lương."));
+    },
+  });
+
   // Determine the latest finalized payslip for the summary card
   const latestFinalized = useMemo(
     () =>
@@ -117,7 +222,7 @@ export default function PayslipsPage() {
       <PageHeader
         eyebrow="Tính lương"
         title="Lịch sử phiếu lương"
-        description="Xem và tải phiếu lương hàng tháng. Lọc theo kỳ để tra cứu nhanh."
+        description="Xem, rà soát và chỉnh bảng lương trước khi gửi email phiếu lương cá nhân."
         actions={
           <div className="flex items-center gap-3">
             {/* Year filter */}
@@ -258,9 +363,23 @@ export default function PayslipsPage() {
           {/* Detail panel — shown below promo when a payslip is selected */}
           {selectedId && (
             <div className="rounded-2xl border border-white/70 bg-white/80 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur">
-              <p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                Chi tiết phiếu lương
-              </p>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Chi tiết bảng lương
+                </p>
+                {canEditPayroll && selected && (
+                  <button
+                    type="button"
+                    onClick={() => (editMode ? setEditMode(false) : startEditSelectedPayslip())}
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  >
+                    {editMode ? "Xem" : "Sửa"}
+                  </button>
+                )}
+              </div>
+
+              {saveError && <p className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">{saveError}</p>}
+              {saveSuccess && <p className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{saveSuccess}</p>}
 
               {detailsQuery.isLoading ? (
                 <p className="text-sm text-slate-500">Đang tải chi tiết...</p>
@@ -311,38 +430,101 @@ export default function PayslipsPage() {
                     ))}
                   </div>
 
+                  {editMode && (
+                    <div className="rounded-xl border border-slate-100 bg-white p-3">
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        D30Payroll
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(
+                          [
+                            ["Lương gross", "gross_salary"],
+                            ["Thưởng", "bonus_total"],
+                            ["Khấu trừ", "deduction_total"],
+                            ["BH người lao động", "insurance_employee"],
+                            ["Thuế TNCN", "pit_amount"],
+                            ["Thực lĩnh", "net_salary"],
+                          ] as [string, keyof PayslipEditForm][]
+                        ).map(([label, key]) => (
+                          <label key={key} className="space-y-1 text-[11px] font-bold text-slate-500">
+                            {label}
+                            <input
+                              type="number"
+                              value={payslipForm[key]}
+                              onChange={(event) => setPayslipForm((current) => ({ ...current, [key]: event.target.value }))}
+                              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => savePayslipMutation.mutate()}
+                        disabled={savePayslipMutation.isPending}
+                        className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
+                      >
+                        <Save className="h-3.5 w-3.5" />
+                        {savePayslipMutation.isPending ? "Đang lưu..." : "Lưu đầu phiếu"}
+                      </button>
+                    </div>
+                  )}
+
                   {/* Line items */}
-                  {toArray<Record<string, unknown>>(selected.items).length > 0 && (
+                  {selectedItems.length > 0 && (
                     <div className="rounded-xl border border-slate-100 bg-white p-3">
                       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Các khoản
+                        D30PayrollDetail
                       </p>
                       <div className="space-y-1.5">
-                        {toArray<Record<string, unknown>>(selected.items).map(
+                        {selectedItems.map(
                           (item, idx) => (
                             <div
-                              key={`${textValue(item, ["code"], String(idx))}-${idx}`}
-                              className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs"
+                              key={`${textValue(item, ["id", "code"], String(idx))}-${idx}`}
+                              className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs"
                             >
-                              <span className="font-medium text-slate-700">
-                                {textValue(item, ["code", "name", "label"], "—")}
-                              </span>
-                              <span className="tabular-nums text-slate-600">
-                                {formatCurrency(numberValue(item, ["amount", "value"], 0))}
-                              </span>
+                              <div>
+                                <span className="block font-medium text-slate-700">
+                                  {textValue(item, ["code", "name", "label"], "—")}
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  {textValue(item, ["group", "item_group"], "—")}
+                                </span>
+                              </div>
+                              {editMode ? (
+                                <input
+                                  type="number"
+                                  value={itemEdits[textValue(item, ["id"], String(idx))]?.amount ?? ""}
+                                  onChange={(event) => {
+                                    const id = textValue(item, ["id"], String(idx));
+                                    setItemEdits((current) => ({
+                                      ...current,
+                                      [id]: { ...(current[id] ?? { qty: "1", rate: "0", amount: "0" }), amount: event.target.value },
+                                    }));
+                                  }}
+                                  className="w-28 rounded-lg border border-slate-200 px-2 py-1.5 text-right text-xs font-semibold tabular-nums outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                                />
+                              ) : (
+                                <span className="tabular-nums text-slate-600">
+                                  {formatCurrency(numberValue(item, ["amount", "value"], 0))}
+                                </span>
+                              )}
                             </div>
                           ),
                         )}
                       </div>
+                      {editMode && (
+                        <button
+                          type="button"
+                          onClick={() => saveItemsMutation.mutate()}
+                          disabled={saveItemsMutation.isPending}
+                          className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
+                        >
+                          <Save className="h-3.5 w-3.5" />
+                          {saveItemsMutation.isPending ? "Đang lưu..." : "Lưu chi tiết"}
+                        </button>
+                      )}
                     </div>
                   )}
-
-                  {/* Raw JSON debug */}
-                  <div className="rounded-xl bg-slate-950 p-3">
-                    <pre className="overflow-x-auto text-[10px] leading-5 text-slate-300">
-                      {JSON.stringify(selected, null, 2)}
-                    </pre>
-                  </div>
                 </div>
               ) : (
                 <EmptyState
@@ -416,7 +598,12 @@ export default function PayslipsPage() {
                       return (
                         <tr
                           key={`${id}-${index}`}
-                          onClick={() => setSelectedId(id)}
+                          onClick={() => {
+                            setSelectedId(id);
+                            setEditMode(false);
+                            setSaveError(null);
+                            setSaveSuccess(null);
+                          }}
                           className={`cursor-pointer transition-colors hover:bg-slate-50/70 ${
                             selectedRow ? "bg-sky-50/60 outline outline-1 -outline-offset-1 outline-sky-200" : ""
                           } ${!finalized ? "opacity-70" : ""}`}

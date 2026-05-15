@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             AttendanceSeeder::class,
             PayrollSeeder::class,
             CustomerEmployeeSeeder::class,
+            DemoVolumeSeeder::class,
             SystemSeeder::class,
             ProcedureCatalogSeeder::class,
         ]);

@@ -103,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/checkin-logs/import', [AttendanceController::class, 'importCheckinLogs'])->middleware('permission:attendance.import_logs');
         Route::post('/checkin-logs/manual', [AttendanceController::class, 'manualCheckin'])->middleware('permission:attendance.manage_request');
         Route::get('/daily', [AttendanceController::class, 'daily'])->middleware('permission:attendance.view');
+        Route::put('/daily/{id}', [AttendanceController::class, 'updateDaily'])->where('id', '[0-9]+')->middleware('permission:attendance.calculate');
         Route::get('/monthly-summary', [AttendanceController::class, 'monthlySummary'])->middleware('permission:attendance.view');
         Route::post('/recalculate', [AttendanceController::class, 'recalculate'])->middleware('permission:attendance.calculate');
         Route::get('/requests', [AttendanceController::class, 'requestsIndex'])->middleware('permission:attendance.manage_request');
@@ -128,7 +129,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/payslips', [PayrollController::class, 'payslips'])->middleware('permission:payroll.view');
         Route::post('/payslips/email', [PayrollController::class, 'emailPayslip'])->middleware('permission:payroll.run');
         Route::get('/payslips/{id}', [PayrollController::class, 'showPayslip'])->where('id', '[0-9]+')->middleware('permission:payroll.view');
+        Route::put('/payslips/{id}', [PayrollController::class, 'updatePayslip'])->where('id', '[0-9]+')->middleware('permission:payroll.run');
         Route::get('/payslips/{id}/details', [PayrollController::class, 'payslipDetails'])->where('id', '[0-9]+')->middleware('permission:payroll.view');
+        Route::put('/payslip-items/{id}', [PayrollController::class, 'updatePayslipItem'])->where('id', '[0-9]+')->middleware('permission:payroll.run');
         Route::post('/adjustments', [PayrollController::class, 'createAdjustment'])->middleware('permission:payroll.adjust');
         Route::put('/adjustments/{id}', [PayrollController::class, 'updateAdjustment'])->where('id', '[0-9]+')->middleware('permission:payroll.adjust');
         Route::delete('/adjustments/{id}', [PayrollController::class, 'deleteAdjustment'])->where('id', '[0-9]+')->middleware('permission:payroll.adjust');

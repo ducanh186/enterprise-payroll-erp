@@ -229,6 +229,46 @@ class AttendanceService
         return $rows;
     }
 
+    public function updateDailyAttendance(int $id, array $data): ?array
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $record = AttendanceDaily::query()
+                ->with(['employee.department', 'shiftAssignment.shift'])
+                ->find($id);
+
+            if (!$record) {
+                return null;
+            }
+
+            $payload = [];
+            foreach (['first_in', 'last_out', 'attendance_status', 'source_status'] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $payload[$field] = $data[$field] ?: null;
+                }
+            }
+
+            foreach (['late_minutes', 'early_minutes', 'meal_count'] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $payload[$field] = (int) $data[$field];
+                }
+            }
+
+            foreach (['regular_hours', 'ot_hours', 'night_hours', 'workday_value'] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $payload[$field] = round((float) $data[$field], 1);
+                }
+            }
+
+            $record->fill($payload);
+            $record->calculation_version = ((int) $record->calculation_version) + 1;
+            $record->save();
+
+            $fresh = $record->fresh(['employee.department', 'shiftAssignment.shift']);
+
+            return $this->formatDailyRecord($fresh, $fresh->employee, $fresh->shiftAssignment?->shift);
+        });
+    }
+
     public function getMonthlySummary(array $filters = []): array
     {
         [$period, $fromDate, $toDate] = $this->resolveAttendancePeriod($filters);
@@ -535,6 +575,7 @@ class AttendanceService
     private function formatDailyRecord(AttendanceDaily $record, Employee $employee, ?Shift $shift): array
     {
         return [
+            'id' => $record->id,
             'employee_id' => $employee->id,
             'employee_code' => $employee->employee_code,
             'employee_name' => $employee->full_name,
@@ -544,9 +585,12 @@ class AttendanceService
             'check_in' => $record->first_in?->format('Y-m-d H:i:s'),
             'check_out' => $record->last_out?->format('Y-m-d H:i:s'),
             'working_hours' => (float) $record->regular_hours,
+            'workday_value' => (float) $record->workday_value,
             'overtime_hours' => (float) $record->ot_hours,
+            'night_hours' => (float) $record->night_hours,
             'late_minutes' => (int) $record->late_minutes,
             'early_leave_minutes' => (int) $record->early_minutes,
+            'meal_count' => (int) $record->meal_count,
             'status' => $this->normalizeAttendanceStatus($record->attendance_status),
             'note' => $record->source_status,
         ];
@@ -555,6 +599,7 @@ class AttendanceService
     private function formatAbsentDailyRecord(Employee $employee, string $date, ?Shift $shift): array
     {
         return [
+            'id' => null,
             'employee_id' => $employee->id,
             'employee_code' => $employee->employee_code,
             'employee_name' => $employee->full_name,
@@ -565,8 +610,11 @@ class AttendanceService
             'check_out' => null,
             'working_hours' => 0,
             'overtime_hours' => 0,
+            'night_hours' => 0,
+            'workday_value' => 0,
             'late_minutes' => 0,
             'early_leave_minutes' => 0,
+            'meal_count' => 0,
             'status' => 'absent',
             'note' => null,
         ];

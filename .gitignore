@@ -34,6 +34,7 @@ docker/data/
 
 # Temp / session files
 ses.txt
+.firecrawl/
 frontend/.env.production.local
 backend/storage/logs/
 CLAUDE.md 
