@@ -282,7 +282,7 @@ export default function EmployeesPage() {
               <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Mã NV</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Họ tên</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Email</th>
-              <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Mobile</th>
+              <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Số điện thoại</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ngày vào làm</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Trạng thái</th>
               <th className="px-4 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Action</th>
@@ -427,13 +427,13 @@ export default function EmployeesPage() {
                 {[
                   ["Mã NV", textValue(selectedEmployee, ["employee_code", "code"], "N/A")],
                   ["Họ tên", textValue(selectedEmployee, ["full_name", "name"], "—")],
-                  ["Gender", textValue(selectedEmployee, ["gender"], "—")],
-                  ["BirthDate", textValue(selectedEmployee, ["birth_date", "date_of_birth"], "")],
-                  ["IdCardNo", textValue(selectedEmployee, ["id_card_no", "identity_number"], "—")],
-                  ["Email", textValue(selectedEmployee, ["email"], "—")],
-                  ["Mobile", textValue(selectedEmployee, ["mobile", "phone"], "—")],
-                  ["Ngày vào làm", textValue(selectedEmployee, ["hire_date", "start_date", "joined_at"], "")],
-                  ["ResignDate", textValue(selectedEmployee, ["resign_date"], "")],
+                  ["Giới tính", textValue(selectedEmployee, ["gender"], "—")],
+                  ["Ngày sinh", formatDate(textValue(selectedEmployee, ["birth_date", "date_of_birth"], ""))],
+                  ["Số CCCD", textValue(selectedEmployee, ["id_card_no", "identity_number"], "—")],
+                  ["Địa chỉ email", textValue(selectedEmployee, ["email"], "—")],
+                  ["Số điện thoại", textValue(selectedEmployee, ["mobile", "phone"], "—")],
+                  ["Ngày vào làm", textValue(selectedEmployee, ["hire_date", "start_date", "joined_at"], "") ? formatDate(textValue(selectedEmployee, ["hire_date", "start_date", "joined_at"], "")) : ""],
+                  ["Ngày nghỉ việc", textValue(selectedEmployee, ["resign_date"], "") ? formatDate(textValue(selectedEmployee, ["resign_date"], "")) : ""],
                   ["Trạng thái", textValue(selectedEmployee, ["status"], "active")],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
@@ -529,7 +529,7 @@ function EmployeeEditorModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Mã nhân viên"><input value={form.employee_code} disabled={editing} onChange={(e) => onChange({ ...form, employee_code: e.target.value })} className={inputClass} /></Field>
           <Field label="Họ và tên"><input value={form.full_name} onChange={(e) => onChange({ ...form, full_name: e.target.value })} className={inputClass} /></Field>
-          <Field label="Gender">
+          <Field label="Giới tính">
             <select value={form.gender} onChange={(e) => onChange({ ...form, gender: e.target.value })} className={inputClass}>
               <option value="">Chưa chọn</option>
               <option value="male">Nam</option>
@@ -537,12 +537,12 @@ function EmployeeEditorModal({
               <option value="other">Khác</option>
             </select>
           </Field>
-          <Field label="BirthDate"><DateInput value={form.birth_date} onChange={(value) => onChange({ ...form, birth_date: value })} className={inputClass} /></Field>
-          <Field label="IdCardNo"><input value={form.id_card_no} onChange={(e) => onChange({ ...form, id_card_no: e.target.value })} className={inputClass} /></Field>
-          <Field label="Email"><input type="email" value={form.email} onChange={(e) => onChange({ ...form, email: e.target.value })} className={inputClass} /></Field>
-          <Field label="Mobile"><input value={form.mobile} onChange={(e) => onChange({ ...form, mobile: e.target.value })} className={inputClass} /></Field>
+          <Field label="Ngày sinh"><DateInput value={form.birth_date} onChange={(value) => onChange({ ...form, birth_date: value })} className={inputClass} /></Field>
+          <Field label="Số CCCD"><input value={form.id_card_no} onChange={(e) => onChange({ ...form, id_card_no: e.target.value })} className={inputClass} /></Field>
+          <Field label="Địa chỉ email"><input type="email" value={form.email} onChange={(e) => onChange({ ...form, email: e.target.value })} className={inputClass} /></Field>
+          <Field label="Số điện thoại"><input value={form.mobile} pattern="[0-9+\\-\\s]{8,20}" onChange={(e) => onChange({ ...form, mobile: e.target.value })} className={inputClass} /></Field>
           <Field label="Ngày vào làm"><DateInput value={form.hire_date} onChange={(value) => onChange({ ...form, hire_date: value })} className={inputClass} /></Field>
-          <Field label="ResignDate"><DateInput value={form.resign_date} onChange={(value) => onChange({ ...form, resign_date: value })} className={inputClass} /></Field>
+          <Field label="Ngày nghỉ việc"><DateInput value={form.resign_date} onChange={(value) => onChange({ ...form, resign_date: value })} className={inputClass} /></Field>
           <Field label="Trạng thái">
             <select value={form.status} onChange={(e) => onChange({ ...form, status: e.target.value })} className={inputClass}>
               <option value="active">Đang làm việc</option>

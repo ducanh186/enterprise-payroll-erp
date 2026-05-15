@@ -61,13 +61,7 @@ class ReferenceService
         return ContractType::query()
             ->orderBy('id')
             ->get()
-            ->map(fn (ContractType $type) => [
-                'id' => $type->id,
-                'code' => $type->code,
-                'name' => $type->name,
-                'max_probation_days' => $this->resolveMaxProbationDays($type),
-                'is_active' => $this->isActiveModel($type),
-            ])
+            ->map(fn (ContractType $type) => $this->formatContractType($type))
             ->all();
     }
 
@@ -81,7 +75,7 @@ class ReferenceService
                 'code' => $type->code,
                 'name' => $type->name,
                 'description' => $this->resolvePayrollTypeDescription($type),
-                'is_active' => true,
+                'is_active' => $this->isActiveModel($type),
             ])
             ->all();
     }
@@ -90,7 +84,6 @@ class ReferenceService
     {
         return PayrollParameter::query()
             ->with(['details' => fn ($query) => $query->orderBy('display_order')->orderBy('id')])
-            ->active()
             ->effective()
             ->orderBy('id')
             ->get()
@@ -167,16 +160,263 @@ class ReferenceService
         return AllowanceType::query()
             ->orderBy('id')
             ->get()
-            ->map(fn (AllowanceType $type) => [
-                'id' => $type->id,
-                'code' => $type->code,
-                'name' => $type->name,
-                'default_amount' => $this->numericValue($type->default_amount),
-                'is_taxable' => (bool) $type->is_taxable,
-                'is_insurance_base' => (bool) $type->is_insurance_base,
-                'is_active' => $type->status === 'active',
-            ])
+            ->map(fn (AllowanceType $type) => $this->formatAllowance($type))
             ->all();
+    }
+
+    public function createContractType(array $data): array
+    {
+        $type = ContractType::query()->create($this->contractTypePayload($data));
+
+        return $this->formatContractType($type);
+    }
+
+    public function updateContractType(int $id, array $data): ?array
+    {
+        $type = ContractType::query()->find($id);
+        if (!$type) {
+            return null;
+        }
+
+        $type->fill($this->contractTypePayload($data, true))->save();
+
+        return $this->formatContractType($type->fresh());
+    }
+
+    public function suspendContractType(int $id): ?array
+    {
+        return $this->updateContractType($id, ['status' => 'inactive']);
+    }
+
+    public function createAllowance(array $data): array
+    {
+        $allowance = AllowanceType::query()->create($this->allowancePayload($data));
+
+        return $this->formatAllowance($allowance);
+    }
+
+    public function updateAllowance(int $id, array $data): ?array
+    {
+        $allowance = AllowanceType::query()->find($id);
+        if (!$allowance) {
+            return null;
+        }
+
+        $allowance->fill($this->allowancePayload($data, true))->save();
+
+        return $this->formatAllowance($allowance->fresh());
+    }
+
+    public function suspendAllowance(int $id): ?array
+    {
+        return $this->updateAllowance($id, ['status' => 'inactive']);
+    }
+
+    public function createPayrollParameter(array $data): array
+    {
+        return DB::transaction(function () use ($data): array {
+            $parameter = PayrollParameter::query()->create([
+                'code' => Str::upper((string) $data['code']),
+                'name' => (string) $data['name'],
+                'description' => $data['description'] ?? null,
+                'effective_from' => $this->dateValue($data['effective_from'] ?? now()->toDateString()),
+                'effective_to' => $this->dateValue($data['effective_to'] ?? null),
+                'status' => $data['status'] ?? 'active',
+            ]);
+
+            $detail = $parameter->details()->create([
+                'param_key' => Str::upper((string) $data['code']),
+                'param_type' => (string) ($data['type'] ?? $data['unit'] ?? 'value'),
+                'default_value' => isset($data['value']) ? (string) $data['value'] : null,
+                'display_order' => 0,
+            ]);
+
+            return $this->formatPayrollParameter($parameter->fresh(), $detail);
+        });
+    }
+
+    public function updatePayrollParameter(int $id, array $data): ?array
+    {
+        return DB::transaction(function () use ($id, $data): ?array {
+            $detail = PayrollParameterDetail::query()->with('payrollParameter')->find($id);
+            $parameter = $detail?->payrollParameter ?? PayrollParameter::query()->find($id);
+
+            if (!$parameter) {
+                return null;
+            }
+
+            $detail ??= $parameter->details()->orderBy('display_order')->orderBy('id')->first();
+            $parameter->fill(array_filter([
+                'code' => array_key_exists('code', $data) ? Str::upper((string) $data['code']) : null,
+                'name' => $data['name'] ?? null,
+                'description' => array_key_exists('description', $data) ? $data['description'] : null,
+                'effective_from' => array_key_exists('effective_from', $data) ? $this->dateValue($data['effective_from']) : null,
+                'effective_to' => array_key_exists('effective_to', $data) ? $this->dateValue($data['effective_to']) : null,
+                'status' => $data['status'] ?? null,
+            ], fn ($value) => $value !== null));
+            $parameter->save();
+
+            if ($detail) {
+                $detail->fill(array_filter([
+                    'param_key' => array_key_exists('code', $data) ? Str::upper((string) $data['code']) : null,
+                    'param_type' => $data['type'] ?? $data['unit'] ?? null,
+                    'default_value' => array_key_exists('value', $data) ? (string) $data['value'] : null,
+                ], fn ($value) => $value !== null));
+                $detail->save();
+            }
+
+            $detail ??= $parameter->details()->create([
+                'param_key' => Str::upper((string) $parameter->code),
+                'param_type' => 'value',
+                'default_value' => null,
+                'display_order' => 0,
+            ]);
+
+            return $this->formatPayrollParameter($parameter->fresh(), $detail->fresh());
+        });
+    }
+
+    public function suspendPayrollParameter(int $id): ?array
+    {
+        return $this->updatePayrollParameter($id, ['status' => 'inactive']);
+    }
+
+    public function createSalaryScale(array $data): array
+    {
+        $type = PayrollType::query()->create([
+            'code' => Str::upper((string) $data['code']),
+            'name' => (string) $data['name'],
+            'is_probationary' => false,
+            'status' => $data['status'] ?? 'active',
+        ]);
+
+        return $this->formatLocalSalaryScale($type, collect());
+    }
+
+    public function updateSalaryScale(int $id, array $data): ?array
+    {
+        $type = PayrollType::query()->with('salaryLevels')->find($id);
+        if (!$type) {
+            return null;
+        }
+
+        $type->fill(array_filter([
+            'code' => array_key_exists('code', $data) ? Str::upper((string) $data['code']) : null,
+            'name' => $data['name'] ?? null,
+            'status' => $data['status'] ?? null,
+        ], fn ($value) => $value !== null))->save();
+
+        return $this->formatLocalSalaryScale($type->fresh(['salaryLevels']), $type->salaryLevels);
+    }
+
+    public function suspendSalaryScale(int $id): ?array
+    {
+        return $this->updateSalaryScale($id, ['status' => 'inactive']);
+    }
+
+    public function createSalaryGrade(int $scaleId, array $data): ?array
+    {
+        $type = PayrollType::query()->find($scaleId);
+        if (!$type) {
+            return null;
+        }
+
+        $grade = SalaryLevel::query()->create([
+            'payroll_type_id' => $type->id,
+            'code' => Str::upper((string) $data['code']),
+            'level_no' => (int) $data['level_no'],
+            'amount' => (float) $data['amount'],
+            'effective_from' => $this->dateValue($data['effective_from']),
+            'effective_to' => $this->dateValue($data['effective_to'] ?? null),
+            'status' => $data['status'] ?? 'active',
+        ]);
+
+        return $this->formatLocalSalaryGrade($grade->fresh(['payrollType']));
+    }
+
+    public function updateSalaryGrade(int $id, array $data): ?array
+    {
+        $grade = SalaryLevel::query()->with('payrollType')->find($id);
+        if (!$grade) {
+            return null;
+        }
+
+        $grade->fill(array_filter([
+            'code' => array_key_exists('code', $data) ? Str::upper((string) $data['code']) : null,
+            'level_no' => $data['level_no'] ?? null,
+            'amount' => $data['amount'] ?? null,
+            'effective_from' => array_key_exists('effective_from', $data) ? $this->dateValue($data['effective_from']) : null,
+            'effective_to' => array_key_exists('effective_to', $data) ? $this->dateValue($data['effective_to']) : null,
+            'status' => $data['status'] ?? null,
+        ], fn ($value) => $value !== null))->save();
+
+        return $this->formatLocalSalaryGrade($grade->fresh(['payrollType']));
+    }
+
+    public function suspendSalaryGrade(int $id): ?array
+    {
+        return $this->updateSalaryGrade($id, ['status' => 'inactive']);
+    }
+
+    protected function formatContractType(ContractType $type): array
+    {
+        return [
+            'id' => $type->id,
+            'code' => $type->code,
+            'name' => $type->name,
+            'duration_months' => $type->duration_months,
+            'max_probation_days' => $this->resolveMaxProbationDays($type),
+            'is_probationary' => (bool) $type->is_probationary,
+            'status' => data_get($type, 'status', 'active'),
+            'is_active' => $this->isActiveModel($type),
+        ];
+    }
+
+    protected function contractTypePayload(array $data, bool $partial = false): array
+    {
+        $payload = [];
+        foreach (['code', 'name', 'duration_months', 'is_probationary', 'status'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $payload[$field] = $field === 'code' ? Str::upper((string) $data[$field]) : $data[$field];
+            }
+        }
+
+        if (!$partial && !array_key_exists('status', $payload)) {
+            $payload['status'] = 'active';
+        }
+
+        return $payload;
+    }
+
+    protected function formatAllowance(AllowanceType $type): array
+    {
+        return [
+            'id' => $type->id,
+            'code' => $type->code,
+            'name' => $type->name,
+            'default_amount' => $this->numericValue($type->default_amount),
+            'is_taxable' => (bool) $type->is_taxable,
+            'is_insurance_base' => (bool) $type->is_insurance_base,
+            'is_insurable' => (bool) $type->is_insurance_base,
+            'status' => $type->status,
+            'is_active' => $type->status === 'active',
+        ];
+    }
+
+    protected function allowancePayload(array $data, bool $partial = false): array
+    {
+        $payload = [];
+        foreach (['code', 'name', 'default_amount', 'is_taxable', 'is_insurance_base', 'status'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $payload[$field] = $field === 'code' ? Str::upper((string) $data[$field]) : $data[$field];
+            }
+        }
+
+        if (!$partial && !array_key_exists('status', $payload)) {
+            $payload['status'] = 'active';
+        }
+
+        return $payload;
     }
 
     protected function formatTime(mixed $value): ?string
@@ -228,12 +468,16 @@ class ReferenceService
     {
         return [
             'id' => $detail->id,
+            'parameter_id' => $parameter->id,
             'code' => Str::upper($detail->param_key),
             'name' => Str::headline(Str::replace('_', ' ', $detail->param_key)),
             'value' => $this->parseParameterValue($detail->default_value),
             'unit' => $this->resolveParameterUnit($detail),
             'effective_from' => $this->dateValue($parameter->effective_from),
             'description' => $parameter->description,
+            'type' => $detail->param_type,
+            'status' => $parameter->status,
+            'is_active' => $parameter->status === 'active',
         ];
     }
 
@@ -340,6 +584,7 @@ class ReferenceService
                     ->all();
 
                 return [
+                    'id' => data_get($scale, 'Id') ?? data_get($scale, 'id') ?? $code,
                     'code' => $code,
                     'name' => (string) (data_get($scale, 'Name') ?? data_get($scale, 'name') ?? $code),
                     'description' => data_get($scale, 'Description') ?? data_get($scale, 'description'),
@@ -363,38 +608,60 @@ class ReferenceService
             ->map(function (Collection $levels, int|string $payrollTypeId): array {
                 /** @var SalaryLevel $first */
                 $first = $levels->first();
-                $scaleCode = data_get($first, 'payrollType.code') ?? 'PAYROLL_TYPE_' . $payrollTypeId;
-                $scaleName = data_get($first, 'payrollType.name') ?? 'Thang lương ' . $scaleCode;
-
-                return [
-                    'code' => $scaleCode,
-                    'name' => $scaleName,
-                    'description' => 'Fallback từ bảng salary_levels nội bộ.',
-                    'is_active' => true,
-                    'grades' => $levels
-                        ->map(fn (SalaryLevel $level) => [
-                            'id' => $level->id,
-                            'scale_code' => $scaleCode,
-                            'effective_date' => $this->dateValue($level->effective_from),
-                            'salary_level' => (int) $level->level_no,
-                            'description' => $level->code,
-                            'details' => [
-                                [
-                                    'row_id' => 'SL-' . $level->id . '-BASE',
-                                    'parent_id' => (string) $level->id,
-                                    'salary_type' => data_get($level, 'payrollType.code') ?? 'BASE',
-                                    'amount' => $this->numericValue($level->amount),
-                                    'description' => data_get($level, 'payrollType.name') ?? 'Lương cơ bản',
-                                ],
-                            ],
-                        ])
-                        ->values()
-                        ->all(),
-                    'source' => 'laravel_fallback',
-                ];
+                return $this->formatLocalSalaryScale($first->payrollType, $levels);
             })
             ->values()
             ->all();
+    }
+
+    protected function formatLocalSalaryScale(?PayrollType $type, Collection $levels): array
+    {
+        $scaleCode = data_get($type, 'code') ?? 'PAYROLL_TYPE_' . (string) data_get($levels->first(), 'payroll_type_id', 'NEW');
+        $scaleName = data_get($type, 'name') ?? 'Thang lương ' . $scaleCode;
+
+        return [
+            'id' => data_get($type, 'id'),
+            'code' => $scaleCode,
+            'name' => $scaleName,
+            'description' => 'Fallback từ bảng salary_levels nội bộ.',
+            'status' => data_get($type, 'status', 'active'),
+            'is_active' => data_get($type, 'status', 'active') === 'active',
+            'grades' => $levels
+                ->map(fn (SalaryLevel $level) => $this->formatLocalSalaryGrade($level))
+                ->values()
+                ->all(),
+            'source' => 'laravel_fallback',
+        ];
+    }
+
+    protected function formatLocalSalaryGrade(SalaryLevel $level): array
+    {
+        $scaleCode = data_get($level, 'payrollType.code') ?? 'PAYROLL_TYPE_' . $level->payroll_type_id;
+
+        return [
+            'id' => $level->id,
+            'scale_code' => $scaleCode,
+            'code' => $level->code,
+            'effective_date' => $this->dateValue($level->effective_from),
+            'effective_from' => $this->dateValue($level->effective_from),
+            'effective_to' => $this->dateValue($level->effective_to),
+            'salary_level' => (int) $level->level_no,
+            'level_no' => (int) $level->level_no,
+            'amount' => $this->numericValue($level->amount),
+            'description' => $level->code,
+            'status' => data_get($level, 'status', 'active'),
+            'is_active' => data_get($level, 'status', 'active') === 'active',
+            'details' => [
+                [
+                    'row_id' => 'SL-' . $level->id . '-BASE',
+                    'parent_id' => (string) $level->id,
+                    'salary_type' => data_get($level, 'payrollType.code') ?? 'BASE',
+                    'amount' => $this->numericValue($level->amount),
+                    'description' => data_get($level, 'payrollType.name') ?? 'Lương cơ bản',
+                    'status' => data_get($level, 'status', 'active'),
+                ],
+            ],
+        ];
     }
 
     protected function formatCustomerSalaryGrade(object $grade, Collection $details, string $scaleCode): array

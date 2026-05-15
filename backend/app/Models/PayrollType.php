@@ -13,6 +13,7 @@ class PayrollType extends Model
         'code',
         'name',
         'is_probationary',
+        'status',
     ];
 
     protected $casts = [

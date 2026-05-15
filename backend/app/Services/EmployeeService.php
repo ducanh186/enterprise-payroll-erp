@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Enums\EmploymentStatus;
 use App\Models\ContractAllowance;
+use App\Models\ContractType;
 use App\Models\Dependent;
 use App\Models\Employee;
 use App\Models\LabourContract;
+use App\Models\PayrollType;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -143,6 +145,48 @@ class EmployeeService
             'per_page' => $paginator->perPage(),
             'current_page' => $paginator->currentPage(),
         ];
+    }
+
+    public function createContract(array $data): array
+    {
+        return DB::transaction(function () use ($data) {
+            $contract = LabourContract::query()->create($this->contractPayload($data));
+
+            return $this->formatContract($contract->fresh([
+                'employee.department',
+                'contractType',
+                'payrollType',
+                'salaryLevel',
+                'allowances.allowanceType',
+            ]));
+        });
+    }
+
+    public function updateContract(int $id, array $data): ?array
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $contract = LabourContract::query()->find($id);
+
+            if (!$contract) {
+                return null;
+            }
+
+            $contract->fill($this->contractPayload($data, true));
+            $contract->save();
+
+            return $this->formatContract($contract->fresh([
+                'employee.department',
+                'contractType',
+                'payrollType',
+                'salaryLevel',
+                'allowances.allowanceType',
+            ]));
+        });
+    }
+
+    public function suspendContract(int $id): ?array
+    {
+        return $this->updateContract($id, ['status' => 'terminated']);
     }
 
     public function getContract(int $id): ?array
@@ -332,6 +376,65 @@ class EmployeeService
 
         if (!$partial && !array_key_exists('relationship', $payload)) {
             $payload['relationship'] = '';
+        }
+
+        return $payload;
+    }
+
+    protected function contractPayload(array $data, bool $partial = false): array
+    {
+        $payload = [];
+        $employeeId = $data['employee_id'] ?? null;
+        if (!$employeeId && !empty($data['employee_code'])) {
+            $employeeId = Employee::query()
+                ->where('employee_code', (string) $data['employee_code'])
+                ->value('id');
+        }
+
+        if ($employeeId) {
+            $payload['employee_id'] = (int) $employeeId;
+        }
+
+        if (array_key_exists('contract_no', $data)) {
+            $payload['contract_no'] = trim((string) $data['contract_no']);
+        }
+
+        if (array_key_exists('contract_type_id', $data) && $data['contract_type_id']) {
+            $payload['contract_type_id'] = (int) $data['contract_type_id'];
+        } elseif (!empty($data['contract_type_code'])) {
+            $payload['contract_type_id'] = (int) ContractType::query()
+                ->where('code', (string) $data['contract_type_code'])
+                ->value('id');
+        } elseif (!$partial) {
+            $payload['contract_type_id'] = (int) ContractType::query()->orderBy('id')->value('id');
+        }
+
+        if (array_key_exists('payroll_type_id', $data) && $data['payroll_type_id']) {
+            $payload['payroll_type_id'] = (int) $data['payroll_type_id'];
+        } elseif (!$partial) {
+            $payload['payroll_type_id'] = (int) PayrollType::query()->orderBy('id')->value('id');
+        }
+
+        foreach (['start_date', 'end_date', 'sign_date'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $payload[$field] = $this->nullableDate($data[$field]);
+            }
+        }
+
+        foreach (['base_salary', 'probation_rate'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $payload[$field] = (float) $data[$field];
+            }
+        }
+
+        if (array_key_exists('salary_level_id', $data)) {
+            $payload['salary_level_id'] = $data['salary_level_id'] ? (int) $data['salary_level_id'] : null;
+        }
+
+        if (array_key_exists('status', $data)) {
+            $payload['status'] = $data['status'] ?: 'draft';
+        } elseif (!$partial) {
+            $payload['status'] = 'active';
         }
 
         return $payload;

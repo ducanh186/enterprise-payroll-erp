@@ -19,7 +19,10 @@ export default function PayrollEmailPayslipsPage() {
     mutationFn: async () => apiPost<unknown>("/payroll/payslips/email", form),
     onSuccess: (response) => {
       setError(null);
-      setResult((response.data ?? {}) as Record<string, unknown>);
+      setResult({
+        ...((response.data ?? {}) as Record<string, unknown>),
+        message: response.success ? "Gửi email phiếu lương thành công" : response.message,
+      });
     },
     onError: (mutationError) => {
       setError(getApiErrorMessage(mutationError, "Không thể gửi email phiếu lương."));
@@ -52,7 +55,7 @@ export default function PayrollEmailPayslipsPage() {
           <div className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">DocDate1</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Ngày tính lương</span>
                 <DateInput
                   value={form.doc_date}
                   onChange={(value) => setForm((current) => ({ ...current, doc_date: value }))}
@@ -60,7 +63,7 @@ export default function PayrollEmailPayslipsPage() {
                 />
               </label>
               <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">EmployeeCode</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Mã nhân viên</span>
                 <input
                   value={form.employee_code}
                   onChange={(event) => setForm((current) => ({ ...current, employee_code: event.target.value }))}
@@ -69,7 +72,7 @@ export default function PayrollEmailPayslipsPage() {
                 />
               </label>
               <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">DeptCode</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Mã phòng ban</span>
                 <input
                   value={form.department_code}
                   onChange={(event) => setForm((current) => ({ ...current, department_code: event.target.value }))}
@@ -78,7 +81,7 @@ export default function PayrollEmailPayslipsPage() {
                 />
               </label>
               <label className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">BranchCode</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Mã chi nhánh</span>
                 <input
                   value={form.branch_code}
                   onChange={(event) => setForm((current) => ({ ...current, branch_code: event.target.value }))}

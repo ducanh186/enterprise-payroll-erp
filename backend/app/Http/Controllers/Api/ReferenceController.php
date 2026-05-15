@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Services\ReferenceService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ReferenceController extends Controller
 {
@@ -30,6 +32,41 @@ class ReferenceController extends Controller
         return $this->success($this->referenceService->getContractTypes());
     }
 
+    public function storeContractType(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:20', Rule::unique('contract_types', 'code')],
+            'name' => ['required', 'string', 'max:100'],
+            'duration_months' => ['nullable', 'integer', 'min:0'],
+            'is_probationary' => ['nullable', 'boolean'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        return $this->created($this->referenceService->createContractType($data), 'Contract type created.');
+    }
+
+    public function updateContractType(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['sometimes', 'string', 'max:20', Rule::unique('contract_types', 'code')->ignore($id)],
+            'name' => ['sometimes', 'string', 'max:100'],
+            'duration_months' => ['nullable', 'integer', 'min:0'],
+            'is_probationary' => ['nullable', 'boolean'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $record = $this->referenceService->updateContractType($id, $data);
+
+        return $record ? $this->success($record, 'Contract type updated.') : $this->notFound('Contract type not found.');
+    }
+
+    public function suspendContractType(int $id): JsonResponse
+    {
+        $record = $this->referenceService->suspendContractType($id);
+
+        return $record ? $this->success($record, 'Contract type suspended.') : $this->notFound('Contract type not found.');
+    }
+
     public function payrollTypes(): JsonResponse
     {
         return $this->success($this->referenceService->getPayrollTypes());
@@ -38,6 +75,49 @@ class ReferenceController extends Controller
     public function payrollParameters(): JsonResponse
     {
         return $this->success($this->referenceService->getPayrollParameters());
+    }
+
+    public function storePayrollParameter(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:50', Rule::unique('payroll_parameters', 'code')],
+            'name' => ['required', 'string', 'max:200'],
+            'value' => ['nullable', 'string', 'max:100'],
+            'unit' => ['nullable', 'string', 'max:20'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'effective_from' => ['required', 'date'],
+            'effective_to' => ['nullable', 'date'],
+            'type' => ['nullable', 'string', 'max:20'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        return $this->created($this->referenceService->createPayrollParameter($data), 'Payroll parameter created.');
+    }
+
+    public function updatePayrollParameter(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['sometimes', 'string', 'max:50', Rule::unique('payroll_parameters', 'code')->ignore($id)],
+            'name' => ['sometimes', 'string', 'max:200'],
+            'value' => ['nullable', 'string', 'max:100'],
+            'unit' => ['nullable', 'string', 'max:20'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'effective_from' => ['sometimes', 'date'],
+            'effective_to' => ['nullable', 'date'],
+            'type' => ['nullable', 'string', 'max:20'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $record = $this->referenceService->updatePayrollParameter($id, $data);
+
+        return $record ? $this->success($record, 'Payroll parameter updated.') : $this->notFound('Payroll parameter not found.');
+    }
+
+    public function suspendPayrollParameter(int $id): JsonResponse
+    {
+        $record = $this->referenceService->suspendPayrollParameter($id);
+
+        return $record ? $this->success($record, 'Payroll parameter suspended.') : $this->notFound('Payroll parameter not found.');
     }
 
     public function lateEarlyRules(): JsonResponse
@@ -60,8 +140,117 @@ class ReferenceController extends Controller
         return $this->success($this->referenceService->getSalaryScales());
     }
 
+    public function storeSalaryScale(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:20', Rule::unique('payroll_types', 'code')],
+            'name' => ['required', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:256'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        return $this->created($this->referenceService->createSalaryScale($data), 'Salary scale created.');
+    }
+
+    public function updateSalaryScale(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['sometimes', 'string', 'max:20', Rule::unique('payroll_types', 'code')->ignore($id)],
+            'name' => ['sometimes', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:256'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $record = $this->referenceService->updateSalaryScale($id, $data);
+
+        return $record ? $this->success($record, 'Salary scale updated.') : $this->notFound('Salary scale not found.');
+    }
+
+    public function suspendSalaryScale(int $id): JsonResponse
+    {
+        $record = $this->referenceService->suspendSalaryScale($id);
+
+        return $record ? $this->success($record, 'Salary scale suspended.') : $this->notFound('Salary scale not found.');
+    }
+
+    public function storeSalaryGrade(Request $request, int $scaleId): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:20'],
+            'level_no' => ['required', 'integer', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'effective_from' => ['required', 'date'],
+            'effective_to' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $record = $this->referenceService->createSalaryGrade($scaleId, $data);
+
+        return $record ? $this->created($record, 'Salary grade created.') : $this->notFound('Salary scale not found.');
+    }
+
+    public function updateSalaryGrade(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['sometimes', 'string', 'max:20'],
+            'level_no' => ['sometimes', 'integer', 'min:1'],
+            'amount' => ['sometimes', 'numeric', 'min:0'],
+            'effective_from' => ['sometimes', 'date'],
+            'effective_to' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $record = $this->referenceService->updateSalaryGrade($id, $data);
+
+        return $record ? $this->success($record, 'Salary grade updated.') : $this->notFound('Salary grade not found.');
+    }
+
+    public function suspendSalaryGrade(int $id): JsonResponse
+    {
+        $record = $this->referenceService->suspendSalaryGrade($id);
+
+        return $record ? $this->success($record, 'Salary grade suspended.') : $this->notFound('Salary grade not found.');
+    }
+
     public function allowances(): JsonResponse
     {
         return $this->success($this->referenceService->getAllowances());
+    }
+
+    public function storeAllowance(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:20', Rule::unique('allowance_types', 'code')],
+            'name' => ['required', 'string', 'max:100'],
+            'default_amount' => ['nullable', 'numeric', 'min:0'],
+            'is_taxable' => ['nullable', 'boolean'],
+            'is_insurance_base' => ['nullable', 'boolean'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        return $this->created($this->referenceService->createAllowance($data), 'Allowance created.');
+    }
+
+    public function updateAllowance(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['sometimes', 'string', 'max:20', Rule::unique('allowance_types', 'code')->ignore($id)],
+            'name' => ['sometimes', 'string', 'max:100'],
+            'default_amount' => ['nullable', 'numeric', 'min:0'],
+            'is_taxable' => ['nullable', 'boolean'],
+            'is_insurance_base' => ['nullable', 'boolean'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $record = $this->referenceService->updateAllowance($id, $data);
+
+        return $record ? $this->success($record, 'Allowance updated.') : $this->notFound('Allowance not found.');
+    }
+
+    public function suspendAllowance(int $id): JsonResponse
+    {
+        $record = $this->referenceService->suspendAllowance($id);
+
+        return $record ? $this->success($record, 'Allowance suspended.') : $this->notFound('Allowance not found.');
     }
 }

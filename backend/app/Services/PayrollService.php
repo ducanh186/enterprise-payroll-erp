@@ -216,8 +216,8 @@ class PayrollService
 
         $procedureResult = app(CustomerProcedureService::class)->execute($procedureName, $parameters);
         $message = $procedureResult['available'] && !$procedureResult['error']
-            ? 'Đã chạy gửi email phiếu lương.'
-            : 'Stored procedure gửi email chưa sẵn sàng, đã ghi nhận tham số thực thi.';
+            ? 'Gửi email phiếu lương thành công'
+            : 'Gửi thất bại: ' . ($procedureResult['error'] ?: 'stored procedure chưa sẵn sàng.');
 
         return [
             'report_code' => 'FUJIMART_PAYROLL_SLIP',

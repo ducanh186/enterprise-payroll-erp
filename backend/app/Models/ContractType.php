@@ -14,6 +14,7 @@ class ContractType extends Model
         'name',
         'duration_months',
         'is_probationary',
+        'status',
     ];
 
     protected $casts = [

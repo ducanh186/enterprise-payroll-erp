@@ -43,13 +43,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/shifts', [ReferenceController::class, 'shifts']);
         Route::get('/holidays', [ReferenceController::class, 'holidays']);
         Route::get('/contract-types', [ReferenceController::class, 'contractTypes']);
+        Route::post('/contract-types', [ReferenceController::class, 'storeContractType'])->middleware('permission:reference.manage');
+        Route::put('/contract-types/{id}', [ReferenceController::class, 'updateContractType'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
+        Route::post('/contract-types/{id}/suspend', [ReferenceController::class, 'suspendContractType'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
         Route::get('/payroll-types', [ReferenceController::class, 'payrollTypes']);
         Route::get('/payroll-parameters', [ReferenceController::class, 'payrollParameters']);
+        Route::post('/payroll-parameters', [ReferenceController::class, 'storePayrollParameter'])->middleware('permission:reference.manage');
+        Route::put('/payroll-parameters/{id}', [ReferenceController::class, 'updatePayrollParameter'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
+        Route::post('/payroll-parameters/{id}/suspend', [ReferenceController::class, 'suspendPayrollParameter'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
         Route::get('/late-early-rules', [ReferenceController::class, 'lateEarlyRules']);
         Route::get('/departments', [ReferenceController::class, 'departments']);
         Route::get('/salary-levels', [ReferenceController::class, 'salaryLevels']);
         Route::get('/salary-scales', [ReferenceController::class, 'salaryScales']);
+        Route::post('/salary-scales', [ReferenceController::class, 'storeSalaryScale'])->middleware('permission:reference.manage');
+        Route::put('/salary-scales/{id}', [ReferenceController::class, 'updateSalaryScale'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
+        Route::post('/salary-scales/{id}/suspend', [ReferenceController::class, 'suspendSalaryScale'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
+        Route::post('/salary-scales/{scaleId}/grades', [ReferenceController::class, 'storeSalaryGrade'])->where('scaleId', '[0-9]+')->middleware('permission:reference.manage');
+        Route::put('/salary-grades/{id}', [ReferenceController::class, 'updateSalaryGrade'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
+        Route::post('/salary-grades/{id}/suspend', [ReferenceController::class, 'suspendSalaryGrade'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
         Route::get('/allowances', [ReferenceController::class, 'allowances']);
+        Route::post('/allowances', [ReferenceController::class, 'storeAllowance'])->middleware('permission:reference.manage');
+        Route::put('/allowances/{id}', [ReferenceController::class, 'updateAllowance'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
+        Route::post('/allowances/{id}/suspend', [ReferenceController::class, 'suspendAllowance'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
     });
 
     // -----------------------------------------------------------------------
@@ -74,7 +89,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // -----------------------------------------------------------------------
     Route::prefix('contracts')->middleware('permission:contract.view')->group(function () {
         Route::get('/', [ContractController::class, 'index']);
+        Route::post('/', [ContractController::class, 'store'])->middleware('permission:contract.create');
         Route::get('/{id}', [ContractController::class, 'show'])->where('id', '[0-9]+');
+        Route::put('/{id}', [ContractController::class, 'update'])->where('id', '[0-9]+')->middleware('permission:contract.update');
+        Route::post('/{id}/suspend', [ContractController::class, 'suspend'])->where('id', '[0-9]+')->middleware('permission:contract.terminate');
     });
 
     // -----------------------------------------------------------------------

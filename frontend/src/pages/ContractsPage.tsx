@@ -1,24 +1,45 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Search,
   Filter,
   Download,
   Eye,
   Edit,
+  Trash2,
   RefreshCcw,
   ChevronLeft,
   ChevronRight,
   Plus,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { apiGet } from "../lib/api";
-import { useDetachedEditor } from "../lib/detachedEditor";
+import DateInput from "../components/DateInput";
+import { apiGet, apiPost, apiPut, getApiErrorMessage } from "../lib/api";
 import { formatCurrency, formatDate } from "../lib/format";
 import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { numberValue, textValue, toArray } from "../lib/records";
 import { Badge, EmptyState } from "../components/ui";
+
+type ContractForm = {
+  employee_code: string;
+  contract_no: string;
+  contract_type_code: string;
+  start_date: string;
+  end_date: string;
+  base_salary: string;
+  status: string;
+};
+
+const emptyContractForm: ContractForm = {
+  employee_code: "",
+  contract_no: "",
+  contract_type_code: "",
+  start_date: "2026-01-01",
+  end_date: "",
+  base_salary: "",
+  status: "active",
+};
 
 function getStatusBadge(status: string) {
   const s = status.toLowerCase();
@@ -84,7 +105,8 @@ export default function ContractsPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingId, setEditingId] = useState<string>("");
-  const { editorAction, editorId, openCreateTab, openEditTab, closeDetachedEditor } = useDetachedEditor("/contracts");
+  const [contractForm, setContractForm] = useState<ContractForm>(emptyContractForm);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -92,19 +114,13 @@ export default function ContractsPage() {
   const permissionSet = useMemo(() => createPermissionSet(user?.permissions), [user?.permissions]);
   const canCreateContract = hasPermissionAccess(permissionSet, "contract.create");
   const canEditContract = hasPermissionAccess(permissionSet, "contract.update");
-  const activeEditingId = canEditContract ? editingId || (editorAction === "edit" ? editorId : "") : "";
-  const modalOpen =
-    (canCreateContract && (showCreateModal || editorAction === "create")) ||
-    (canEditContract && Boolean(activeEditingId));
+  const canTerminateContract = hasPermissionAccess(permissionSet, "contract.terminate");
+  const modalOpen = (canCreateContract && showCreateModal) || (canEditContract && Boolean(editingId));
 
   function handleCloseEditor() {
-    if (editorAction === "create" || editorAction === "edit") {
-      closeDetachedEditor();
-      return;
-    }
-
     setShowCreateModal(false);
     setEditingId("");
+    setContractForm(emptyContractForm);
   }
 
   const contractsQuery = useQuery({
@@ -148,6 +164,60 @@ export default function ContractsPage() {
   }).length;
   const totalSalary = contracts.reduce((sum, c) => sum + numberValue(c, ["base_salary"], 0), 0);
 
+  const saveContractMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        ...contractForm,
+        base_salary: contractForm.base_salary ? Number(contractForm.base_salary) : 0,
+      };
+      return editingId
+        ? apiPut<unknown>(`/contracts/${editingId}`, payload)
+        : apiPost<unknown>("/contracts", payload);
+    },
+    onSuccess: async () => {
+      setError(null);
+      handleCloseEditor();
+      await contractsQuery.refetch();
+    },
+    onError: (mutationError) => {
+      setError(getApiErrorMessage(mutationError, "Không thể lưu hợp đồng."));
+    },
+  });
+
+  const suspendContractMutation = useMutation({
+    mutationFn: async (id: string) => apiPost<unknown>(`/contracts/${id}/suspend`),
+    onSuccess: async () => {
+      setError(null);
+      await contractsQuery.refetch();
+      if (selectedId) await selectedQuery.refetch();
+    },
+    onError: (mutationError) => {
+      setError(getApiErrorMessage(mutationError, "Không thể đình chỉ hợp đồng."));
+    },
+  });
+
+  const openCreateContract = () => {
+    setEditingId("");
+    setContractForm(emptyContractForm);
+    setError(null);
+    setShowCreateModal(true);
+  };
+
+  const openEditContract = (record: Record<string, unknown>) => {
+    setEditingId(textValue(record, ["id"], ""));
+    setContractForm({
+      employee_code: textValue(record, ["employee_code", "employee.employee_code"], ""),
+      contract_no: textValue(record, ["contract_no", "contract_number", "number"], ""),
+      contract_type_code: textValue(record, ["contract_type_code", "contractType.code"], ""),
+      start_date: textValue(record, ["start_date"], ""),
+      end_date: textValue(record, ["end_date"], ""),
+      base_salary: textValue(record, ["base_salary", "basic_salary"], ""),
+      status: textValue(record, ["status"], "active"),
+    });
+    setError(null);
+    setShowCreateModal(false);
+  };
+
   return (
     <div className="space-y-8 pb-10">
       {/* Page Title */}
@@ -180,7 +250,7 @@ export default function ContractsPage() {
           {canCreateContract && (
             <button
               type="button"
-              onClick={openCreateTab}
+              onClick={openCreateContract}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
             >
               <Plus className="h-4 w-4" />
@@ -249,9 +319,13 @@ export default function ContractsPage() {
         </div>
       </div>
 
+      {error && (
+        <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
+      )}
+
       {/* Main Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
-        <table className="w-full border-collapse text-left">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/60 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+        <table className="min-w-[1180px] w-full border-collapse text-left">
           <thead className="bg-slate-50/50">
             <tr>
               <th className="px-6 py-4">
@@ -278,7 +352,7 @@ export default function ContractsPage() {
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Trạng thái
               </th>
-              <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <th className="sticky right-0 bg-slate-50/95 px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Hành động
               </th>
             </tr>
@@ -372,8 +446,8 @@ export default function ContractsPage() {
                     <td className="px-4 py-4">
                       {getStatusBadge(status)}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                    <td className="sticky right-0 bg-white px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${id}`); }}
                           className="rounded-lg p-1.5 text-slate-400 transition hover:text-indigo-600"
@@ -383,11 +457,20 @@ export default function ContractsPage() {
                         </button>
                         {canEditContract && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); openEditTab(id); }}
+                            onClick={(e) => { e.stopPropagation(); openEditContract(item); }}
                             className="rounded-lg p-1.5 text-slate-400 transition hover:text-indigo-600"
                             title="Chỉnh sửa"
                           >
                             <Edit className="h-4 w-4" />
+                          </button>
+                        )}
+                        {canTerminateContract && status !== "terminated" && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); suspendContractMutation.mutate(id); }}
+                            className="rounded-lg p-1.5 text-slate-400 transition hover:text-rose-600"
+                            title="Đình chỉ"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         )}
                       </div>
@@ -573,34 +656,51 @@ export default function ContractsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-bold text-slate-900">
-              {editorAction === "create" || showCreateModal ? "Tạo hợp đồng mới" : "Chỉnh sửa hợp đồng"}
+              {showCreateModal ? "Tạo hợp đồng mới" : "Chỉnh sửa hợp đồng"}
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              {editorAction === "create" || showCreateModal ? "Nhập thông tin hợp đồng lao động mới" : "Cập nhật thông tin hợp đồng"}
+              {showCreateModal ? "Nhập thông tin hợp đồng lao động mới" : "Cập nhật thông tin hợp đồng"}
             </p>
 
-            <form className="mt-6 space-y-4">
+            <form className="mt-6 space-y-4" onSubmit={(event) => { event.preventDefault(); saveContractMutation.mutate(); }}>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  Số hợp đồng
+                </label>
+                <input
+                  type="text"
+                  value={contractForm.contract_no}
+                  onChange={(event) => setContractForm((current) => ({ ...current, contract_no: event.target.value }))}
+                  placeholder="Ví dụ: HD-2026-001"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                  required
+                />
+              </div>
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">
                   Mã nhân viên
                 </label>
                 <input
                   type="text"
+                  value={contractForm.employee_code}
+                  onChange={(event) => setContractForm((current) => ({ ...current, employee_code: event.target.value }))}
                   placeholder="Ví dụ: NV001"
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                  required
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">
-                  Loại hợp đồng
+                  Mã loại hợp đồng
                 </label>
-                <select className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100">
-                  <option value="">-- Chọn loại hợp đồng --</option>
-                  <option value="full">Toàn thời gian</option>
-                  <option value="part">Bán thời gian</option>
-                  <option value="probation">Thử việc</option>
-                </select>
+                <input
+                  type="text"
+                  value={contractForm.contract_type_code}
+                  onChange={(event) => setContractForm((current) => ({ ...current, contract_type_code: event.target.value }))}
+                  placeholder="Để trống nếu dùng loại mặc định"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -608,17 +708,20 @@ export default function ContractsPage() {
                   <label className="mb-1 block text-sm font-semibold text-slate-700">
                     Ngày bắt đầu
                   </label>
-                  <input
-                    type="date"
+                  <DateInput
+                    value={contractForm.start_date}
+                    onChange={(value) => setContractForm((current) => ({ ...current, start_date: value }))}
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                    required
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-slate-700">
                     Ngày kết thúc
                   </label>
-                  <input
-                    type="date"
+                  <DateInput
+                    value={contractForm.end_date}
+                    onChange={(value) => setContractForm((current) => ({ ...current, end_date: value }))}
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
@@ -630,11 +733,12 @@ export default function ContractsPage() {
                 </label>
                 <input
                   type="number"
+                  value={contractForm.base_salary}
+                  onChange={(event) => setContractForm((current) => ({ ...current, base_salary: event.target.value }))}
                   placeholder="Ví dụ: 15000000"
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
                 />
               </div>
-            </form>
 
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
@@ -645,13 +749,14 @@ export default function ContractsPage() {
                 Hủy
               </button>
               <button
-                type="button"
-                onClick={handleCloseEditor}
+                type="submit"
+                disabled={saveContractMutation.isPending}
                 className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
               >
-                Lưu
+                {saveContractMutation.isPending ? "Đang lưu..." : "Lưu"}
               </button>
             </div>
+            </form>
           </div>
         </div>
       )}

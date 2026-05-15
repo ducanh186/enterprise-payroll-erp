@@ -39,24 +39,25 @@ export default function LoginPage() {
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center p-4"
+      className="flex min-h-screen items-center justify-center overflow-hidden p-4"
       style={{
-        backgroundColor: "#0f172a",
+        backgroundColor: "#091224",
         backgroundImage:
-          "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0)",
-        backgroundSize: "24px 24px",
+          "radial-gradient(circle at top, rgba(56,189,248,0.16), transparent 34%), radial-gradient(circle at bottom left, rgba(45,212,191,0.12), transparent 28%), radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0)",
+        backgroundSize: "cover, cover, 24px 24px",
       }}
     >
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 ring-1 ring-white/10">
-            <img src={fujimartLogo} alt="Fujimart" className="h-full w-full object-contain" />
+        <div className="mb-10 flex justify-center">
+          <div className="flex w-full max-w-[19rem] items-center justify-center rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(7,16,35,0.92),rgba(23,37,84,0.76))] px-6 py-5 shadow-[0_24px_60px_rgba(2,6,23,0.42)] ring-1 ring-sky-100/10 backdrop-blur-md">
+            <img
+              src={fujimartLogo}
+              alt="Fujimart Fresh Everyday"
+              className="h-auto w-full object-contain"
+            />
           </div>
-          <h1 className="text-2xl font-black uppercase tracking-tight text-white">
-            Fujimart HRM
-          </h1>
         </div>
 
         {/* Card */}

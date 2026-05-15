@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, RefreshCcw } from "lucide-react";
 import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
+import DateInput from "../components/DateInput";
 import { useAuth } from "../context/AuthContext";
 import { formatDateTime } from "../lib/format";
 import { textValue, toArray } from "../lib/records";
@@ -233,11 +234,10 @@ export default function ManualAttendancePage() {
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Ngày</label>
-            <input
-              type="date"
+            <DateInput
               required
               value={form.date}
-              onChange={(e) => updateForm("date", e.target.value)}
+              onChange={(value) => updateForm("date", value)}
               className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
             />
           </div>

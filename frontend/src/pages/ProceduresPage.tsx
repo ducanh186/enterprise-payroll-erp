@@ -7,6 +7,7 @@ import {
   Settings2,
 } from "lucide-react";
 import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
+import DateInput from "../components/DateInput";
 import { formatDateTime, formatNumber } from "../lib/format";
 import { Badge, EmptyState, PageHeader, Panel } from "../components/ui";
 
@@ -167,12 +168,7 @@ export default function ProceduresPage() {
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             {label} {p.required && <span className="text-rose-500">*</span>}
           </span>
-          <input
-            type="date"
-            value={value}
-            onChange={(e) => setField(p.name, e.target.value)}
-            className={inputClass}
-          />
+          <DateInput value={value} onChange={(next) => setField(p.name, next)} className={inputClass} />
         </label>
       );
     }

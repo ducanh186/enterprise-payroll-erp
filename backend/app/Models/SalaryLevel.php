@@ -16,6 +16,7 @@ class SalaryLevel extends Model
         'amount',
         'effective_from',
         'effective_to',
+        'status',
     ];
 
     protected $casts = [

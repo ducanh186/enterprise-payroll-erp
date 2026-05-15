@@ -1,0 +1,249 @@
+payroll-backend  | 
+payroll-backend  |    INFO  Clearing cached bootstrap files.  
+payroll-backend  | 
+payroll-backend  |   config ........................................................ 10.98ms DONE
+payroll-backend  |   cache ......................................................... 99.76ms DONE
+payroll-backend  |   compiled ...................................................... 30.02ms DONE
+payroll-backend  |   events ........................................................ 13.28ms DONE
+payroll-backend  |   routes ......................................................... 8.07ms DONE
+payroll-backend  |   views .......................................................... 1 giây DONE
+payroll-backend  | 
+payroll-backend  | 
+payroll-backend  |    WARN  Unable to respect the `PHP_CLI_SERVER_WORKERS` environment variable without the `--no-reload` flag. Only creating a single server.  
+payroll-backend  | 
+payroll-backend  |    INFO  Server running on [http://0.0.0.0:8000].  
+payroll-backend  | 
+payroll-backend  |   Press Ctrl+C to stop the server
+payroll-backend  | 
+payroll-backend  |   2026-05-12 15:57:08 /api/payroll/payslips ........................ ~ 6 giây
+payroll-backend  |   2026-05-12 15:57:15 /api/contracts ............................... ~ 2 giây
+payroll-backend  |   2026-05-12 15:57:15 /api/reports/templates ....................... ~ 3 giây
+payroll-backend  |   2026-05-12 15:57:17 /api/payroll/periods ......................... ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:18 /api/employees ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:19 /api/attendance/daily ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:28 /api/payroll/payslips ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:29 /api/contracts ............................. ~ 507.32ms
+payroll-backend  |   2026-05-12 15:57:29 /api/reports/templates ..................... ~ 533.76ms
+payroll-backend  |   2026-05-12 15:57:29 /api/payroll/periods ........................ ~ 19.64ms
+payroll-backend  |   2026-05-12 15:57:29 /api/attendance/daily ...................... ~ 523.98ms
+payroll-backend  |   2026-05-12 15:57:29 /api/employees ............................. ~ 518.42ms
+payroll-backend  |   2026-05-12 15:57:30 /api/reports/templates ...................... ~ 25.86ms
+payroll-backend  |   2026-05-12 15:57:30 /api/reference/departments .................. ~ 18.23ms
+payroll-backend  |   2026-05-12 15:57:30 /api/users ................................. ~ 516.02ms
+payroll-backend  |   2026-05-12 15:57:30 /api/payroll/payslips ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:30 /api/contracts ............................... ~ 2 giây
+payroll-backend  |   2026-05-12 15:57:32 /api/reports/templates ....................... ~ 2 giây
+payroll-backend  |   2026-05-12 15:57:33 /api/payroll/periods ......................... ~ 2 giây
+payroll-backend  |   2026-05-12 15:57:34 /api/attendance/daily ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:34 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:35 /api/reference/departments ................... ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:36 /api/employees ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 15:57:37 /api/users ................................... ~ 1 giây
+payroll-backend  |   2026-05-12 15:59:59 /api/auth/login ............................ ~ 502.77ms
+payroll-backend  |   2026-05-12 15:59:59 /api/auth/login .............................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:01 /api/employees ............................... ~ 0.50ms
+payroll-backend  |   2026-05-12 16:00:01 /api/attendance/daily ...................... ~ 512.02ms
+payroll-backend  |   2026-05-12 16:00:01 /api/payroll/periods ....................... ~ 512.68ms
+payroll-backend  |   2026-05-12 16:00:01 /api/contracts .............................. ~ 10.63ms
+payroll-backend  |   2026-05-12 16:00:01 /api/reports/templates ...................... ~ 16.00ms
+payroll-backend  |   2026-05-12 16:00:01 /api/payroll/payslips ........................ ~ 5.61ms
+payroll-backend  |   2026-05-12 16:00:01 /api/users ................................... ~ 6.55ms
+payroll-backend  |   2026-05-12 16:00:01 /api/employees ............................. ~ 522.74ms
+payroll-backend  |   2026-05-12 16:00:01 /api/attendance/daily ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:02 /api/payroll/periods ......................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:03 /api/contracts ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:03 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:04 /api/payroll/payslips ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:05 /api/users ................................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:09 /api/employees ............................... ~ 0.51ms
+payroll-backend  |   2026-05-12 16:00:09 /api/employees ............................. ~ 503.55ms
+payroll-backend  |   2026-05-12 16:00:11 /api/employees ............................... ~ 0.25ms
+payroll-backend  |   2026-05-12 16:00:12 /api/employees ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:12 /api/employees ............................... ~ 0.59ms
+payroll-backend  |   2026-05-12 16:00:12 /api/employees ............................... ~ 0.22ms
+payroll-backend  |   2026-05-12 16:00:13 /api/employees/20001 ....................... ~ 503.29ms
+payroll-backend  |   2026-05-12 16:00:13 /api/employees/20001 ....................... ~ 516.93ms
+payroll-backend  |   2026-05-12 16:00:15 /api/employees/20001 ......................... ~ 0.60ms
+payroll-backend  |   2026-05-12 16:00:15 /api/employees/20001 ....................... ~ 502.46ms
+payroll-backend  |   2026-05-12 16:00:16 /api/employees ............................... ~ 0.32ms
+payroll-backend  |   2026-05-12 16:00:16 /api/employees ............................. ~ 502.52ms
+payroll-backend  |   2026-05-12 16:00:17 /api/employees/20001 ......................... ~ 0.76ms
+payroll-backend  |   2026-05-12 16:00:17 /api/employees/20001 ....................... ~ 502.69ms
+payroll-backend  |   2026-05-12 16:00:19 /api/employees/20001/dependents ............ ~ 503.97ms
+payroll-backend  |   2026-05-12 16:00:19 /api/employees/20001/dependents ............ ~ 502.24ms
+payroll-backend  |   2026-05-12 16:00:21 /api/employees/20001/dependents .............. ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:22 /api/employees/20001/dependents .............. ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:23 /api/employees/20001/dependents .............. ~ 0.39ms
+payroll-backend  |   2026-05-12 16:00:24 /api/employees/20001/dependents .............. ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:26 /api/employees/20001/dependents/20001 ...... ~ 502.73ms
+payroll-backend  |   2026-05-12 16:00:26 /api/employees/20001/dependents/20001 ...... ~ 502.39ms
+payroll-backend  |   2026-05-12 16:00:27 /api/employees/20001/dependents .............. ~ 0.27ms
+payroll-backend  |   2026-05-12 16:00:27 /api/employees/20001/dependents ............ ~ 503.82ms
+payroll-backend  |   2026-05-12 16:00:28 /api/employees/20001/suspend ................. ~ 0.45ms
+payroll-backend  |   2026-05-12 16:00:28 /api/employees/20001/suspend ............... ~ 642.90ms
+payroll-backend  |   2026-05-12 16:00:29 /api/employees ............................... ~ 0.21ms
+payroll-backend  |   2026-05-12 16:00:29 /api/employees ............................. ~ 502.53ms
+payroll-backend  |   2026-05-12 16:00:30 /api/employees ............................. ~ 504.06ms
+payroll-backend  |   2026-05-12 16:00:30 /api/employees ............................. ~ 502.97ms
+payroll-backend  |   2026-05-12 16:00:30 /api/employees/ .............................. ~ 0.33ms
+payroll-backend  |   2026-05-12 16:00:30 /api/employees/ ............................ ~ 505.17ms
+payroll-backend  |   2026-05-12 16:00:31 /api/reference/payroll-parameters ............ ~ 0.43ms
+payroll-backend  |   2026-05-12 16:00:31 /api/reference/payroll-parameters .......... ~ 504.79ms
+payroll-backend  |   2026-05-12 16:00:33 /api/reference/salary-scales ................. ~ 0.59ms
+payroll-backend  |   2026-05-12 16:00:33 /api/reference/salary-scales ................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:34 /api/reference/salary-scales ................. ~ 0.43ms
+payroll-backend  |   2026-05-12 16:00:34 /api/reference/salary-scales ............... ~ 509.97ms
+payroll-backend  |   2026-05-12 16:00:36 /api/payroll/payslips/email .................. ~ 0.71ms
+payroll-backend  |   2026-05-12 16:00:36 /api/payroll/payslips/email .................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:38 /api/attendance/checkin-logs ................. ~ 0.40ms
+payroll-backend  |   2026-05-12 16:00:38 /api/attendance/checkin-logs ............... ~ 501.35ms
+payroll-backend  |   2026-05-12 16:00:39 /api/attendance/checkin-logs/import .......... ~ 0.24ms
+payroll-backend  |   2026-05-12 16:00:39 /api/attendance/checkin-logs/import ......... ~ 17 giây
+payroll-backend  |   2026-05-12 16:00:57 /api/attendance/checkin-logs ................. ~ 0.29ms
+payroll-backend  |   2026-05-12 16:00:57 /api/attendance/checkin-logs ................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:00:59 /api/attendance/monthly-summary ............ ~ 563.31ms
+payroll-backend  |   2026-05-12 16:00:59 /api/attendance/monthly-summary ............ ~ 505.34ms
+payroll-backend  |   2026-05-12 16:01:00 /api/attendance/monthly-summary .............. ~ 0.44ms
+payroll-backend  |   2026-05-12 16:01:01 /api/attendance/recalculate .................. ~ 0.23ms
+payroll-backend  |   2026-05-12 16:01:01 /api/attendance/monthly-summary .............. ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:02 /api/attendance/recalculate ................ ~ 502.82ms
+payroll-backend  |   2026-05-12 16:01:02 /api/attendance/monthly-summary .............. ~ 0.33ms
+payroll-backend  |   2026-05-12 16:01:02 /api/attendance/monthly-summary .............. ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:04 /api/reference/departments ................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:04 /api/payroll/runs/preview-parameters ......... ~ 0.31ms
+payroll-backend  |   2026-05-12 16:01:04 /api/reference/departments ................. ~ 504.12ms
+payroll-backend  |   2026-05-12 16:01:05 /api/payroll/runs/preview-parameters ....... ~ 503.30ms
+payroll-backend  |   2026-05-12 16:01:06 /api/payroll/runs/calculate .................. ~ 0.37ms
+payroll-backend  |   2026-05-12 16:01:06 /api/payroll/runs/calculate ................ ~ 502.34ms
+payroll-backend  |   2026-05-12 16:01:08 /api/reports/templates ..................... ~ 505.23ms
+payroll-backend  |   2026-05-12 16:01:08 /api/reference/departments ................... ~ 0.22ms
+payroll-backend  |   2026-05-12 16:01:08 /api/reports/templates ..................... ~ 503.79ms
+payroll-backend  |   2026-05-12 16:01:09 /api/reference/departments ................. ~ 509.54ms
+payroll-backend  |   2026-05-12 16:01:10 /api/reports/templates ....................... ~ 0.22ms
+payroll-backend  |   2026-05-12 16:01:10 /api/reference/departments ................. ~ 502.37ms
+payroll-backend  |   2026-05-12 16:01:10 /api/reports/templates ....................... ~ 0.27ms
+payroll-backend  |   2026-05-12 16:01:10 /api/reports/FUJIMART_ATTENDANCE_REPORT/preview  ~ 510.44ms
+payroll-backend  |   2026-05-12 16:01:10 /api/reference/departments ................. ~ 503.41ms
+payroll-backend  |   2026-05-12 16:01:11 /api/reports/FUJIMART_ATTENDANCE_REPORT/preview  ~ 502.15ms
+payroll-backend  |   2026-05-12 16:01:12 /api/reports/FUJIMART_ATTENDANCE_REPORT/export  ~ 0.95ms
+payroll-backend  |   2026-05-12 16:01:12 /api/reports/FUJIMART_ATTENDANCE_REPORT/export  ~ 502.50ms
+payroll-backend  |   2026-05-12 16:01:13 /api/reports/download/FUJIMART_ATTENDANCE_REPORT_03_2026.xlsx  ~ 0.36ms
+payroll-backend  |   2026-05-12 16:01:13 /api/reports/download/FUJIMART_ATTENDANCE_REPORT_03_2026.xlsx  ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:15 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:15 /api/reference/departments ................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:17 /api/reports/templates ..................... ~ 502.43ms
+payroll-backend  |   2026-05-12 16:01:17 /api/reference/departments ................. ~ 502.31ms
+payroll-backend  |   2026-05-12 16:01:18 /api/reports/templates ....................... ~ 0.39ms
+payroll-backend  |   2026-05-12 16:01:18 /api/reference/departments ................... ~ 0.35ms
+payroll-backend  |   2026-05-12 16:01:18 /api/reports/FUJIMART_PAYROLL_REPORT/preview  ~ 519.72ms
+payroll-backend  |   2026-05-12 16:01:19 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:19 /api/reference/departments ................. ~ 514.23ms
+payroll-backend  |   2026-05-12 16:01:19 /api/reports/FUJIMART_PAYROLL_REPORT/preview  ~ 507.25ms
+payroll-backend  |   2026-05-12 16:01:21 /api/reports/FUJIMART_PAYROLL_REPORT/export .. ~ 0.44ms
+payroll-backend  |   2026-05-12 16:01:21 /api/reports/FUJIMART_PAYROLL_REPORT/export .. ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:22 /api/reports/download/FUJIMART_PAYROLL_REPORT_03_2026.xlsx  ~ 0.31ms
+payroll-backend  |   2026-05-12 16:01:22 /api/reports/download/FUJIMART_PAYROLL_REPORT_03_2026.xlsx  ~ 502.92ms
+payroll-backend  |   2026-05-12 16:01:23 /api/reference/departments ................. ~ 502.96ms
+payroll-backend  |   2026-05-12 16:01:23 /api/reports/templates ..................... ~ 506.13ms
+payroll-backend  |   2026-05-12 16:01:24 /api/reference/departments ................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:24 /api/reports/templates ....................... ~ 2 giây
+payroll-backend  |   2026-05-12 16:01:27 /api/reports/templates ....................... ~ 0.46ms
+payroll-backend  |   2026-05-12 16:01:27 /api/reference/departments ................... ~ 0.29ms
+payroll-backend  |   2026-05-12 16:01:27 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:28 /api/reports/FUJIMART_PAYROLL_SLIP/preview ... ~ 0.60ms
+payroll-backend  |   2026-05-12 16:01:28 /api/reference/departments ................. ~ 510.93ms
+payroll-backend  |   2026-05-12 16:01:29 /api/reports/FUJIMART_PAYROLL_SLIP/preview . ~ 502.34ms
+payroll-backend  |   2026-05-12 16:01:30 /api/reports/FUJIMART_PAYROLL_SLIP/export .... ~ 0.51ms
+payroll-backend  |   2026-05-12 16:01:30 /api/reports/FUJIMART_PAYROLL_SLIP/export .. ~ 504.72ms
+payroll-backend  |   2026-05-12 16:01:31 /api/reports/download/FUJIMART_PAYROLL_SLIP_03_2026.xlsx  ~ 0.36ms
+payroll-backend  |   2026-05-12 16:01:31 /api/reports/download/FUJIMART_PAYROLL_SLIP_03_2026.xlsx  ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:37 /api/auth/login ............................ ~ 550.34ms
+payroll-backend  |   2026-05-12 16:01:38 /api/auth/login .............................. ~ 2 giây
+payroll-backend  |   2026-05-12 16:01:40 /api/attendance/daily ...................... ~ 503.08ms
+payroll-backend  |   2026-05-12 16:01:40 /api/payroll/payslips ........................ ~ 1.27ms
+payroll-backend  |   2026-05-12 16:01:40 /api/reports/templates ...................... ~ 12.34ms
+payroll-backend  |   2026-05-12 16:01:40 /api/employees ............................... ~ 7.32ms
+payroll-backend  |   2026-05-12 16:01:41 /api/contracts .............................. ~ 16.00ms
+payroll-backend  |   2026-05-12 16:01:41 /api/payroll/periods ....................... ~ 514.52ms
+payroll-backend  |   2026-05-12 16:01:41 /api/users ................................. ~ 513.09ms
+payroll-backend  |   2026-05-12 16:01:41 /api/attendance/daily ...................... ~ 514.83ms
+payroll-backend  |   2026-05-12 16:01:41 /api/payroll/payslips ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:42 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:43 /api/employees ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:43 /api/contracts ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:44 /api/payroll/periods ......................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:44 /api/users ................................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:49 /api/auth/login .............................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:50 /api/auth/login .............................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:52 /api/employees ............................. ~ 502.48ms
+payroll-backend  |   2026-05-12 16:01:52 /api/attendance/daily ........................ ~ 0.34ms
+payroll-backend  |   2026-05-12 16:01:52 /api/payroll/periods ......................... ~ 9.12ms
+payroll-backend  |   2026-05-12 16:01:52 /api/reports/templates ....................... ~ 9.89ms
+payroll-backend  |   2026-05-12 16:01:52 /api/contracts ............................... ~ 9.75ms
+payroll-backend  |   2026-05-12 16:01:53 /api/payroll/payslips ....................... ~ 14.22ms
+payroll-backend  |   2026-05-12 16:01:53 /api/employees ............................. ~ 512.93ms
+payroll-backend  |   2026-05-12 16:01:53 /api/attendance/daily ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:53 /api/payroll/periods ......................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:54 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:55 /api/contracts ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:55 /api/payroll/payslips ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 16:01:59 /api/auth/login .............................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:00 /api/auth/login .............................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:02 /api/employees ............................. ~ 502.43ms
+payroll-backend  |   2026-05-12 16:02:02 /api/payroll/payslips ........................ ~ 0.37ms
+payroll-backend  |   2026-05-12 16:02:02 /api/attendance/daily ........................ ~ 7.36ms
+payroll-backend  |   2026-05-12 16:02:02 /api/contracts ............................... ~ 5.88ms
+payroll-backend  |   2026-05-12 16:02:02 /api/payroll/periods ......................... ~ 9.95ms
+payroll-backend  |   2026-05-12 16:02:02 /api/reports/templates ....................... ~ 6.76ms
+payroll-backend  |   2026-05-12 16:02:02 /api/employees ............................. ~ 510.58ms
+payroll-backend  |   2026-05-12 16:02:03 /api/payroll/payslips ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:03 /api/attendance/daily ........................ ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:03 /api/contracts ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:04 /api/payroll/periods ......................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:04 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:08 /api/auth/login .............................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:10 /api/auth/login .............................. ~ 2 giây
+payroll-backend  |   2026-05-12 16:02:12 /api/payroll/payslips ...................... ~ 502.17ms
+payroll-backend  |   2026-05-12 16:02:13 /api/employees ............................... ~ 0.12ms
+payroll-backend  |   2026-05-12 16:02:13 /api/payroll/periods ........................ ~ 10.54ms
+payroll-backend  |   2026-05-12 16:02:13 /api/reports/templates ....................... ~ 7.05ms
+payroll-backend  |   2026-05-12 16:02:13 /api/payroll/payslips ...................... ~ 510.73ms
+payroll-backend  |   2026-05-12 16:02:13 /api/employees ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:13 /api/payroll/periods ......................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:14 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:18 /api/auth/login .............................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:19 /api/auth/login .............................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:21 /api/payroll/payslips ...................... ~ 515.49ms
+payroll-backend  |   2026-05-12 16:02:22 /api/payroll/periods ......................... ~ 0.25ms
+payroll-backend  |   2026-05-12 16:02:22 /api/employees ............................... ~ 9.82ms
+payroll-backend  |   2026-05-12 16:02:22 /api/reports/templates ...................... ~ 14.02ms
+payroll-backend  |   2026-05-12 16:02:22 /api/payroll/payslips ...................... ~ 516.59ms
+payroll-backend  |   2026-05-12 16:02:22 /api/payroll/periods ......................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:22 /api/employees ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:23 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:26 /api/reference/departments ................. ~ 503.73ms
+payroll-backend  |   2026-05-12 16:02:27 /api/payroll/runs/preview-parameters ......... ~ 0.40ms
+payroll-backend  |   2026-05-12 16:02:27 /api/payroll/runs/calculate .................. ~ 5.47ms
+payroll-backend  |   2026-05-12 16:02:27 /api/reference/departments ................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:02:27 /api/payroll/runs/preview-parameters ......... ~ 2 giây
+payroll-backend  |   2026-05-12 16:02:28 /api/payroll/runs/calculate .................. ~ 1 giây
+payroll-backend  |   2026-05-12 16:10:02 /api/auth/login .............................. ~ 0.57ms
+payroll-backend  |   2026-05-12 16:10:02 /api/auth/login ............................ ~ 503.12ms
+payroll-backend  |   2026-05-12 16:10:02 /api/employees ............................... ~ 0.60ms
+payroll-backend  |   2026-05-12 16:10:02 /api/attendance/daily ........................ ~ 0.26ms
+payroll-backend  |   2026-05-12 16:10:02 /api/payroll/payslips ...................... ~ 507.87ms
+payroll-backend  |   2026-05-12 16:10:03 /api/contracts ............................. ~ 505.13ms
+payroll-backend  |   2026-05-12 16:10:03 /api/payroll/periods ......................... ~ 6.37ms
+payroll-backend  |   2026-05-12 16:10:03 /api/reports/templates ....................... ~ 6.94ms
+payroll-backend  |   2026-05-12 16:10:03 /api/users ................................... ~ 5.71ms
+payroll-backend  |   2026-05-12 16:10:03 /api/employees ............................. ~ 510.48ms
+payroll-backend  |   2026-05-12 16:10:03 /api/attendance/daily ...................... ~ 508.86ms
+payroll-backend  |   2026-05-12 16:10:03 /api/payroll/payslips ...................... ~ 506.04ms
+payroll-backend  |   2026-05-12 16:10:04 /api/contracts ............................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:10:04 /api/payroll/periods ....................... ~ 508.09ms
+payroll-backend  |   2026-05-12 16:10:04 /api/reports/templates ..................... ~ 504.96ms
+payroll-backend  |   2026-05-12 16:10:04 /api/users ................................. ~ 506.44ms
+payroll-backend  |   2026-05-12 16:10:08 /api/reports/templates ..................... ~ 517.14ms
+payroll-backend  |   2026-05-12 16:10:08 /api/reference/departments ................... ~ 0.31ms
+payroll-backend  |   2026-05-12 16:10:09 /api/reports/templates ....................... ~ 1 giây
+payroll-backend  |   2026-05-12 16:10:10 /api/reference/departments ................. ~ 502.40ms

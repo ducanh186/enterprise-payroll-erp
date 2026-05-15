@@ -182,7 +182,7 @@ export default function ShiftAssignmentsPage() {
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Ngày</label>
-            <input type="date" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+            <input type="text" inputMode="numeric" placeholder="DD/MM/YYYY" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Ghi chú</label>
