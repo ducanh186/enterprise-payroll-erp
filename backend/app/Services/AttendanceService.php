@@ -17,6 +17,7 @@ use App\Models\SystemConfig;
 use App\Models\TimeLog;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -272,6 +273,15 @@ class AttendanceService
     public function getMonthlySummary(array $filters = []): array
     {
         [$period, $fromDate, $toDate] = $this->resolveAttendancePeriod($filters);
+        $connection = $this->customerConnection();
+        if ($this->customerDatabaseConfigured() || $this->sourceExists($connection, 'D30Attendance')) {
+            try {
+                return $this->getCustomerMonthlySummary($connection, $fromDate, $toDate, $filters);
+            } catch (\Throwable) {
+                // Fall back to Laravel migrated attendance tables when the customer source DB is unavailable.
+            }
+        }
+
         $standardDays = $this->standardWorkingDays();
 
         $dailyRows = AttendanceDaily::query()
@@ -318,6 +328,9 @@ class AttendanceService
     {
         $procedureResult = $this->tryCustomerAttendanceProcedure($data);
         if ($procedureResult['available'] && !$procedureResult['error']) {
+            [$period, $fromDate, $toDate] = $this->resolveAttendancePeriod($data, false);
+            $d30AttendanceCount = $this->countCustomerAttendanceRows($fromDate, $toDate);
+
             return [
                 'message' => 'Tính và tổng hợp công hoàn tất từ stored procedure.',
                 'execution_mode' => 'stored_procedure',
@@ -325,6 +338,8 @@ class AttendanceService
                 'row_count' => $procedureResult['row_count'],
                 'execution_ms' => $procedureResult['execution_ms'],
                 'result_sets' => count($procedureResult['result_sets']),
+                'source_table' => 'D30Attendance',
+                'd30_attendance_count' => $d30AttendanceCount,
             ];
         }
 
@@ -416,6 +431,49 @@ class AttendanceService
 
     public function getShiftAssignments(): array
     {
+        $connection = $this->customerConnection();
+        if ($this->customerDatabaseConfigured() || $this->sourceExists($connection, 'D30AssignedShift')) {
+            try {
+                $query = $connection->table('D30AssignedShift as a')
+                    ->leftJoin('D20Shift as s', 's.Code', '=', 'a.ShiftCode')
+                    ->select([
+                        'a.Id',
+                        'a.AssignId',
+                        'a.Date',
+                        'a.EmployeeCode',
+                        'a.ShiftCode',
+                        'a.StartDate',
+                        'a.EndDate',
+                        'a.IncludeMon',
+                        'a.IncludeTue',
+                        'a.IncludeWed',
+                        'a.IncludeThu',
+                        'a.IncludeFri',
+                        'a.IncludeSat',
+                        'a.IncludeSun',
+                        'a.Description',
+                        'a.IsActive',
+                        's.Name as ShiftName',
+                    ])
+                    ->where('a.IsActive', 1)
+                    ->orderByDesc('a.StartDate')
+                    ->orderBy('a.EmployeeCode');
+
+                if ($this->sourceExists($connection, 'D20Employee')) {
+                    $query->leftJoin('D20Employee as e', 'e.Code', '=', 'a.EmployeeCode')
+                        ->addSelect([
+                            'e.FullName as EmployeeFullName',
+                        ]);
+                }
+
+                return collect($query->get())
+                    ->map(fn (object $assignment) => $this->formatCustomerShiftAssignment($assignment))
+                    ->all();
+            } catch (\Throwable) {
+                // Fall back to the Laravel migrated table when the customer source DB is unavailable.
+            }
+        }
+
         return ShiftAssignment::query()
             ->with(['employee', 'shift'])
             ->orderBy('id')
@@ -424,8 +482,10 @@ class AttendanceService
                 'id' => $assignment->id,
                 'employee_id' => $assignment->employee_id,
                 'employee_name' => data_get($assignment, 'employee.full_name'),
+                'employee_code' => data_get($assignment, 'employee.employee_code'),
                 'shift_id' => $assignment->shift_id,
                 'shift_name' => data_get($assignment, 'shift.name'),
+                'shift_code' => data_get($assignment, 'shift.code'),
                 'work_date' => $assignment->work_date?->format('Y-m-d'),
                 'source' => $assignment->source,
                 'note' => $assignment->note,
@@ -788,6 +848,117 @@ class AttendanceService
         ]);
     }
 
+    private function formatCustomerShiftAssignment(object $assignment): array
+    {
+        return [
+            'id' => data_get($assignment, 'AssignId') ?? data_get($assignment, 'Id'),
+            'assign_id' => data_get($assignment, 'AssignId'),
+            'employee_code' => data_get($assignment, 'EmployeeCode'),
+            'employee_name' => data_get($assignment, 'EmployeeFullName')
+                ?? data_get($assignment, 'EmployeeCode'),
+            'shift_code' => data_get($assignment, 'ShiftCode'),
+            'shift_name' => data_get($assignment, 'ShiftName') ?? data_get($assignment, 'ShiftCode'),
+            'date' => $this->nullableDate(data_get($assignment, 'Date')),
+            'work_date' => $this->nullableDate(data_get($assignment, 'Date')),
+            'start_date' => $this->nullableDate(data_get($assignment, 'StartDate')),
+            'end_date' => $this->nullableDate(data_get($assignment, 'EndDate')),
+            'include_mon' => (int) (data_get($assignment, 'IncludeMon') ?? 0),
+            'include_tue' => (int) (data_get($assignment, 'IncludeTue') ?? 0),
+            'include_wed' => (int) (data_get($assignment, 'IncludeWed') ?? 0),
+            'include_thu' => (int) (data_get($assignment, 'IncludeThu') ?? 0),
+            'include_fri' => (int) (data_get($assignment, 'IncludeFri') ?? 0),
+            'include_sat' => (int) (data_get($assignment, 'IncludeSat') ?? 0),
+            'include_sun' => (int) (data_get($assignment, 'IncludeSun') ?? 0),
+            'description' => data_get($assignment, 'Description'),
+            'note' => data_get($assignment, 'Description'),
+            'source' => 'customer_source',
+            'source_table' => 'D30AssignedShift',
+            'is_active' => (bool) data_get($assignment, 'IsActive', true),
+        ];
+    }
+
+    private function getCustomerMonthlySummary(ConnectionInterface $connection, string $fromDate, string $toDate, array $filters): array
+    {
+        $query = $connection->table('D30Attendance as att')
+            ->leftJoin('D30AssignedShift as assign', 'assign.AssignId', '=', 'att.AssignId')
+            ->selectRaw('
+                assign.EmployeeCode as employee_code,
+                SUM(att.WorkingDays) as total_workdays,
+                SUM(att.WorkingHours) as regular_hours,
+                SUM(att.WorkNightHours) as night_hours,
+                SUM(att.PaidLeaveDays) as paid_leave_days,
+                SUM(COALESCE(att.UnpaidLeaveDays, 0)) as unpaid_leave_days,
+                SUM(att.ExcludeDays) as exclude_days,
+                SUM(att.ExcludeHours) as exclude_hours,
+                SUM(att.ShiftMeal) as meal_count
+            ')
+            ->whereBetween('att.Date', [$fromDate, $toDate])
+            ->where('att.IsActive', 1)
+            ->groupBy('assign.EmployeeCode')
+            ->orderBy('assign.EmployeeCode');
+
+        if (!empty($filters['employee_code'])) {
+            $query->where('assign.EmployeeCode', (string) $filters['employee_code']);
+        }
+
+        $rows = collect($query->get());
+        $employeeNames = $this->customerEmployeeNames($connection, $rows->pluck('employee_code')->filter()->all());
+
+        return $rows
+            ->map(fn (object $row) => [
+                'id' => (string) data_get($row, 'employee_code'),
+                'employee_code' => data_get($row, 'employee_code'),
+                'employee_name' => $employeeNames[(string) data_get($row, 'employee_code')] ?? data_get($row, 'employee_code'),
+                'department_name' => null,
+                'period' => [
+                    'from_date' => $fromDate,
+                    'to_date' => $toDate,
+                ],
+                'total_workdays' => (float) data_get($row, 'total_workdays', 0),
+                'regular_hours' => (float) data_get($row, 'regular_hours', 0),
+                'ot_hours' => 0.0,
+                'night_hours' => (float) data_get($row, 'night_hours', 0),
+                'paid_leave_days' => (float) data_get($row, 'paid_leave_days', 0),
+                'unpaid_leave_days' => (float) data_get($row, 'unpaid_leave_days', 0),
+                'late_minutes' => 0,
+                'early_minutes' => 0,
+                'exclude_days' => (float) data_get($row, 'exclude_days', 0),
+                'exclude_hours' => (float) data_get($row, 'exclude_hours', 0),
+                'meal_count' => (int) data_get($row, 'meal_count', 0),
+                'status' => 'generated',
+                'source_table' => 'D30Attendance',
+            ])
+            ->all();
+    }
+
+    private function customerEmployeeNames(ConnectionInterface $connection, array $employeeCodes): array
+    {
+        if (!$employeeCodes || !$this->sourceExists($connection, 'D20Employee')) {
+            return [];
+        }
+
+        return collect($connection->table('D20Employee')
+            ->whereIn('Code', array_values(array_unique($employeeCodes)))
+            ->get(['Code', 'FullName']))
+            ->mapWithKeys(fn (object $employee) => [
+                (string) data_get($employee, 'Code') => (string) data_get($employee, 'FullName'),
+            ])
+            ->all();
+    }
+
+    private function countCustomerAttendanceRows(string $fromDate, string $toDate): int
+    {
+        $connection = $this->customerConnection();
+        if (!$this->sourceExists($connection, 'D30Attendance')) {
+            return 0;
+        }
+
+        return (int) $connection->table('D30Attendance')
+            ->whereBetween('Date', [$fromDate, $toDate])
+            ->where('IsActive', 1)
+            ->count();
+    }
+
     private function normalizeHeader(string $value): string
     {
         return preg_replace('/[^a-z0-9]/', '', Str::lower(Str::ascii(trim($value)))) ?? '';
@@ -944,7 +1115,44 @@ class AttendanceService
 
     private function customerConnectionName(): ?string
     {
-        return config('database.connections.customer_sqlsrv.database') ? 'customer_sqlsrv' : null;
+        return $this->customerDatabaseConfigured() ? 'customer_sqlsrv' : null;
+    }
+
+    private function customerConnection(): ConnectionInterface
+    {
+        if ($this->customerDatabaseConfigured()) {
+            return DB::connection('customer_sqlsrv');
+        }
+
+        return DB::connection();
+    }
+
+    private function customerDatabaseConfigured(): bool
+    {
+        return (bool) config('database.connections.customer_sqlsrv.database');
+    }
+
+    private function sourceExists(ConnectionInterface $connection, string $source): bool
+    {
+        try {
+            if ($connection->getDriverName() === 'sqlsrv') {
+                $row = $connection->selectOne('SELECT OBJECT_ID(?) AS object_id', [$source]);
+                return !empty($row?->object_id);
+            }
+
+            if ($connection->getDriverName() === 'sqlite') {
+                $row = $connection->selectOne(
+                    "SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?",
+                    [$source]
+                );
+
+                return !empty($row?->name);
+            }
+
+            return $connection->getSchemaBuilder()->hasTable($source);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     private function findCustomerEmployee(string $connectionName, string $employeeCode): ?object

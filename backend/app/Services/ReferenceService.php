@@ -22,6 +22,20 @@ class ReferenceService
 {
     public function getShifts(): array
     {
+        $connection = $this->customerConnection();
+        if ($this->customerDatabaseConfigured() || $this->sourceExists($connection, 'D20Shift')) {
+            try {
+                return collect($connection->table('D20Shift')
+                    ->where('IsActive', 1)
+                    ->orderBy('Code')
+                    ->get())
+                    ->map(fn (object $shift) => $this->formatCustomerShift($shift))
+                    ->all();
+            } catch (\Throwable) {
+                // Fall back to the Laravel migrated table when the customer source DB is unavailable.
+            }
+        }
+
         return Shift::query()
             ->active()
             ->orderBy('id')
@@ -82,6 +96,34 @@ class ReferenceService
 
     public function getPayrollParameters(): array
     {
+        $connection = $this->customerConnection();
+        if (
+            $this->customerDatabaseConfigured()
+            || (
+                $this->sourceExists($connection, 'vD20PayrollPara_ValuePara')
+                && $this->sourceExists($connection, 'vD20PayrollPara_SalaryType')
+            )
+        ) {
+            try {
+                return [
+                    'value_parameters' => collect($connection->table('vD20PayrollPara_ValuePara')
+                        ->where('IsActive', 1)
+                        ->orderBy('Parameter')
+                        ->get())
+                        ->map(fn (object $parameter) => $this->formatCustomerPayrollParameter($parameter, 'vD20PayrollPara_ValuePara'))
+                        ->all(),
+                    'salary_types' => collect($connection->table('vD20PayrollPara_SalaryType')
+                        ->where('IsActive', 1)
+                        ->orderBy('Parameter')
+                        ->get())
+                        ->map(fn (object $parameter) => $this->formatCustomerPayrollParameter($parameter, 'vD20PayrollPara_SalaryType'))
+                        ->all(),
+                ];
+            } catch (\Throwable) {
+                // Fall back to the Laravel migrated table when the customer source views are unavailable.
+            }
+        }
+
         return PayrollParameter::query()
             ->with(['details' => fn ($query) => $query->orderBy('display_order')->orderBy('id')])
             ->effective()
@@ -464,6 +506,33 @@ class ReferenceService
         return (int) $startAt->diffInMinutes($endAt);
     }
 
+    protected function formatCustomerShift(object $shift): array
+    {
+        $code = (string) data_get($shift, 'Code');
+
+        return [
+            'id' => $code,
+            'code' => $code,
+            'name' => (string) data_get($shift, 'Name'),
+            'description' => data_get($shift, 'Description'),
+            'start_time' => $this->formatTime(data_get($shift, 'StartTime')),
+            'end_time' => $this->formatTime(data_get($shift, 'EndTime')),
+            'start_time_valid_from' => $this->formatTime(data_get($shift, 'StartTimeValid1')),
+            'start_time_valid_to' => $this->formatTime(data_get($shift, 'StartTimeValid2')),
+            'end_time_valid_from' => $this->formatTime(data_get($shift, 'EndTimeValid1')),
+            'end_time_valid_to' => $this->formatTime(data_get($shift, 'EndTimeValid2')),
+            'break_minutes' => (int) (data_get($shift, 'ShiftBreakMins') ?? 0),
+            'working_hours' => $this->numericValue(data_get($shift, 'WorkingHours')),
+            'workday_value' => $this->numericValue(data_get($shift, 'WorkDay')),
+            'is_checkin' => (bool) data_get($shift, 'IsCheckIn'),
+            'is_checkout' => (bool) data_get($shift, 'IsCheckOut'),
+            'is_night_shift' => data_get($shift, 'StartWorkingNightTime') !== null
+                || data_get($shift, 'EndWorkingNightTime') !== null,
+            'is_active' => (bool) data_get($shift, 'IsActive', true),
+            'source_table' => 'D20Shift',
+        ];
+    }
+
     protected function formatPayrollParameter(PayrollParameter $parameter, PayrollParameterDetail $detail): array
     {
         return [
@@ -479,6 +548,48 @@ class ReferenceService
             'status' => $parameter->status,
             'is_active' => $parameter->status === 'active',
         ];
+    }
+
+    protected function formatCustomerPayrollParameter(object $parameter, string $sourceView): array
+    {
+        $code = (string) data_get($parameter, 'Parameter');
+
+        return [
+            'id' => data_get($parameter, 'Id') ?? $code,
+            'parameter_id' => data_get($parameter, 'Id') ?? $code,
+            'code' => $code,
+            'param_code' => $code,
+            'name' => (string) data_get($parameter, 'Name'),
+            'param_name' => (string) data_get($parameter, 'Name'),
+            'value' => $this->parseParameterValue(data_get($parameter, 'Amount')),
+            'unit' => $this->resolveCustomerParameterUnit($parameter),
+            'effective_from' => $this->dateValue(data_get($parameter, 'EffectiveDate')),
+            'description' => data_get($parameter, 'Description'),
+            'type' => data_get($parameter, 'Type'),
+            'status' => (bool) data_get($parameter, 'IsActive', true) ? 'active' : 'inactive',
+            'is_active' => (bool) data_get($parameter, 'IsActive', true),
+            'source_view' => $sourceView,
+        ];
+    }
+
+    protected function resolveCustomerParameterUnit(object $parameter): string
+    {
+        $code = Str::lower((string) data_get($parameter, 'Parameter'));
+        $type = Str::lower((string) data_get($parameter, 'Type'));
+
+        if (Str::contains($code, ['rate', 'percent', 'tyle'])) {
+            return 'percent';
+        }
+
+        if (Str::contains($code, ['day', 'days', 'ngay'])) {
+            return 'days';
+        }
+
+        if (Str::contains($code, ['salary', 'amount', 'luong', 'phu_cap', 'bonus', 'deduction'])) {
+            return 'VND';
+        }
+
+        return $type === 'salary' ? 'VND' : 'value';
     }
 
     protected function parseParameterValue(mixed $value): mixed
@@ -695,13 +806,16 @@ class ReferenceService
 
     protected function customerConnection(): ConnectionInterface
     {
-        $customerDatabase = config('database.connections.customer_sqlsrv.database');
-
-        if ($customerDatabase && DB::connection()->getDriverName() === 'sqlsrv') {
+        if ($this->customerDatabaseConfigured()) {
             return DB::connection('customer_sqlsrv');
         }
 
         return DB::connection();
+    }
+
+    protected function customerDatabaseConfigured(): bool
+    {
+        return (bool) config('database.connections.customer_sqlsrv.database');
     }
 
     protected function tableExists(ConnectionInterface $connection, string $table): bool
@@ -725,5 +839,28 @@ class ReferenceService
         }
 
         return (float) $value;
+    }
+
+    protected function sourceExists(ConnectionInterface $connection, string $source): bool
+    {
+        try {
+            if ($connection->getDriverName() === 'sqlsrv') {
+                $row = $connection->selectOne('SELECT OBJECT_ID(?) AS object_id', [$source]);
+                return !empty($row?->object_id);
+            }
+
+            if ($connection->getDriverName() === 'sqlite') {
+                $row = $connection->selectOne(
+                    "SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?",
+                    [$source]
+                );
+
+                return !empty($row?->name);
+            }
+
+            return $connection->getSchemaBuilder()->hasTable($source);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

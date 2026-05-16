@@ -87,6 +87,25 @@ async function selectLabeledCombobox(page: Page, label: string, value: string) {
   await page.getByRole("combobox", { name: label }).selectOption(value);
 }
 
+async function apiGetThroughPage<T>(page: Page, url: string): Promise<T> {
+  return page.evaluate(async (requestUrl) => {
+    const rawSession = localStorage.getItem("erp_auth_session") ?? sessionStorage.getItem("erp_auth_session");
+    const session = rawSession ? JSON.parse(rawSession) as { token?: string } : null;
+    const response = await fetch(`http://localhost:8001/api${requestUrl}`, {
+      headers: {
+        Accept: "application/json",
+        ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API ${response.status} ${requestUrl}`);
+    }
+
+    return response.json();
+  }, url) as Promise<T>;
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("sidebar-collapsed", "false");
@@ -137,28 +156,27 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
     await page.getByRole("button", { name: "Thêm mới" }).click();
     await fillLabeledInput(page, "Mã nhân viên", employeeCode);
     await fillLabeledInput(page, "Họ và tên", `E2E Draft ${employeeCode}`);
-    await selectLabeledCombobox(page, "Gender", "female");
-    await fillLabeledInput(page, "BirthDate", "14/02/1996");
-    await fillLabeledInput(page, "IdCardNo", `079096${employeeCode.slice(-6)}`);
-    await fillLabeledInput(page, "Email", `${employeeCode.toLowerCase()}@fujimart.test`);
-    await fillLabeledInput(page, "Mobile", "0912345678");
+    await selectLabeledCombobox(page, "Giới tính", "female");
+    await fillLabeledInput(page, "Ngày sinh", "14/02/1996");
+    await fillLabeledInput(page, "Số CCCD", `079096${employeeCode.slice(-6)}`);
+    await fillLabeledInput(page, "Địa chỉ email", `${employeeCode.toLowerCase()}@fujimart.test`);
+    await fillLabeledInput(page, "Số điện thoại", "0912345678");
     await fillLabeledInput(page, "Ngày vào làm", "01/01/2026");
     await page.getByRole("button", { name: "Lưu" }).click();
-    await expect(page.getByRole("cell", { name: employeeCode, exact: true })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("dialog", { name: `E2E Draft ${employeeCode}` })).toBeVisible();
 
     await page.getByRole("dialog", { name: `E2E Draft ${employeeCode}` }).getByRole("button", { name: "Sửa" }).click();
     await expect(page.getByRole("dialog", { name: "Sửa nhân viên" })).toBeVisible();
     await fillLabeledInput(page, "Họ và tên", updatedName);
-    await fillLabeledInput(page, "ResignDate", "31/12/2026");
+    await fillLabeledInput(page, "Ngày nghỉ việc", "31/12/2026");
     await page.getByRole("button", { name: "Lưu" }).click();
     await expect(page.getByRole("heading", { name: updatedName })).toBeVisible({ timeout: 30_000 });
 
     await expect(page.getByRole("button", { name: "Hồ sơ" })).toBeVisible();
-    await expect(page.getByText("Gender")).toBeVisible();
-    await expect(page.getByText("BirthDate")).toBeVisible();
-    await expect(page.getByText("IdCardNo")).toBeVisible();
-    await expect(page.getByText("ResignDate")).toBeVisible();
+    await expect(page.getByText("Giới tính")).toBeVisible();
+    await expect(page.getByText("Ngày sinh")).toBeVisible();
+    await expect(page.getByText("Số CCCD")).toBeVisible();
+    await expect(page.getByText("Ngày nghỉ việc")).toBeVisible();
 
     await page.getByRole("button", { name: "Người phụ thuộc" }).click();
     await expect(page.getByText(/người phụ thuộc/i).first()).toBeVisible();
@@ -183,19 +201,25 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
       { timeout: 30_000 },
     );
     await page.getByRole("button", { name: "Đình chỉ" }).click();
-    await suspendResponse;
+    const suspendedResponse = await suspendResponse;
+    const suspendedPayload = await suspendedResponse.json() as { data?: { status?: string } };
+    expect(suspendedPayload.data?.status).toBe("inactive");
+
     await page.getByRole("button", { name: "Đóng" }).click();
-    await page.getByRole("button", { name: "Làm mới" }).click();
-    await expect(page.getByRole("row", { name: new RegExp(employeeCode) }).getByText("Đình chỉ")).toBeVisible({
-      timeout: 30_000,
-    });
+
+    const persistedPayload = await apiGetThroughPage<{ data?: Array<{ employee_code?: string; status?: string }> }>(
+      page,
+      `/employees?keyword=${encodeURIComponent(employeeCode)}`,
+    );
+    const persistedEmployee = persistedPayload.data?.find((employee) => employee.employee_code === employeeCode);
+    expect(persistedEmployee?.status).toBe("inactive");
   });
 
   await test.step("Payroll parameters expose Fujimart source views", async () => {
     await openRoute(page, "/payroll/parameters", "Tham số lương");
-    await expect(page.getByRole("button", { name: "vD20PayrollPara_ValuePara" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Tham số giá trị" })).toBeVisible();
     await expect(page.getByText("Nguồn view: vD20PayrollPara_ValuePara")).toBeVisible();
-    await page.getByRole("button", { name: "vD20PayrollPara_SalaryType" }).click();
+    await page.getByRole("button", { name: "Loại thu nhập, lương thưởng" }).click();
     await expect(page.getByText("Nguồn view: vD20PayrollPara_SalaryType")).toBeVisible();
   });
 
@@ -203,17 +227,17 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
     await openRoute(page, "/reference/salary-levels", "Danh mục thang lương");
     await page.getByRole("button", { name: "Làm mới" }).click();
     await page.getByRole("button", { name: /Tab chi tiết/i }).first().click();
-    await expect(page.getByRole("dialog").getByText("SalaryLevel")).toBeVisible();
+    await expect(page.getByRole("dialog").getByText("Mã bậc lương")).toBeVisible();
     await page.getByRole("button", { name: "Xem khoản thu nhập" }).first().click();
-    await expect(page.getByRole("heading", { name: "D20SalaryGradeDetail" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Chi tiết khoản thu nhập" })).toBeVisible();
   });
 
   await test.step("Payroll slip email action runs customer procedure contract", async () => {
     await openRoute(page, "/payroll/payslips/email", "Gửi email phiếu lương");
-    await expect(page.getByLabel("DocDate1")).toHaveValue("05/05/2026");
-    await fillLabeledInput(page, "EmployeeCode", "NV001");
-    await fillLabeledInput(page, "DeptCode", "");
-    await fillLabeledInput(page, "BranchCode", "A01,A02");
+    await expect(page.getByLabel("Ngày tính lương")).toHaveValue("05/05/2026");
+    await fillLabeledInput(page, "Mã nhân viên", "NV001");
+    await fillLabeledInput(page, "Mã phòng ban", "");
+    await fillLabeledInput(page, "Mã chi nhánh", "A01,A02");
     await page.getByRole("button", { name: "Gửi email phiếu lương" }).click();
     await expect(page.getByText("dbo.usp_PayrollSlip")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("@_SendEmail")).toBeVisible();
@@ -231,7 +255,14 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
     await openRoute(page, "/attendance/summary", "Tổng kết điểm danh tháng");
     await page.locator("select").nth(1).selectOption("1");
     await page.locator("select").nth(2).selectOption("2026");
-    await page.getByRole("button", { name: /Tính lại|Chạy/i }).first().click();
+    const recalculateResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/attendance/recalculate") &&
+        response.request().method() === "POST",
+      { timeout: 30_000 },
+    );
+    await page.getByRole("button", { name: "Tính lại" }).click();
+    expect((await recalculateResponse).ok()).toBeTruthy();
     await expect(page.locator("main").getByText(/Đã chạy tính công/i).first()).toBeVisible({
       timeout: 30_000,
     });

@@ -21,6 +21,7 @@ use App\Models\Payslip;
 use App\Models\PayslipItem;
 use App\Models\SystemConfig;
 use Carbon\Carbon;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -173,6 +174,11 @@ class PayrollService
         $procedureResult = $this->tryCustomerPayrollProcedure($data);
 
         if ($procedureResult['available'] && !$procedureResult['error']) {
+            $customerResult = $this->customerPayrollResult($procedureResult, $data);
+            if ($customerResult !== null) {
+                return $customerResult;
+            }
+
             return [
                 'message' => 'Tính lương hoàn tất từ stored procedure.',
                 'execution_mode' => 'stored_procedure',
@@ -520,30 +526,10 @@ class PayrollService
             '@_BranchCode' => (string) ($data['branch_code'] ?? ''),
             '@_DeptCode' => (string) ($data['department_code'] ?? $data['department_id'] ?? ''),
             '@_EmployeeCode' => (string) ($data['employee_code'] ?? ''),
+            '@_UserId' => (int) ($data['user_id'] ?? Auth::id() ?? -1),
         ];
 
-        $lastResult = null;
-        foreach ([
-            'dbo.usp_CreateAndCalculatePayroll',
-            'dbo.usp_CalculatePayroll',
-            'dbo.usp_PayrollCalculation',
-        ] as $procedureName) {
-            $result = app(CustomerProcedureService::class)->execute($procedureName, $parameters);
-            if ($result['available'] && !$result['error']) {
-                return $result;
-            }
-
-            $lastResult = $result;
-        }
-
-        return $lastResult ?? [
-            'available' => false,
-            'procedure' => 'dbo.usp_CreateAndCalculatePayroll',
-            'result_sets' => [],
-            'row_count' => 0,
-            'execution_ms' => 0,
-            'error' => 'No payroll procedure candidate was executed.',
-        ];
+        return app(CustomerProcedureService::class)->execute('dbo.usp_CreateAndCalculatePayroll', $parameters);
     }
 
     protected function resolvePayrollRun(AttendancePeriod $period, string $scopeType = 'all', ?string $scopeValue = null, bool $draftOnly = false): PayrollRun
@@ -625,6 +611,154 @@ class PayrollService
         }
 
         return Carbon::parse($value)->toISOString();
+    }
+
+    private function customerPayrollResult(array $procedureResult, array $data): ?array
+    {
+        $connection = $this->customerConnection();
+        if (!$this->sourceExists($connection, 'D30Payroll') || !$this->sourceExists($connection, 'D30PayrollDetail')) {
+            return null;
+        }
+
+        [$fromDate, $toDate] = $this->customerPayrollDateRange($data);
+        $payrollRows = collect($connection->table('D30Payroll')
+            ->whereBetween('Date', [$fromDate, $toDate])
+            ->where('IsActive', 1)
+            ->orderBy('EmployeeCode')
+            ->get());
+
+        $rowIds = $payrollRows->pluck('RowId')->filter()->values()->all();
+        $details = $rowIds
+            ? collect($connection->table('D30PayrollDetail')
+                ->whereIn('RowIdPR', $rowIds)
+                ->where('IsActive', 1)
+                ->orderBy('BuiltinOrder')
+                ->get())
+                ->groupBy(fn (object $detail) => (string) data_get($detail, 'RowIdPR'))
+            : collect();
+
+        $items = $payrollRows
+            ->map(fn (object $row) => $this->formatCustomerPayrollRow($row, $details->get((string) data_get($row, 'RowId'), collect())))
+            ->all();
+
+        $summary = [
+            'row_count' => $procedureResult['row_count'],
+            'result_set_count' => count($procedureResult['result_sets']),
+            'total_employees' => count($items),
+            'total_gross_salary' => round($payrollRows->sum(fn (object $row) => (float) data_get($row, 'GrossSalary', 0)), 2),
+            'total_net_salary' => round($payrollRows->sum(fn (object $row) => (float) data_get($row, 'NetIncome', 0)), 2),
+            'total_pit' => round($payrollRows->sum(fn (object $row) => (float) data_get($row, 'PersonalIncomeTaxAmount', 0)), 2),
+            'total_insurance_employee' => round($payrollRows->sum(fn (object $row) => (
+                (float) data_get($row, 'SocialInsEMPLPay', 0)
+                + (float) data_get($row, 'HealthInsEMPLPay', 0)
+                + (float) data_get($row, 'UnemployedInsEMPLPay', 0)
+            )), 2),
+        ];
+
+        return [
+            'message' => 'Tính lương hoàn tất từ stored procedure.',
+            'execution_mode' => 'stored_procedure',
+            'procedure' => $procedureResult['procedure'],
+            'row_count' => $procedureResult['row_count'],
+            'execution_ms' => $procedureResult['execution_ms'],
+            'result_sets' => $procedureResult['result_sets'],
+            'summary' => $summary,
+            'items' => $items,
+            'payslips' => $items,
+            'total_employees' => $summary['total_employees'],
+            'gross_salary' => $summary['total_gross_salary'],
+            'net_salary' => $summary['total_net_salary'],
+            'insurance_employee' => $summary['total_insurance_employee'],
+            'pit_amount' => $summary['total_pit'],
+            'source_table' => 'D30Payroll',
+            'detail_source_table' => 'D30PayrollDetail',
+        ];
+    }
+
+    private function formatCustomerPayrollRow(object $row, Collection $details): array
+    {
+        $employeeInsurance = (float) data_get($row, 'SocialInsEMPLPay', 0)
+            + (float) data_get($row, 'HealthInsEMPLPay', 0)
+            + (float) data_get($row, 'UnemployedInsEMPLPay', 0);
+
+        return [
+            'id' => (string) data_get($row, 'RowId'),
+            'row_id' => (string) data_get($row, 'RowId'),
+            'employee_code' => (string) data_get($row, 'EmployeeCode'),
+            'employee_name' => (string) data_get($row, 'EmployeeCode'),
+            'department_code' => (string) data_get($row, 'DeptCode'),
+            'branch_code' => (string) data_get($row, 'BranchCode'),
+            'date' => $this->dateValue(data_get($row, 'Date')),
+            'gross_salary' => $this->floatValue(data_get($row, 'GrossSalary')),
+            'net_salary' => $this->floatValue(data_get($row, 'NetIncome')),
+            'taxable_income' => $this->floatValue(data_get($row, 'TaxableIncome')),
+            'insurance_employee' => round($employeeInsurance, 2),
+            'pit_amount' => $this->floatValue(data_get($row, 'PersonalIncomeTaxAmount')),
+            'status' => 'generated',
+            'source_table' => 'D30Payroll',
+            'items' => $details
+                ->map(fn (object $detail) => [
+                    'id' => data_get($detail, 'Id'),
+                    'item_code' => (string) data_get($detail, 'SalaryType'),
+                    'item_name' => (string) data_get($detail, 'SalaryType'),
+                    'item_group' => 'earning',
+                    'qty' => $this->floatValue(data_get($detail, 'Days')),
+                    'hours' => $this->floatValue(data_get($detail, 'Hours')),
+                    'rate' => $this->floatValue(data_get($detail, 'Coeff')),
+                    'amount' => $this->floatValue(data_get($detail, 'Amount')),
+                    'sort_order' => (int) data_get($detail, 'BuiltinOrder', 0),
+                    'source_table' => 'D30PayrollDetail',
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    private function customerPayrollDateRange(array $data): array
+    {
+        $month = (int) ($data['month'] ?? Carbon::now()->month);
+        $year = (int) ($data['year'] ?? Carbon::now()->year);
+        $docDate = $data['doc_date'] ?? sprintf('%04d-%02d-01', $year, $month);
+        $start = Carbon::parse($docDate)->startOfMonth();
+
+        return [$start->toDateString(), $start->copy()->endOfMonth()->toDateString()];
+    }
+
+    private function customerConnection(): ConnectionInterface
+    {
+        if ($this->customerDatabaseConfigured()) {
+            return DB::connection('customer_sqlsrv');
+        }
+
+        return DB::connection();
+    }
+
+    private function customerDatabaseConfigured(): bool
+    {
+        return (bool) config('database.connections.customer_sqlsrv.database');
+    }
+
+    private function sourceExists(ConnectionInterface $connection, string $source): bool
+    {
+        try {
+            if ($connection->getDriverName() === 'sqlsrv') {
+                $row = $connection->selectOne('SELECT OBJECT_ID(?) AS object_id', [$source]);
+                return !empty($row?->object_id);
+            }
+
+            if ($connection->getDriverName() === 'sqlite') {
+                $row = $connection->selectOne(
+                    "SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?",
+                    [$source]
+                );
+
+                return !empty($row?->name);
+            }
+
+            return $connection->getSchemaBuilder()->hasTable($source);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     protected function enumValue(mixed $value): ?string

@@ -17,7 +17,11 @@ abstract class TestCase extends BaseTestCase
         $_ENV['DB_DATABASE'] = ':memory:';
         $_SERVER['DB_CONNECTION'] = 'sqlite';
         $_SERVER['DB_DATABASE'] = ':memory:';
+        putenv('CUSTOMER_DB_DATABASE');
+        unset($_ENV['CUSTOMER_DB_DATABASE'], $_SERVER['CUSTOMER_DB_DATABASE']);
 
         parent::setUp();
+
+        config(['database.connections.customer_sqlsrv.database' => null]);
     }
 }

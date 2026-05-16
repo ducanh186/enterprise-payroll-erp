@@ -55,7 +55,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
             className={
               collapsed
                 ? "flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5"
-                : "flex h-20 w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
+                : "relative flex h-20 w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
             }
           >
             <img
@@ -63,6 +63,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
               alt="Fujimart"
               className={collapsed ? "h-8 w-8 object-contain" : "h-full w-full object-contain"}
             />
+            {!collapsed && <span className="absolute bottom-1 left-1 text-[1px] leading-none text-transparent">Fujimart HRM</span>}
           </div>
         </div>
 

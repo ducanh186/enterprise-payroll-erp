@@ -4,7 +4,7 @@ import { Pencil, Plus, RefreshCcw, Search, Trash2 } from "lucide-react";
 import DateInput from "../components/DateInput";
 import { apiGet, apiPost, apiPut, getApiErrorMessage } from "../lib/api";
 import { formatDate } from "../lib/format";
-import { boolValue, textValue, toArray } from "../lib/records";
+import { boolValue, isRecord, textValue, toArray } from "../lib/records";
 import { Badge, EmptyState, Modal, PageHeader } from "../components/ui";
 
 type ParameterForm = {
@@ -52,20 +52,40 @@ export default function PayrollParametersPage() {
     queryFn: async () => apiGet<unknown>("/reference/payroll-parameters"),
   });
 
-  const items = useMemo(
-    () => toArray<Record<string, unknown>>(query.data?.data),
-    [query.data?.data],
-  );
+  const groupedItems = useMemo(() => {
+    const data = query.data?.data;
+
+    if (isRecord(data)) {
+      const valueParameters = toArray<Record<string, unknown>>(data.value_parameters);
+      const salaryTypes = toArray<Record<string, unknown>>(data.salary_types);
+
+      if (valueParameters.length > 0 || salaryTypes.length > 0) {
+        return {
+          valueParameters,
+          salaryTypes,
+          all: [...valueParameters, ...salaryTypes],
+          isViewBacked: [...valueParameters, ...salaryTypes].some((item) => textValue(item, ["source_view"], "") !== ""),
+        };
+      }
+    }
+
+    const legacyItems = toArray<Record<string, unknown>>(data);
+    const salaryTypes = legacyItems.filter((item) => isSalaryTypeRow(item));
+    const hasSalaryRows = salaryTypes.length > 0;
+
+    return {
+      valueParameters: legacyItems.filter((item) => !isSalaryTypeRow(item) || !hasSalaryRows),
+      salaryTypes: hasSalaryRows ? salaryTypes : legacyItems,
+      all: legacyItems,
+      isViewBacked: false,
+    };
+  }, [query.data?.data]);
+
+  const isReadOnly = groupedItems.isViewBacked;
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    const hasSalaryRows = items.some((candidate) => isSalaryTypeRow(candidate));
-    const viewItems = items.filter((item) => {
-      const salaryTypeMatch = isSalaryTypeRow(item);
-      return activeView === "salaryType"
-        ? salaryTypeMatch || !hasSalaryRows
-        : !salaryTypeMatch || !hasSalaryRows;
-    });
+    const viewItems = activeView === "salaryType" ? groupedItems.salaryTypes : groupedItems.valueParameters;
 
     if (!q) return viewItems;
     return viewItems.filter((item) => {
@@ -73,7 +93,7 @@ export default function PayrollParametersPage() {
       const name = textValue(item, ["name", "param_name", "label"], "").toLowerCase();
       return code.includes(q) || name.includes(q);
     });
-  }, [activeView, items, search]);
+  }, [activeView, groupedItems.salaryTypes, groupedItems.valueParameters, search]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -143,10 +163,12 @@ export default function PayrollParametersPage() {
               <RefreshCcw className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`} />
               Làm mới
             </button>
-            <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95">
-              <Plus className="h-4 w-4" />
-              Thêm mới
-            </button>
+            {!isReadOnly && (
+              <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95">
+                <Plus className="h-4 w-4" />
+                Thêm mới
+              </button>
+            )}
           </>
         }
       />
@@ -214,20 +236,24 @@ export default function PayrollParametersPage() {
                     <td className="px-4 py-4 text-sm tabular-nums text-slate-700">{effectiveDate ? formatDate(effectiveDate) : "—"}</td>
                     <td className="px-4 py-4">{isActive ? <Badge tone="success">Đang dùng</Badge> : <Badge>Đã đình chỉ</Badge>}</td>
                     <td className="sticky right-0 bg-white px-4 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => openEdit(item)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">
-                          <Pencil className="h-3.5 w-3.5" />
-                          Sửa
-                        </button>
-                        {isActive ? (
-                          <button type="button" onClick={() => suspendMutation.mutate(id)} className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100">
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Đình chỉ
+                      {isReadOnly ? (
+                        <span className="block text-right text-sm text-slate-400">—</span>
+                      ) : (
+                        <div className="flex justify-end gap-2">
+                          <button type="button" onClick={() => openEdit(item)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                            <Pencil className="h-3.5 w-3.5" />
+                            Sửa
                           </button>
-                        ) : (
-                          <Badge>Đã đình chỉ</Badge>
-                        )}
-                      </div>
+                          {isActive ? (
+                            <button type="button" onClick={() => suspendMutation.mutate(id)} className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100">
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Đình chỉ
+                            </button>
+                          ) : (
+                            <Badge>Đã đình chỉ</Badge>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
