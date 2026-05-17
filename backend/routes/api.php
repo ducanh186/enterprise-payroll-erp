@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\FujimartProcedureController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\ProcedureController;
 use App\Http\Controllers\Api\ReferenceController;
@@ -48,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/contract-types/{id}/suspend', [ReferenceController::class, 'suspendContractType'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
         Route::get('/payroll-types', [ReferenceController::class, 'payrollTypes']);
         Route::get('/payroll-parameters', [ReferenceController::class, 'payrollParameters']);
+        Route::get('/d20-payroll-parameters', [ReferenceController::class, 'd20PayrollParameters']);
         Route::post('/payroll-parameters', [ReferenceController::class, 'storePayrollParameter'])->middleware('permission:reference.manage');
         Route::put('/payroll-parameters/{id}', [ReferenceController::class, 'updatePayrollParameter'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
         Route::post('/payroll-parameters/{id}/suspend', [ReferenceController::class, 'suspendPayrollParameter'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
@@ -168,4 +170,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/permissions', [AdminController::class, 'permissions'])->middleware('permission:admin.roles');
     Route::get('/admin/permissions', [AdminController::class, 'permissions'])->middleware('permission:admin.roles');
     Route::post('/users/{id}/roles', [AdminController::class, 'assignRoles'])->where('id', '[0-9]+')->middleware('permission:admin.roles');
+
+    // -----------------------------------------------------------------------
+    // Fujimart Procedures (5 SP)
+    // -----------------------------------------------------------------------
+    Route::prefix('fujimart')->controller(FujimartProcedureController::class)->group(function () {
+        Route::post('attendance/calculate', 'attendanceCalculate')->middleware('permission:attendance.calculate');
+        Route::post('payroll/calculate',    'payrollCalculate')->middleware('permission:payroll.run');
+        Route::get ('reports/attendance',   'attendanceReport')->middleware('permission:reports.view');
+        Route::get ('reports/payroll',      'payrollReport')->middleware('permission:reports.view');
+        Route::post('reports/payslip',      'payrollSlip')->middleware('permission:reports.view');
+    });
 });

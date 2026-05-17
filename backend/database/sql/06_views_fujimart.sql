@@ -244,9 +244,9 @@ SELECT
     p.description            AS Description,
     p.effective_date         AS EffectiveDate,
     p.type                   AS [Type],
-    p.amount                 AS Amount
-FROM dbo.d20_payroll_parameters p
-WHERE p.is_active = 1;
+    p.amount                 AS Amount,
+    CAST(p.is_active AS INT) AS IsActive
+FROM dbo.d20_payroll_parameters p;
 GO
 
 -- =============================================================================

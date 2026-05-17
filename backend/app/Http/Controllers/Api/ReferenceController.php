@@ -77,6 +77,24 @@ class ReferenceController extends Controller
         return $this->success($this->referenceService->getPayrollParameters());
     }
 
+    /**
+     * Fujimart D20PayrollParameter flat table with 2 tabs.
+     * GET /api/reference/d20-payroll-parameters?tab=value|salary
+     */
+    public function d20PayrollParameters(Request $request): JsonResponse
+    {
+        $tab = $request->input('tab', 'value');
+
+        $query = \App\Models\D20PayrollParameter::query()->where('is_active', true);
+        if ($tab === 'salary') {
+            $query->salaryTab();
+        } else {
+            $query->valueTab();
+        }
+
+        return $this->success($query->orderBy('parameter')->get());
+    }
+
     public function storePayrollParameter(Request $request): JsonResponse
     {
         $data = $request->validate([
