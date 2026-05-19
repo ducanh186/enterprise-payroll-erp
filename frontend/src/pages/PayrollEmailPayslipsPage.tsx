@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { MailCheck, RefreshCcw, Send } from "lucide-react";
 import DateInput from "../components/DateInput";
-import { Badge, EmptyState, PageHeader, Panel } from "../components/ui";
+import { EmptyState, PageHeader, Panel } from "../components/ui";
 import { apiPost, getApiErrorMessage } from "../lib/api";
 
 export default function PayrollEmailPayslipsPage() {
@@ -34,7 +34,6 @@ export default function PayrollEmailPayslipsPage() {
       <PageHeader
         eyebrow="Tiền lương"
         title="Gửi email phiếu lương"
-        description="Chạy thủ tục dbo.usp_PayrollSlip với SendEmail = 1."
         actions={
           <button
             type="button"
@@ -90,11 +89,6 @@ export default function PayrollEmailPayslipsPage() {
               </label>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Badge tone="info">SendEmail = 1</Badge>
-              <Badge tone="neutral">MailProfile = rỗng</Badge>
-            </div>
-
             {error && (
               <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                 {error}
@@ -113,7 +107,7 @@ export default function PayrollEmailPayslipsPage() {
           </div>
         </Panel>
 
-        <Panel title="Kết quả thủ tục" subtitle="Thông báo thành công hoặc lỗi từ backend">
+        <Panel title="Kết quả gửi email" subtitle="Thông báo thành công hoặc lỗi từ hệ thống">
           {result ? (
             <div className="space-y-4">
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
@@ -125,9 +119,6 @@ export default function PayrollEmailPayslipsPage() {
                     <p className="text-sm font-semibold text-emerald-900">
                       {String(result.message ?? "Đã nhận phản hồi từ backend")}
                     </p>
-                    <p className="mt-1 text-xs text-emerald-700">
-                      {String(result.procedure ?? "dbo.usp_PayrollSlip")}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -135,7 +126,7 @@ export default function PayrollEmailPayslipsPage() {
           ) : (
             <EmptyState
               title="Chưa có kết quả gửi"
-              description="Bấm Gửi email phiếu lương để chạy thủ tục và xem phản hồi."
+              description="Bấm Gửi email phiếu lương để xem phản hồi."
             />
           )}
         </Panel>

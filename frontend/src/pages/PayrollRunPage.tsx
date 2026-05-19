@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Play, ShieldCheck, Search, Filter, Users, CheckCircle2 } from "lucide-react";
 import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
 import { formatCurrency, formatNumber } from "../lib/format";
@@ -13,6 +14,7 @@ type Step = 1 | 2 | 3;
 
 export default function PayrollRunPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [form, setForm] = useState({
     month: String(current.getMonth() + 1),
@@ -88,6 +90,7 @@ export default function PayrollRunPage() {
       setError(null);
       await queryClient.invalidateQueries({ queryKey: ["payroll", "periods"] });
       setCurrentStep(3);
+      navigate("/payroll/periods");
     },
     onError: (mutationError) => {
       setError(getApiErrorMessage(mutationError, "Không thể mở kỳ lương."));

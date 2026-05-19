@@ -232,15 +232,14 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
     await expect(page.getByRole("heading", { name: "Chi tiết khoản thu nhập" })).toBeVisible();
   });
 
-  await test.step("Payroll slip email action runs customer procedure contract", async () => {
+  await test.step("Payroll slip email action sends payslip email", async () => {
     await openRoute(page, "/payroll/payslips/email", "Gửi email phiếu lương");
     await expect(page.getByLabel("Ngày tính lương")).toHaveValue("05/05/2026");
     await fillLabeledInput(page, "Mã nhân viên", "NV001");
     await fillLabeledInput(page, "Mã phòng ban", "");
     await fillLabeledInput(page, "Mã chi nhánh", "A01,A02");
     await page.getByRole("button", { name: "Gửi email phiếu lương" }).click();
-    await expect(page.getByText("dbo.usp_PayrollSlip")).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText("SendEmail = 1", { exact: true })).toBeVisible();
+    await expect(page.getByText("Gửi email phiếu lương thành công")).toBeVisible({ timeout: 30_000 });
   });
 
   await test.step("Import customer check-in/out Excel", async () => {
