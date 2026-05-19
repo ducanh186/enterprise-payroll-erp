@@ -35,9 +35,13 @@ docker/data/
 # Temp / session files
 ses.txt
 .firecrawl/
+.codex/
+excalidraw.log
+data/
+Template bảng chấm công.xlsx
 frontend/.env.production.local
 backend/storage/logs/
-CLAUDE.md 
+CLAUDE.md
 # OS
 *.orig
 

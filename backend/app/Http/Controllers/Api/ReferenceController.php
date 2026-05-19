@@ -230,6 +230,39 @@ class ReferenceController extends Controller
         return $record ? $this->success($record, 'Salary grade suspended.') : $this->notFound('Salary grade not found.');
     }
 
+    public function salaryGradeDetails(int $id): JsonResponse
+    {
+        return $this->success($this->referenceService->getSalaryGradeDetails($id));
+    }
+
+    public function storeSalaryGradeDetail(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'salary_type' => ['required', 'string', 'max:128'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string', 'max:512'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $record = $this->referenceService->createSalaryGradeDetail($id, $data);
+
+        return $record ? $this->created($record, 'Salary grade detail created.') : $this->notFound('Salary grade not found.');
+    }
+
+    public function updateSalaryGradeDetail(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'salary_type' => ['sometimes', 'string', 'max:128'],
+            'amount' => ['sometimes', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string', 'max:512'],
+            'status' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $record = $this->referenceService->updateSalaryGradeDetail($id, $data);
+
+        return $record ? $this->success($record, 'Salary grade detail updated.') : $this->notFound('Salary grade detail not found.');
+    }
+
     public function allowances(): JsonResponse
     {
         return $this->success($this->referenceService->getAllowances());

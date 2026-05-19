@@ -1,5 +1,28 @@
-# Kiểm thử E2E Fujimart HRM
+# Kiểm thử Fujimart HRM Payroll
 
+Tài liệu này dành cho người muốn tự dựng app, restore database khách hàng, chạy test tự động và kiểm tra thủ công các màn Fujimart HRM Payroll.
+
+## Yêu cầu trước khi chạy
+
+- Docker Desktop đang chạy.
+- PowerShell chạy từ thư mục gốc repo: `D:\CODE\enterprise-payroll-erp`.
+- File backup SQL Server tồn tại tại `docker/data/fujimart/DUNGNTN_HRM.bak`.
+- Port local cần trống:
+  - `8001`: Backend API.
+  - `5173`: Frontend Docker dev server.
+  - `4173`: Playwright preview server.
+  - `1433`: SQL Server Docker.
+
+## Hai database cần hiểu rõ
+
+Hệ thống local dùng 2 database SQL Server khác nhau:
+
+| Database | Vai trò | Lệnh nào tác động |
+| --- | --- | --- |
+| `enterprise_payroll_erp` | App DB do Laravel migrate/seed tạo, dùng cho user, role, các bảng app còn lại | `php artisan migrate:fresh --seed --force` |
+| `fujimart_hrm_source` | Source DB khách hàng restore từ `.bak`, chứa `D20Shift`, `D30AssignedShift`, `D30Attendance`, `D30Payroll`, stored procedures | `scripts/restore-fujimart-db.ps1` |
+
+`migrate:fresh` chỉ nên reset app DB `enterprise_payroll_erp`; không dùng nó để reset source DB khách hàng. Source DB khách hàng được restore bằng script riêng.
 
 ## Cách chạy toàn bộ vòng kiểm tra
 
@@ -10,7 +33,7 @@ docker compose up -d --build
 ```
 
 ```powershell
-.\scripts\restore-fujimart-db.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\restore-fujimart-db.ps1
 ```
 
 ```powershell
@@ -31,11 +54,81 @@ docker compose exec -T frontend npm run lint
 
 ```powershell
 cd frontend
-$env:E2E_BASE_URL = "http://localhost:5173"
+$env:E2E_BASE_URL = "http://127.0.0.1:4173"
 npm run test:e2e:smoke
 ```
 
+Ghi chú về URL: trên một số máy Windows, `localhost` có thể resolve qua IPv6/WSL relay và làm login bị `Network Error`. Nếu gặp lỗi đó, dùng `127.0.0.1` thay cho `localhost`.
+
+## Sửa lỗi login `Network Error` trên local
+
+Triệu chứng thường gặp: mở `http://localhost:5174/login`, nhập `admin01` / `password`, nhưng frontend báo `Network Error`.
+
+Nguyên nhân hay gặp là browser đang mở frontend bằng `localhost`, trong khi backend API ổn định hơn khi gọi qua `127.0.0.1`. Hãy dùng cùng một kiểu host cho local: ưu tiên `127.0.0.1`.
+
+Nếu chạy bằng Docker Compose, dùng đúng URL này:
+
+```powershell
+docker compose up -d --build
+```
+
+```text
+http://127.0.0.1:5173/login
+```
+
+Nếu tự chạy Vite trong thư mục `frontend` và Vite báo đang chạy ở port `5174`, dừng frontend cũ bằng `Ctrl+C`, rồi chạy lại:
+
+```powershell
+cd D:\CODE\enterprise-payroll-erp\frontend
+$env:VITE_API_BASE_URL = "http://127.0.0.1:8001/api"
+npm run dev -- --host 127.0.0.1 --port 5174
+```
+
+Sau đó mở:
+
+```text
+http://127.0.0.1:5174/login
+```
+
+Kiểm tra backend trước khi thử login lại:
+
+```powershell
+$login = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8001/api/auth/login" `
+  -ContentType "application/json" `
+  -Body '{"username":"admin01","password":"password"}'
+
+$login.data.user.username
+```
+
+Nếu lệnh trên trả về `admin01`, backend đã chạy đúng; lỗi còn lại thường là frontend đang dùng sai `VITE_API_BASE_URL` hoặc bạn vẫn đang mở URL `localhost`.
+
 Nếu một bước bị lỗi, sửa đúng tầng đang hỏng, build lại Docker nếu cần, chạy lại đúng bước nhỏ nhất để xác nhận, rồi mới quay lại toàn bộ vòng kiểm tra.
+
+## Chạy test nhỏ trước khi chạy full loop
+
+Khi đang sửa code, nên chạy test nhỏ nhất trước:
+
+```powershell
+docker compose exec -T backend php artisan test --filter FujimartSourceSchemaTest
+```
+
+```powershell
+docker compose exec -T backend php artisan test --filter Reference
+```
+
+```powershell
+docker compose exec -T backend php artisan test --filter Attendance
+```
+
+```powershell
+docker compose exec -T backend php artisan test --filter Payroll
+```
+
+Sau khi các test nhỏ pass, chạy full backend:
+
+```powershell
+docker compose exec -T backend composer test:sqlite
+```
 
 ## Tài khoản smoke test
 
@@ -44,6 +137,47 @@ Nếu một bước bị lỗi, sửa đúng tầng đang hỏng, build lại Do
 - `payroll01` / `password`: test đăng nhập vai trò payroll.
 - `manager01` / `password`: test đăng nhập vai trò quản lý.
 - `emp001` / `password`: test đăng nhập nhân viên được seed từ dữ liệu Fujimart.
+
+## Kiểm tra nhanh app đang dùng Fujimart source schema
+
+Sau khi restore DB và đăng nhập được, các API dưới đây phải đọc source object Fujimart, không chỉ đọc bảng migrate Laravel.
+
+```powershell
+$login = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8001/api/auth/login" `
+  -ContentType "application/json" `
+  -Body '{"username":"admin01","password":"password"}'
+
+$headers = @{ Authorization = "Bearer $($login.data.token)" }
+```
+
+Shift master phải trả `source_table = D20Shift`:
+
+```powershell
+(Invoke-RestMethod -Uri "http://127.0.0.1:8001/api/reference/shifts" -Headers $headers).data |
+  Select-Object -First 3 code,name,source_table
+```
+
+Payroll parameters phải có 2 nhóm từ 2 view:
+
+```powershell
+$params = Invoke-RestMethod -Uri "http://127.0.0.1:8001/api/reference/payroll-parameters" -Headers $headers
+$params.data.value_parameters | Select-Object -First 3 code,name,source_view
+$params.data.salary_types | Select-Object -First 3 code,name,source_view
+```
+
+Shift assignment phải trả `source_table = D30AssignedShift` và dùng business key `EmployeeCode` + `ShiftCode`:
+
+```powershell
+(Invoke-RestMethod -Uri "http://127.0.0.1:8001/api/attendance/shift-assignments" -Headers $headers).data |
+  Select-Object -First 3 employee_code,shift_code,source_table
+```
+
+Kỳ vọng:
+
+- `source_table` của shift là `D20Shift`.
+- `source_view` của nhóm tham số giá trị là `vD20PayrollPara_ValuePara`.
+- `source_view` của nhóm loại lương/thưởng là `vD20PayrollPara_SalaryType`.
+- `source_table` của phân ca là `D30AssignedShift`.
 
 ## Cập nhật dữ liệu demo qua Docker
 
@@ -90,7 +224,7 @@ Ghi chú: các bước import -> tính công -> tính lương -> báo cáo phụ
 
 Sau khi Playwright đã pass, mở thêm browser-use hoặc in-app browser để kiểm tra lại bằng mắt:
 
-1. Mở `http://localhost:5173/login`.
+1. Mở `http://127.0.0.1:5173/login`.
 2. Đăng nhập `admin01` / `password`.
 3. Xác nhận web title là `Fujimart HRM`, sidebar chỉ có logo Fujimart và không còn nhãn `Quản lý`.
 4. Mở `Nhân sự & HĐLĐ` -> `Hồ sơ cán bộ nhân viên` -> chi tiết -> `Người phụ thuộc`.
@@ -108,3 +242,4 @@ Sau khi Playwright đã pass, mở thêm browser-use hoặc in-app browser để
 - Logo và các Excel template được commit vì runtime cần chúng để hiển thị và export.
 - SQL Server Docker cục bộ phải có `DUNGNTN_HRM.bak` trong `docker/data/fujimart/` trước khi restore.
 - Report phiếu lương khi preview/export gọi `dbo.usp_PayrollSlip` với `_SendEmail = 0` trong smoke test để không phụ thuộc vào cấu hình Database Mail của máy local.
+- Firecrawl CLI hiện không scrape trực tiếp được URL local như `http://127.0.0.1:5173` vì tool yêu cầu URL có top-level domain. Dùng Playwright hoặc in-app browser cho kiểm thử UI local.

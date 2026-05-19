@@ -400,6 +400,86 @@ class ReferenceService
         return $this->updateSalaryGrade($id, ['status' => 'inactive']);
     }
 
+    public function getSalaryGradeDetails(int $gradeId): array
+    {
+        $connection = $this->customerConnection();
+        if ($this->tableExists($connection, 'D20SalaryGradeDetail')) {
+            return collect($connection->table('D20SalaryGradeDetail')
+                ->where('ParentId', $gradeId)
+                ->where('IsActive', 1)
+                ->orderBy('Id')
+                ->get())
+                ->map(fn (object $detail) => $this->formatCustomerSalaryGradeDetail($detail))
+                ->values()
+                ->all();
+        }
+
+        return [];
+    }
+
+    public function createSalaryGradeDetail(int $gradeId, array $data): ?array
+    {
+        $connection = $this->customerConnection();
+        if (!$this->tableExists($connection, 'D20SalaryGrade') || !$this->tableExists($connection, 'D20SalaryGradeDetail')) {
+            return null;
+        }
+
+        $grade = $connection->table('D20SalaryGrade')->where('Id', $gradeId)->first();
+        if (!$grade) {
+            return null;
+        }
+
+        $now = Carbon::now();
+        $id = $connection->table('D20SalaryGradeDetail')->insertGetId([
+            'ParentId' => $gradeId,
+            'IsGroup' => 0,
+            'IsActive' => ($data['status'] ?? 'active') !== 'inactive',
+            'CreatedBy' => -1,
+            'CreatedAt' => $now,
+            'ModifiedBy' => -1,
+            'ModifiedAt' => $now,
+            'SalaryType' => (string) $data['salary_type'],
+            'Amount' => (float) $data['amount'],
+            'Description' => $data['description'] ?? null,
+        ]);
+
+        $detail = $connection->table('D20SalaryGradeDetail')->where('Id', $id)->first();
+
+        return $detail ? $this->formatCustomerSalaryGradeDetail($detail) : null;
+    }
+
+    public function updateSalaryGradeDetail(int $id, array $data): ?array
+    {
+        $connection = $this->customerConnection();
+        if (!$this->tableExists($connection, 'D20SalaryGradeDetail')) {
+            return null;
+        }
+
+        $detail = $connection->table('D20SalaryGradeDetail')->where('Id', $id)->first();
+        if (!$detail) {
+            return null;
+        }
+
+        $payload = ['ModifiedAt' => Carbon::now()];
+        if (array_key_exists('salary_type', $data)) {
+            $payload['SalaryType'] = (string) $data['salary_type'];
+        }
+        if (array_key_exists('amount', $data)) {
+            $payload['Amount'] = (float) $data['amount'];
+        }
+        if (array_key_exists('description', $data)) {
+            $payload['Description'] = $data['description'];
+        }
+        if (array_key_exists('status', $data)) {
+            $payload['IsActive'] = $data['status'] !== 'inactive';
+        }
+
+        $connection->table('D20SalaryGradeDetail')->where('Id', $id)->update($payload);
+        $fresh = $connection->table('D20SalaryGradeDetail')->where('Id', $id)->first();
+
+        return $fresh ? $this->formatCustomerSalaryGradeDetail($fresh) : null;
+    }
+
     protected function formatContractType(ContractType $type): array
     {
         return [
@@ -785,13 +865,7 @@ class ReferenceService
                 return $parentId === $id || $parentId === $scaleCode;
             })
             ->values()
-            ->map(fn (object $detail) => [
-                'row_id' => (string) (data_get($detail, 'RowId') ?? data_get($detail, 'row_id') ?? ''),
-                'parent_id' => (string) (data_get($detail, 'ParentId') ?? data_get($detail, 'parent_id') ?? ''),
-                'salary_type' => data_get($detail, 'SalaryType') ?? data_get($detail, 'salary_type'),
-                'amount' => $this->numericValue(data_get($detail, 'Amount') ?? data_get($detail, 'amount')),
-                'description' => data_get($detail, 'Description') ?? data_get($detail, 'description'),
-            ])
+            ->map(fn (object $detail) => $this->formatCustomerSalaryGradeDetail($detail))
             ->all();
 
         return [
@@ -801,6 +875,22 @@ class ReferenceService
             'salary_level' => (int) (data_get($grade, 'SalaryLevel') ?? data_get($grade, 'salary_level') ?? 0),
             'description' => data_get($grade, 'Description') ?? data_get($grade, 'description'),
             'details' => $gradeDetails,
+        ];
+    }
+
+    protected function formatCustomerSalaryGradeDetail(object $detail): array
+    {
+        $isActive = (bool) (data_get($detail, 'IsActive') ?? data_get($detail, 'is_active') ?? true);
+
+        return [
+            'id' => (int) (data_get($detail, 'Id') ?? data_get($detail, 'id') ?? 0),
+            'row_id' => (string) (data_get($detail, 'RowId') ?? data_get($detail, 'row_id') ?? ''),
+            'parent_id' => (string) (data_get($detail, 'ParentId') ?? data_get($detail, 'parent_id') ?? ''),
+            'salary_type' => data_get($detail, 'SalaryType') ?? data_get($detail, 'salary_type'),
+            'amount' => $this->numericValue(data_get($detail, 'Amount') ?? data_get($detail, 'amount')),
+            'description' => data_get($detail, 'Description') ?? data_get($detail, 'description'),
+            'status' => $isActive ? 'active' : 'inactive',
+            'is_active' => $isActive,
         ];
     }
 

@@ -131,9 +131,6 @@ export default function PayrollEmailPayslipsPage() {
                   </div>
                 </div>
               </div>
-              <pre className="max-h-96 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs leading-6 text-slate-300">
-                {JSON.stringify(result, null, 2)}
-              </pre>
             </div>
           ) : (
             <EmptyState

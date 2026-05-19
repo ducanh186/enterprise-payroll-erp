@@ -79,6 +79,59 @@ class ReportFlowTest extends TestCase
         }
     }
 
+    public function test_fujimart_payroll_export_fills_the_template_sheet(): void
+    {
+        $headers = $this->authHeaders();
+
+        $export = $this->withHeaders($headers)->postJson('/api/reports/FUJIMART_PAYROLL_REPORT/export', [
+            'date_from' => '2026-01-01',
+            'date_to' => '2026-01-31',
+            'format' => 'xlsx',
+        ]);
+
+        $export->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.report_code', 'FUJIMART_PAYROLL_REPORT');
+
+        $path = storage_path('app/public/reports/' . $export->json('data.file_name'));
+        $sheets = $this->readWorkbookSheets($path);
+
+        $this->assertArrayHasKey('TÍNH LƯƠNG', $sheets);
+
+        $templateSheetText = implode('|', array_filter($sheets['TÍNH LƯƠNG']));
+        $this->assertStringNotContainsString('{=@_Month}', $templateSheetText);
+        $this->assertStringNotContainsString('{=@_Year}', $templateSheetText);
+        $this->assertNotEmpty($sheets['TÍNH LƯƠNG']['A10'] ?? null);
+
+        $allOtherSheetText = collect($sheets)
+            ->except('TÍNH LƯƠNG')
+            ->flatMap(fn (array $cells) => array_values($cells))
+            ->implode('|');
+
+        $this->assertStringNotContainsString('Fujimart HRM|Bảng thanh toán lương theo phòng ban|Generated at', $allOtherSheetText);
+    }
+
+    public function test_fujimart_payslip_export_updates_template_header(): void
+    {
+        $headers = $this->authHeaders();
+
+        $export = $this->withHeaders($headers)->postJson('/api/reports/FUJIMART_PAYROLL_SLIP/export', [
+            'date_from' => '2026-03-01',
+            'date_to' => '2026-03-31',
+            'format' => 'xlsx',
+        ]);
+
+        $export->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.report_code', 'FUJIMART_PAYROLL_SLIP');
+
+        $path = storage_path('app/public/reports/' . $export->json('data.file_name'));
+        $sheets = $this->readWorkbookSheets($path);
+
+        $this->assertArrayHasKey('Phiếu lương cá nhân', $sheets);
+        $this->assertSame('Tháng 3/2026', $sheets['Phiếu lương cá nhân']['A2'] ?? null);
+    }
+
     public function test_send_fujimart_payroll_slip_email_uses_customer_procedure_contract(): void
     {
         $headers = $this->authHeaders();
@@ -256,5 +309,81 @@ class ReportFlowTest extends TestCase
         $this->assertArrayHasKey('details', $grade);
         $this->assertNotEmpty($grade['details']);
         $this->assertArrayHasKey('amount', $grade['details'][0]);
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private function readWorkbookSheets(string $path): array
+    {
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($path) === true, "Cannot open workbook {$path}.");
+
+        try {
+            $sharedStrings = [];
+            $sharedStringsXml = $zip->getFromName('xl/sharedStrings.xml');
+            if ($sharedStringsXml !== false) {
+                $sharedStringsDom = new \DOMDocument();
+                $sharedStringsDom->loadXML($sharedStringsXml);
+                $sharedStringsXpath = new \DOMXPath($sharedStringsDom);
+                $sharedStringsXpath->registerNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+                foreach ($sharedStringsXpath->query('//x:si') ?: [] as $item) {
+                    $texts = [];
+                    foreach ($sharedStringsXpath->query('.//x:t', $item) ?: [] as $textNode) {
+                        $texts[] = $textNode->textContent;
+                    }
+                    $sharedStrings[] = implode('', $texts);
+                }
+            }
+
+            $workbook = simplexml_load_string($zip->getFromName('xl/workbook.xml'));
+            $relationships = simplexml_load_string($zip->getFromName('xl/_rels/workbook.xml.rels'));
+            $relationshipTargets = [];
+            foreach ($relationships->Relationship as $relationship) {
+                $relationshipTargets[(string) $relationship['Id']] = (string) $relationship['Target'];
+            }
+
+            $sheets = [];
+            foreach ($workbook->children('http://schemas.openxmlformats.org/spreadsheetml/2006/main')->sheets->sheet as $sheet) {
+                $attributes = $sheet->attributes();
+                $relAttributes = $sheet->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships');
+                $name = (string) $attributes['name'];
+                $target = $relationshipTargets[(string) $relAttributes['id']] ?? 'worksheets/sheet1.xml';
+                $sheetPath = str_starts_with($target, 'xl/') ? $target : 'xl/' . ltrim($target, '/');
+                $sheetDom = new \DOMDocument();
+                $sheetDom->loadXML($zip->getFromName($sheetPath));
+                $sheetXpath = new \DOMXPath($sheetDom);
+                $sheetXpath->registerNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+                $cells = [];
+
+                foreach ($sheetXpath->query('//x:c') ?: [] as $cell) {
+                    if (!$cell instanceof \DOMElement) {
+                        continue;
+                    }
+
+                    $ref = $cell->getAttribute('r');
+                    $type = $cell->getAttribute('t');
+
+                    if ($type === 's') {
+                        $value = $sheetXpath->query('x:v', $cell)?->item(0)?->textContent ?? '';
+                        $cells[$ref] = $sharedStrings[(int) $value] ?? '';
+                    } elseif ($type === 'inlineStr') {
+                        $inlineText = '';
+                        foreach ($sheetXpath->query('.//x:t', $cell) ?: [] as $textNode) {
+                            $inlineText .= $textNode->textContent;
+                        }
+                        $cells[$ref] = $inlineText;
+                    } else {
+                        $cells[$ref] = $sheetXpath->query('x:v', $cell)?->item(0)?->textContent ?? '';
+                    }
+                }
+
+                $sheets[$name] = $cells;
+            }
+
+            return $sheets;
+        } finally {
+            $zip->close();
+        }
     }
 }

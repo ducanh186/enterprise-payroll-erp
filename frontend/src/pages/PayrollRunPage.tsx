@@ -178,11 +178,6 @@ export default function PayrollRunPage() {
                   : "border-slate-200"
               }`}
             >
-              {currentStep === step && (
-                <span className="absolute -top-3 left-0 text-[10px] font-bold tracking-widest uppercase text-indigo-700">
-                  Đang thực hiện
-                </span>
-              )}
               <div className={`flex items-center gap-3 ${currentStep !== step ? "opacity-50" : ""}`}>
                 <span
                   className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold ${
@@ -437,7 +432,6 @@ export default function PayrollRunPage() {
                     <th className="px-6 py-4">Thưởng</th>
                     <th className="px-6 py-4">Khấu trừ</th>
                     <th className="px-6 py-4 text-right">Thực nhận</th>
-                    <th className="px-6 py-4">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -450,7 +444,6 @@ export default function PayrollRunPage() {
                       const gross = numberValue(item, ["gross_salary", "gross_pay"], 0);
                       const net = numberValue(item, ["net_salary", "net_pay"], 0);
                       const ded = gross - net;
-                      const status = textValue(item, ["status"], "pending");
                       return (
                         <tr key={`item-${index}`} className="hover:bg-slate-50 transition-colors group">
                           <td className="px-6 py-4">
@@ -476,18 +469,12 @@ export default function PayrollRunPage() {
                           <td className="px-6 py-4 text-sm font-black tabular-nums text-right text-slate-900">
                             {formatCurrency(net)}
                           </td>
-                          <td className="px-6 py-4">
-                            <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-600 flex items-center gap-1 w-fit">
-                              <span className="w-1 h-1 rounded-full bg-slate-400" />
-                              {status}
-                            </span>
-                          </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10">
+                      <td colSpan={5} className="px-6 py-10">
                         <EmptyState
                           title="Dữ liệu xem trước đã tải"
                           description="Chi tiết từng nhân viên sẽ hiển thị tại đây khi dịch vụ trả về dữ liệu chi tiết."
@@ -508,12 +495,6 @@ export default function PayrollRunPage() {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Raw JSON summary */}
-          <div className="bg-slate-950 rounded-xl p-6 text-white">
-            <p className="text-sm font-semibold mb-3">Tóm tắt xem trước (JSON)</p>
-            <pre className="overflow-x-auto text-xs leading-6 text-slate-300">{JSON.stringify(result, null, 2)}</pre>
           </div>
 
           {error && (

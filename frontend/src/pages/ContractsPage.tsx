@@ -27,7 +27,7 @@ type ContractForm = {
   contract_type_code: string;
   start_date: string;
   end_date: string;
-  base_salary: string;
+  salary_level_id: string;
   status: string;
 };
 
@@ -37,7 +37,7 @@ const emptyContractForm: ContractForm = {
   contract_type_code: "",
   start_date: "2026-01-01",
   end_date: "",
-  base_salary: "",
+  salary_level_id: "",
   status: "active",
 };
 
@@ -128,6 +128,11 @@ export default function ContractsPage() {
     queryFn: async () => apiGet<unknown>("/contracts", { page: 1, per_page: 20 }),
   });
 
+  const salaryLevelsQuery = useQuery({
+    queryKey: ["reference", "salary-levels"],
+    queryFn: async () => apiGet<unknown>("/reference/salary-levels"),
+  });
+
   const selectedQuery = useQuery({
     queryKey: ["contracts", selectedId],
     queryFn: async () => apiGet<unknown>(`/contracts/${selectedId}`),
@@ -135,6 +140,7 @@ export default function ContractsPage() {
   });
 
   const contracts = useMemo(() => toArray<Record<string, unknown>>(contractsQuery.data?.data), [contractsQuery.data?.data]);
+  const salaryLevels = useMemo(() => toArray<Record<string, unknown>>(salaryLevelsQuery.data?.data), [salaryLevelsQuery.data?.data]);
   const selected =
     selectedQuery.data?.data && typeof selectedQuery.data.data === "object"
       ? (selectedQuery.data.data as Record<string, unknown>)
@@ -168,7 +174,7 @@ export default function ContractsPage() {
     mutationFn: async () => {
       const payload = {
         ...contractForm,
-        base_salary: contractForm.base_salary ? Number(contractForm.base_salary) : 0,
+        salary_level_id: contractForm.salary_level_id ? Number(contractForm.salary_level_id) : null,
       };
       return editingId
         ? apiPut<unknown>(`/contracts/${editingId}`, payload)
@@ -211,7 +217,7 @@ export default function ContractsPage() {
       contract_type_code: textValue(record, ["contract_type_code", "contractType.code"], ""),
       start_date: textValue(record, ["start_date"], ""),
       end_date: textValue(record, ["end_date"], ""),
-      base_salary: textValue(record, ["base_salary", "basic_salary"], ""),
+      salary_level_id: textValue(record, ["salary_level_id"], ""),
       status: textValue(record, ["status"], "active"),
     });
     setError(null);
@@ -347,7 +353,7 @@ export default function ContractsPage() {
                 Ngày hiệu lực
               </th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Lương cơ bản
+                Mã bậc lương
               </th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Trạng thái
@@ -390,7 +396,7 @@ export default function ContractsPage() {
                 const contractType = textValue(item, ["contractType.name", "contract_type.name", "contract_type", "type"], "N/A");
                 const startDate = formatDate(textValue(item, ["start_date"], ""));
                 const endDate = textValue(item, ["end_date"], "");
-                const baseSalary = formatCurrency(numberValue(item, ["base_salary"], 0));
+                const salaryLevelCode = textValue(item, ["salary_level_code", "salary_level.name", "salary_level_id"], "—");
                 const status = textValue(item, ["status"], "draft");
                 const initials = getInitials(name);
                 const colorClass = avatarColor(name);
@@ -440,8 +446,8 @@ export default function ContractsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm font-semibold tabular-nums text-slate-800">
-                      {baseSalary}
+                    <td className="px-4 py-4 font-mono text-sm font-semibold tabular-nums text-slate-800">
+                      {salaryLevelCode}
                     </td>
                     <td className="px-4 py-4">
                       {getStatusBadge(status)}
@@ -555,7 +561,7 @@ export default function ContractsPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 {(
                   [
-                    ["Lương cơ bản", ["base_salary"]] as const,
+                    ["Mã bậc lương", ["salary_level_code", "salary_level_id"]] as const,
                     ["Phụ cấp", ["total_allowance", "allowance_total"]] as const,
                     ["Ngày bắt đầu", ["start_date"]] as const,
                     ["Ngày kết thúc", ["end_date"]] as const,
@@ -568,7 +574,9 @@ export default function ContractsPage() {
                     <p className="mt-1 text-lg font-bold text-slate-950">
                       {label === "Ngày bắt đầu" || label === "Ngày kết thúc"
                         ? formatDate(textValue(selected, paths, ""))
-                        : formatCurrency(numberValue(selected, paths, 0))}
+                        : label === "Mã bậc lương"
+                          ? textValue(selected, paths, "—")
+                          : formatCurrency(numberValue(selected, paths, 0))}
                     </p>
                   </div>
                 ))}
@@ -729,15 +737,25 @@ export default function ContractsPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">
-                  Lương cơ bản (VNĐ)
+                  Mã bậc lương
                 </label>
-                <input
-                  type="number"
-                  value={contractForm.base_salary}
-                  onChange={(event) => setContractForm((current) => ({ ...current, base_salary: event.target.value }))}
-                  placeholder="Ví dụ: 15000000"
+                <select
+                  value={contractForm.salary_level_id}
+                  onChange={(event) => setContractForm((current) => ({ ...current, salary_level_id: event.target.value }))}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-                />
+                >
+                  <option value="">Chọn mã bậc lương</option>
+                  {salaryLevels.map((level) => {
+                    const id = textValue(level, ["id"], "");
+                    const code = textValue(level, ["code"], id);
+                    const levelNo = textValue(level, ["level_no"], "");
+                    return (
+                      <option key={id || code} value={id}>
+                        {code}{levelNo ? ` - Bậc ${levelNo}` : ""}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
 
             <div className="mt-6 flex items-center justify-end gap-3">

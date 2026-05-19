@@ -5,9 +5,9 @@ import { RefreshCw, Upload, UserRoundSearch } from "lucide-react";
 import { apiGet, apiPost, apiUpload, getApiErrorMessage } from "../lib/api";
 import { formatDateTime } from "../lib/format";
 import { useAuth } from "../context/AuthContext";
-import { boolValue, textValue, toArray } from "../lib/records";
+import { textValue, toArray } from "../lib/records";
 import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
-import { Badge, EmptyState, Panel, PageHeader } from "../components/ui";
+import { EmptyState, Panel, PageHeader } from "../components/ui";
 
 type LogFilters = {
   date_from: string;
@@ -121,13 +121,12 @@ export default function AttendanceLogsPage() {
       />
 
       <Panel title="Bộ lọc" subtitle="Lọc theo ngày, mã nhân viên, máy chấm công">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
             ["Từ ngày", "date_from"],
             ["Đến ngày", "date_to"],
             ["Mã nhân viên", "employee_id"],
             ["Máy chấm công", "machine_number"],
-            ["Trạng thái", "is_valid"],
           ].map(([label, key]) => (
             <label key={String(key)} className="space-y-2">
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{label}</span>
@@ -153,9 +152,7 @@ export default function AttendanceLogsPage() {
                   <tr className="text-left text-xs uppercase tracking-[0.22em] text-slate-500">
                     <th className="px-3 py-2">Nhân viên</th>
                     <th className="px-3 py-2">Thời gian</th>
-                    <th className="px-3 py-2">Loại</th>
                     <th className="px-3 py-2">Máy chấm công</th>
-                    <th className="px-3 py-2">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -173,20 +170,8 @@ export default function AttendanceLogsPage() {
                       <td className="px-3 py-4 text-sm text-slate-700">
                         {formatDateTime(textValue(item, ["check_time", "created_at", "time"], ""))}
                       </td>
-                      <td className="px-3 py-4">
-                        <Badge tone={textValue(item, ["check_type", "type"], "").toLowerCase() === "out" ? "neutral" : "accent"}>
-                          {textValue(item, ["check_type", "type"], "in")}
-                        </Badge>
-                      </td>
                       <td className="px-3 py-4 text-sm text-slate-700">
                         {textValue(item, ["machine_number", "machine"], "N/A")}
-                      </td>
-                      <td className="px-3 py-4">
-                        {boolValue(item, ["is_valid", "valid"], true) ? (
-                          <Badge tone="success">Hợp lệ</Badge>
-                        ) : (
-                          <Badge tone="danger">Không hợp lệ</Badge>
-                        )}
                       </td>
                     </tr>
                   ))}
@@ -271,8 +256,8 @@ export default function AttendanceLogsPage() {
                   onChange={(event) => setManualForm((current) => ({ ...current, check_type: event.target.value }))}
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                 >
-                  <option value="in">in</option>
-                  <option value="out">out</option>
+                  <option value="in">Giờ vào (in)</option>
+                  <option value="out">Giờ ra (out)</option>
                 </select>
               </label>
               <label className="block space-y-2">

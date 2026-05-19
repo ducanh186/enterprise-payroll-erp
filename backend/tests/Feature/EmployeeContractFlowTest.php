@@ -239,6 +239,28 @@ class EmployeeContractFlowTest extends TestCase
         $this->assertFalse($data['is_probation']);
     }
 
+    public function test_update_contract_uses_salary_level_id_not_base_salary_for_grade_code(): void
+    {
+        $headers = $this->authHeaders();
+
+        $response = $this->withHeaders($headers)->putJson('/api/contracts/1', [
+            'salary_level_id' => 2,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.salary_level_id', 2);
+
+        $data = $response->json('data');
+        $this->assertArrayHasKey('salary_level_code', $data);
+        $this->assertNotEmpty($data['salary_level_code']);
+
+        $this->assertDatabaseHas('labour_contracts', [
+            'id' => 1,
+            'salary_level_id' => 2,
+        ]);
+    }
+
     public function test_contract_not_found_returns_404(): void
     {
         $headers = $this->authHeaders();

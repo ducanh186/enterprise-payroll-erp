@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, Plus, RefreshCcw, Search } from "lucide-react";
-import { apiGet } from "../lib/api";
+import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { formatCurrency, formatDate, formatNumber } from "../lib/format";
 import { numberValue, textValue, toArray } from "../lib/records";
@@ -21,9 +21,16 @@ function periodStatusBadge(status: string) {
 export default function PayrollPeriodsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [periodForm, setPeriodForm] = useState({
+    month: String(new Date().getMonth() + 1),
+    year: String(new Date().getFullYear()),
+    standard_working_days: "26",
+  });
+  const [error, setError] = useState<string | null>(null);
   const permissionSet = createPermissionSet(user?.permissions);
   const canRunPayroll = hasPermissionAccess(permissionSet, "payroll.run");
 
@@ -48,6 +55,22 @@ export default function PayrollPeriodsPage() {
       return true;
     });
   }, [items, search, statusFilter]);
+
+  const openPeriodMutation = useMutation({
+    mutationFn: async () => apiPost<unknown>("/payroll/periods/open", {
+      month: Number(periodForm.month),
+      year: Number(periodForm.year),
+      standard_working_days: Number(periodForm.standard_working_days || 26),
+    }),
+    onSuccess: async () => {
+      setError(null);
+      setShowModal(false);
+      await queryClient.invalidateQueries({ queryKey: ["payroll", "periods"] });
+    },
+    onError: (mutationError) => {
+      setError(getApiErrorMessage(mutationError, "Không thể tạo kỳ lương."));
+    },
+  });
 
   return (
     <div className="space-y-8 pb-10">
@@ -193,15 +216,12 @@ export default function PayrollPeriodsPage() {
 
       {/* Create Period Modal */}
       <Modal open={showModal && canRunPayroll} onClose={() => setShowModal(false)} title="Tạo kỳ lương mới" size="md">
-        <form className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Tên kỳ lương</label>
-            <input type="text" placeholder="Ví dụ: Lương tháng 03/2026" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
-          </div>
+        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); openPeriodMutation.mutate(); }}>
+          {error && <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Tháng</label>
-              <select className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100">
+              <select value={periodForm.month} onChange={(event) => setPeriodForm((current) => ({ ...current, month: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100">
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                   <option key={m} value={m}>Tháng {String(m).padStart(2, "0")}</option>
                 ))}
@@ -209,12 +229,16 @@ export default function PayrollPeriodsPage() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Năm</label>
-              <input type="number" placeholder="2026" min="2020" max="2099" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+              <input type="number" value={periodForm.year} onChange={(event) => setPeriodForm((current) => ({ ...current, year: event.target.value }))} placeholder="2026" min="2020" max="2099" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
             </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Số ngày công chuẩn</label>
+            <input type="number" value={periodForm.standard_working_days} onChange={(event) => setPeriodForm((current) => ({ ...current, standard_working_days: event.target.value }))} min="1" max="31" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
           </div>
           <div className="flex items-center justify-end gap-3 pt-2">
             <button type="button" onClick={() => setShowModal(false)} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Hủy</button>
-            <button type="button" onClick={() => setShowModal(false)} className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95">Tạo kỳ lương</button>
+            <button type="submit" disabled={openPeriodMutation.isPending} className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 disabled:opacity-60">{openPeriodMutation.isPending ? "Đang tạo..." : "Tạo kỳ lương"}</button>
           </div>
         </form>
       </Modal>

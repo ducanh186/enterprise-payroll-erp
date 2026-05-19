@@ -84,12 +84,19 @@ class ReportService
         $rows = $this->rowsForExport($preview);
 
         if ($format === 'xlsx') {
-            app(ExcelWorkbookService::class)->writeRows(
-                $path,
-                $rows,
-                $this->templatePathForReport($normalizedCode),
-                $this->sheetNameForReport($normalizedCode)
-            );
+            $templatePath = $this->templatePathForReport($normalizedCode);
+            if ($templatePath) {
+                app(ExcelWorkbookService::class)->writeTemplateRows(
+                    $path,
+                    $this->templateRowsForReport($preview, $normalizedCode),
+                    $this->templateReplacements($preview, $parameters),
+                    $templatePath,
+                    $this->templateDataStartRow($normalizedCode),
+                    $this->templateCellValues($preview, $parameters, $normalizedCode)
+                );
+            } else {
+                app(ExcelWorkbookService::class)->writeRows($path, $rows, null, $this->sheetNameForReport($normalizedCode));
+            }
         } else {
             if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
                 throw new \RuntimeException("Cannot create report directory {$directory}.");
@@ -1027,6 +1034,190 @@ class ReportService
         return $rows;
     }
 
+    /**
+     * @return array<int, array<int, mixed>>
+     */
+    private function templateRowsForReport(array $preview, string $reportCode): array
+    {
+        $records = $preview['records'] ?? $preview['items'] ?? $preview['by_department'] ?? [$preview['summary'] ?? []];
+        $records = collect(is_array($records) ? $records : [])
+            ->filter(fn ($row) => is_array($row) && $row !== [])
+            ->values();
+
+        if ($records->isEmpty()) {
+            $records = collect([$preview['summary'] ?? ['message' => $preview['title'] ?? $reportCode]]);
+        }
+
+        return $records
+            ->map(fn (array $record, int $index) => match ($reportCode) {
+                'FUJIMART_ATTENDANCE_REPORT', 'HRM_ATTENDANCE_REPORT', 'RPT_ATTENDANCE_MONTHLY' => $this->attendanceTemplateRow($record, $index + 1),
+                'FUJIMART_PAYROLL_REPORT', 'RPT_PAYROLL_SUMMARY' => $this->payrollTemplateRow($record, $index + 1),
+                'FUJIMART_PAYROLL_SLIP', 'RPT_PAYSLIP' => $this->payslipTemplateRow($record),
+                default => array_values($this->flattenRecord($record)),
+            })
+            ->values()
+            ->all();
+    }
+
+    private function payrollTemplateRow(array $record, int $index): array
+    {
+        return [
+            $this->recordValue($record, ['No']) ?? $index,
+            $this->recordValue($record, ['employee_name', 'EmployeeName', 'FullName', 'full_name', 'name', 'department']),
+            $this->recordValue($record, ['position_name', 'PositionName', 'Position', 'position', 'job_title']),
+            $this->recordValue($record, ['base_salary', 'BaseSalary', 'base_salary_snapshot', 'basic_salary', 'salary_amount']),
+            $this->recordValue($record, ['position_salary', 'PositionSalary', 'WorkSalary', 'salary_cv']),
+            $this->recordValue($record, ['work_days', 'WorkDays', 'WorkingDays', 'working_days', 'employee_count']),
+            $this->recordValue($record, ['actual_workday_salary', 'ActualWorkSalary', 'GrossByWorkday', 'total_gross', 'gross_salary']),
+            $this->recordValue($record, ['holiday_work_days', 'HolidayWorkDays', 'HolidayDays']),
+            $this->recordValue($record, ['holiday_salary', 'HolidaySalary', 'HolidayAmount']),
+            $this->recordValue($record, ['lunch_allowance', 'LunchAllowance']),
+            $this->recordValue($record, ['other_allowance', 'OtherAllowance']),
+            $this->recordValue($record, ['fuel_allowance', 'FuelAllowance', 'TransportAllowance']),
+            $this->recordValue($record, ['housing_allowance', 'HousingAllowance']),
+            $this->recordValue($record, ['total_allowance', 'total_allowances', 'AllowanceTotal']),
+            $this->recordValue($record, ['gross_salary', 'total_gross', 'total_gross_income', 'GrossSalary']),
+            $this->recordValue($record, ['retroactive_salary', 'RetroactiveSalary', 'PreviousMonthBackPay']),
+            $this->recordValue($record, ['bhxh_company', 'social_insurance_company', 'BHXHCompany', 'SocialInsCompany']),
+            $this->recordValue($record, ['bhyt_company', 'health_insurance_company', 'BHYTCompany', 'HealthInsCompany']),
+            $this->recordValue($record, ['bhtn_company', 'unemployment_insurance_company', 'BHTNCompany', 'UnemployedInsCompany']),
+            $this->recordValue($record, ['insurance_company', 'total_insurance_employer', 'CompanyInsuranceTotal', 'TotalInsCompany']),
+            $this->recordValue($record, ['bhxh_employee', 'social_insurance_employee', 'BHXHEmployee', 'SocialInsEmployee']),
+            $this->recordValue($record, ['bhyt_employee', 'health_insurance_employee', 'BHYTEmployee', 'HealthInsEmployee']),
+            $this->recordValue($record, ['bhtn_employee', 'unemployment_insurance_employee', 'BHTNEmployee', 'UnemployedInsEmployee']),
+            $this->recordValue($record, ['insurance_employee', 'total_insurance_employee', 'EmployeeInsuranceTotal', 'TotalInsEmployee']),
+            $this->recordValue($record, ['penalty_amount', 'PenaltyAmount', 'PenaltyOrInsBackPay']),
+            $this->recordValue($record, ['pit_amount', 'total_pit', 'PITAmount', 'PersonalIncomeTax']),
+            $this->recordValue($record, ['other_bonus', 'OtherBonus']),
+            $this->recordValue($record, ['net_salary', 'total_net', 'total_net_salary', 'NetSalary', 'NetIncome']),
+            $this->recordValue($record, ['signature', 'Signature']),
+            $this->recordValue($record, ['paid_amount', 'PaidAmount', 'Received']),
+            $this->recordValue($record, ['difference_amount', 'DifferenceAmount', 'Difference']),
+            null,
+            null,
+            $this->recordValue($record, ['bank_account', 'BankAccount', 'BankAccountNo']),
+            $this->recordValue($record, ['bank_name', 'BankName']),
+        ];
+    }
+
+    private function attendanceTemplateRow(array $record, int $index): array
+    {
+        $row = [
+            $this->recordValue($record, ['STT']) ?? $index,
+            $this->recordValue($record, ['employee_code', 'EmployeeCode', 'Mã NV', 'code']),
+            $this->recordValue($record, ['employee_name', 'EmployeeName', 'Tên NV', 'full_name', 'name']),
+            $this->recordValue($record, ['department_name', 'DeptName', 'Phòng', 'department']),
+        ];
+
+        for ($day = 1; $day <= 31; $day++) {
+            $row[] = $this->recordValue($record, ["day_{$day}", "Day{$day}", "d{$day}", (string) $day]);
+        }
+
+        $row[] = $this->recordValue($record, ['total_workdays', 'TotalWorkDays', 'Tổng công làm việc', 'working_days']);
+        $row[] = $this->recordValue($record, ['paid_workdays', 'TotalPaidWorkDays', 'Tổng công hưởng lương', 'paid_days']);
+        $row[] = $this->recordValue($record, ['paid_leave_days', 'PaidLeaveDays', 'Số ngày nghỉ phép', 'leave_days']);
+        $row[] = $this->recordValue($record, ['unpaid_leave_days', 'UnpaidLeaveDays', 'Số ngày nghỉ không lương', 'absent_days']);
+        $row[] = $this->recordValue($record, ['holiday_days', 'HolidayDays', 'Số ngày nghỉ lễ']);
+        $row[] = $this->recordValue($record, ['meal_count', 'MealCount', 'Số bữa ăn']);
+
+        return $row;
+    }
+
+    private function payslipTemplateRow(array $record): array
+    {
+        return [
+            $this->recordValue($record, ['item_name', 'ItemName', 'Description', 'name', 'employee_name']),
+            $this->recordValue($record, ['amount', 'Amount', 'Salary', 'net_salary', 'gross_salary']),
+        ];
+    }
+
+    private function templateReplacements(array $preview, array $parameters): array
+    {
+        $date = $parameters['doc_date']
+            ?? $parameters['date_from']
+            ?? data_get($preview, 'summary.date_from')
+            ?? now()->toDateString();
+        $parsed = Carbon::parse($date);
+        $firstRecord = collect($preview['records'] ?? [])->first();
+        $firstRecord = is_array($firstRecord) ? $firstRecord : [];
+
+        return [
+            '@_Month' => (string) $parsed->month,
+            '@_Year' => (string) $parsed->year,
+            '@_DocDate1' => $parsed->toDateString(),
+            '@_BranchName' => $parameters['branch_name'] ?? $this->recordValue($firstRecord, ['branch_name', 'BranchName']) ?? $parameters['branch_code'] ?? '',
+            '@_DeptName' => $parameters['department_name'] ?? $this->recordValue($firstRecord, ['department_name', 'DeptName']) ?? $parameters['department_code'] ?? $parameters['department_id'] ?? '',
+            '@_EmployeeCode' => $parameters['employee_code'] ?? $this->recordValue($firstRecord, ['employee_code', 'EmployeeCode']) ?? '',
+        ];
+    }
+
+    private function templateDataStartRow(string $reportCode): int
+    {
+        return match ($reportCode) {
+            'FUJIMART_ATTENDANCE_REPORT', 'HRM_ATTENDANCE_REPORT', 'RPT_ATTENDANCE_MONTHLY' => 13,
+            'FUJIMART_PAYROLL_REPORT', 'RPT_PAYROLL_SUMMARY' => 10,
+            'FUJIMART_PAYROLL_SLIP', 'RPT_PAYSLIP' => 10,
+            default => 1,
+        };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function templateCellValues(array $preview, array $parameters, string $reportCode): array
+    {
+        if (!in_array($reportCode, ['FUJIMART_PAYROLL_SLIP', 'RPT_PAYSLIP'], true)) {
+            return [];
+        }
+
+        $date = $parameters['doc_date']
+            ?? $parameters['date_from']
+            ?? data_get($preview, 'summary.date_from')
+            ?? now()->toDateString();
+        $parsed = Carbon::parse($date);
+        $summary = is_array($preview['summary'] ?? null) ? $preview['summary'] : [];
+        $firstRecord = collect($preview['records'] ?? [])->first();
+        $firstRecord = is_array($firstRecord) ? $firstRecord : [];
+
+        return [
+            'A2' => 'Tháng ' . $parsed->month . '/' . $parsed->year,
+            'A3' => 'Họ và tên: ' . (string) ($this->recordValue($summary, ['employee_name', 'EmployeeName'])
+                ?? $this->recordValue($firstRecord, ['employee_name', 'EmployeeName', 'FullName', 'full_name'])
+                ?? ''),
+            'A4' => 'Chức vụ: ' . (string) ($this->recordValue($summary, ['position_name', 'PositionName', 'position'])
+                ?? $this->recordValue($firstRecord, ['position_name', 'PositionName', 'Position', 'position'])
+                ?? ''),
+            'A5' => 'Phòng ban: ' . (string) ($this->recordValue($summary, ['department_name', 'DeptName'])
+                ?? $this->recordValue($firstRecord, ['department_name', 'DeptName', 'department'])
+                ?? ''),
+            'A6' => 'Số ngày công: ' . (string) ($this->recordValue($summary, ['work_days', 'working_days', 'total_workdays'])
+                ?? $this->recordValue($firstRecord, ['work_days', 'working_days', 'total_workdays', 'StandardWorkDays'])
+                ?? ''),
+        ];
+    }
+
+    private function recordValue(array $record, array $keys): mixed
+    {
+        $lookup = [];
+        foreach ($record as $key => $value) {
+            $lookup[$this->normalizeRecordKey((string) $key)] = $value;
+        }
+
+        foreach ($keys as $key) {
+            $normalized = $this->normalizeRecordKey((string) $key);
+            if (array_key_exists($normalized, $lookup)) {
+                return $lookup[$normalized];
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeRecordKey(string $key): string
+    {
+        return strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $key) ?? '');
+    }
+
     private function flattenRecord(array $record, string $prefix = ''): array
     {
         $flat = [];
@@ -1222,6 +1413,22 @@ class ReportService
 
             if ($date) {
                 return $date->format('Y-m-d');
+            }
+        }
+
+        if (!empty($parameters['date_from'])) {
+            $date = $this->safeParseDate((string) $parameters['date_from']);
+
+            if ($date) {
+                return $date->format('m_Y');
+            }
+        }
+
+        if (!empty($parameters['doc_date'])) {
+            $date = $this->safeParseDate((string) $parameters['doc_date']);
+
+            if ($date) {
+                return $date->format('m_Y');
             }
         }
 

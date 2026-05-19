@@ -123,10 +123,18 @@ class AttendanceController extends Controller
     public function requestsStore(Request $request): JsonResponse
     {
         $request->validate([
-            'employee_id' => 'required|integer',
-            'request_type' => 'required|in:late_excuse,missing_checkout,leave,overtime,early_leave',
+            'employee_id' => 'required_without:employee_code|integer',
+            'employee_code' => 'required_without:employee_id|string|max:16',
+            'request_type' => 'required_without:doc_type|in:late_excuse,missing_checkout,leave,overtime,early_leave',
+            'doc_type' => 'nullable|string|in:AL',
             'request_date' => 'required|date',
+            'to_date' => 'nullable|date',
+            'manager_code' => 'nullable|string|max:16',
             'reason' => 'required|string|max:1000',
+            'working_hours' => 'nullable|numeric|min:0|max:24',
+            'working_days' => 'nullable|numeric|min:0|max:2',
+            'absence_type' => 'nullable|integer|min:0',
+            'detail_description' => 'nullable|string|max:256',
         ]);
 
         $result = $this->attendanceService->createRequest($request->all());
@@ -143,6 +151,33 @@ class AttendanceController extends Controller
         }
 
         return $this->success($result);
+    }
+
+    public function requestsUpdate(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'employee_id' => 'sometimes|integer',
+            'employee_code' => 'sometimes|string|max:16',
+            'request_type' => 'sometimes|in:late_excuse,missing_checkout,leave,overtime,early_leave',
+            'doc_type' => 'nullable|string|in:AL',
+            'request_date' => 'sometimes|date',
+            'to_date' => 'nullable|date',
+            'manager_code' => 'nullable|string|max:16',
+            'reason' => 'sometimes|string|max:1000',
+            'working_hours' => 'nullable|numeric|min:0|max:24',
+            'working_days' => 'nullable|numeric|min:0|max:2',
+            'absence_type' => 'nullable|integer|min:0',
+            'detail_description' => 'nullable|string|max:256',
+            'status' => 'nullable|string|max:20',
+        ]);
+
+        $result = $this->attendanceService->updateRequest($id, $request->all());
+
+        if (!$result) {
+            return $this->notFound('Attendance request not found.');
+        }
+
+        return $this->success($result, 'Attendance request updated.');
     }
 
     public function requestsApprove(Request $request, int $id): JsonResponse
@@ -174,5 +209,24 @@ class AttendanceController extends Controller
     public function shiftAssignments(): JsonResponse
     {
         return $this->success($this->attendanceService->getShiftAssignments());
+    }
+
+    public function storeShiftAssignment(Request $request): JsonResponse
+    {
+        $request->validate([
+            'employee_id' => 'required_without:employee_code|integer|exists:employees,id',
+            'employee_code' => 'required_without:employee_id|string|max:16',
+            'shift_id' => 'required_without:shift_code|integer|exists:shifts,id',
+            'shift_code' => 'required_without:shift_id|string|max:16',
+            'work_date' => 'required|date',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        return $this->created(
+            $this->attendanceService->createShiftAssignment($request->all()),
+            'Shift assignment created successfully.'
+        );
     }
 }

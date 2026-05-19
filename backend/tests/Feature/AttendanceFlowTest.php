@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AttendancePeriod;
+use App\Models\ShiftAssignment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -89,6 +90,35 @@ class AttendanceFlowTest extends TestCase
         $response = $this->withHeaders($headers)->postJson('/api/attendance/checkin-logs/manual', []);
 
         $response->assertStatus(422);
+    }
+
+    public function test_create_shift_assignment_persists_to_database(): void
+    {
+        $headers = $this->authHeaders();
+
+        $response = $this->withHeaders($headers)->postJson('/api/attendance/shift-assignments', [
+            'employee_id' => 1,
+            'shift_id' => 1,
+            'work_date' => '2026-12-31',
+            'note' => 'P2 shift assignment test',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.employee_id', 1)
+            ->assertJsonPath('data.shift_id', 1)
+            ->assertJsonPath('data.work_date', '2026-12-31');
+
+        $this->assertDatabaseHas('shift_assignments', [
+            'employee_id' => 1,
+            'shift_id' => 1,
+            'note' => 'P2 shift assignment test',
+        ]);
+
+        $this->assertSame(1, ShiftAssignment::query()
+            ->where('employee_id', 1)
+            ->whereDate('work_date', '2026-12-31')
+            ->count());
     }
 
     public function test_view_daily_attendance(): void

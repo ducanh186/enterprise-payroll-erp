@@ -9,9 +9,11 @@ import { Badge, EmptyState, Modal, PageHeader } from "../components/ui";
 
 type ScaleForm = { code: string; name: string; description: string };
 type GradeForm = { code: string; level_no: string; amount: string; effective_from: string; effective_to: string };
+type DetailForm = { salary_type: string; amount: string; description: string };
 
 const emptyScaleForm: ScaleForm = { code: "", name: "", description: "" };
 const emptyGradeForm: GradeForm = { code: "", level_no: "", amount: "", effective_from: "2026-01-01", effective_to: "" };
+const emptyDetailForm: DetailForm = { salary_type: "", amount: "", description: "" };
 
 export default function SalaryLevelsPage() {
   const [search, setSearch] = useState("");
@@ -19,10 +21,13 @@ export default function SalaryLevelsPage() {
   const [selectedGrade, setSelectedGrade] = useState<Record<string, unknown> | null>(null);
   const [scaleModalOpen, setScaleModalOpen] = useState(false);
   const [gradeModalOpen, setGradeModalOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [editingScaleId, setEditingScaleId] = useState("");
   const [editingGradeId, setEditingGradeId] = useState("");
+  const [editingDetailId, setEditingDetailId] = useState("");
   const [scaleForm, setScaleForm] = useState<ScaleForm>(emptyScaleForm);
   const [gradeForm, setGradeForm] = useState<GradeForm>(emptyGradeForm);
+  const [detailForm, setDetailForm] = useState<DetailForm>(emptyDetailForm);
   const [error, setError] = useState<string | null>(null);
 
   const query = useQuery({
@@ -47,6 +52,22 @@ export default function SalaryLevelsPage() {
 
   const grades = selectedScale ? toArray<Record<string, unknown>>(selectedScale.grades) : [];
   const gradeDetails = selectedGrade ? toArray<Record<string, unknown>>(selectedGrade.details) : [];
+
+  const patchSelectedDetail = (detail: unknown) => {
+    const record = detail as Record<string, unknown>;
+    const nextDetails = editingDetailId
+      ? gradeDetails.map((item) => textValue(item, ["id"], "") === editingDetailId ? record : item)
+      : [...gradeDetails, record];
+    const nextGrade = selectedGrade ? { ...selectedGrade, details: nextDetails } : null;
+
+    setSelectedGrade(nextGrade);
+    if (selectedScale && nextGrade) {
+      setSelectedScale({
+        ...selectedScale,
+        grades: grades.map((grade) => textValue(grade, ["id"], "") === textValue(nextGrade, ["id"], "") ? nextGrade : grade),
+      });
+    }
+  };
 
   const saveScaleMutation = useMutation({
     mutationFn: async () => editingScaleId
@@ -108,6 +129,29 @@ export default function SalaryLevelsPage() {
     onError: (mutationError) => setError(getApiErrorMessage(mutationError, "Không thể đình chỉ bậc lương.")),
   });
 
+  const saveDetailMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        salary_type: detailForm.salary_type,
+        amount: Number(detailForm.amount),
+        description: detailForm.description || null,
+      };
+
+      return editingDetailId
+        ? apiPut<unknown>(`/reference/salary-grade-details/${editingDetailId}`, payload)
+        : apiPost<unknown>(`/reference/salary-grades/${textValue(selectedGrade, ["id"], "")}/details`, payload);
+    },
+    onSuccess: async (result) => {
+      setError(null);
+      patchSelectedDetail(result.data);
+      setDetailModalOpen(false);
+      setEditingDetailId("");
+      setDetailForm(emptyDetailForm);
+      await query.refetch();
+    },
+    onError: (mutationError) => setError(getApiErrorMessage(mutationError, "Không thể lưu chi tiết khoản thu nhập.")),
+  });
+
   const openCreateScale = () => {
     setEditingScaleId("");
     setScaleForm(emptyScaleForm);
@@ -144,6 +188,24 @@ export default function SalaryLevelsPage() {
     });
     setError(null);
     setGradeModalOpen(true);
+  };
+
+  const openCreateDetail = () => {
+    setEditingDetailId("");
+    setDetailForm(emptyDetailForm);
+    setError(null);
+    setDetailModalOpen(true);
+  };
+
+  const openEditDetail = (record: Record<string, unknown>) => {
+    setEditingDetailId(textValue(record, ["id"], ""));
+    setDetailForm({
+      salary_type: textValue(record, ["salary_type"], ""),
+      amount: textValue(record, ["amount"], ""),
+      description: textValue(record, ["description"], ""),
+    });
+    setError(null);
+    setDetailModalOpen(true);
   };
 
   return (
@@ -266,7 +328,6 @@ export default function SalaryLevelsPage() {
                   <tr>
                     <th className="px-4 py-3">Mã bậc lương</th>
                     <th className="px-4 py-3">Tên bậc</th>
-                    <th className="px-4 py-3">Mức lương</th>
                     <th className="px-4 py-3">Loại lương</th>
                     <th className="px-4 py-3">Hiệu lực từ</th>
                     <th className="px-4 py-3">Hiệu lực đến</th>
@@ -285,7 +346,6 @@ export default function SalaryLevelsPage() {
                       <tr key={`${id}-${index}`}>
                         <td className="px-4 py-3 font-mono text-sm text-slate-700">{textValue(grade, ["code", "description"], "—")}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-slate-900">{levelName}</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-slate-900">{formatCurrency(numberValue(grade, ["amount"], 0))}</td>
                         <td className="px-4 py-3 text-sm text-slate-600">{textValue(firstDetail, ["salary_type"], "—")}</td>
                         <td className="px-4 py-3 text-sm text-slate-600">{textValue(grade, ["effective_date", "effective_from"], "") ? formatDate(textValue(grade, ["effective_date", "effective_from"], "")) : "—"}</td>
                         <td className="px-4 py-3 text-sm text-slate-600">{textValue(grade, ["effective_to"], "") ? formatDate(textValue(grade, ["effective_to"], "")) : "—"}</td>
@@ -302,7 +362,7 @@ export default function SalaryLevelsPage() {
                       </tr>
                     );
                   }) : (
-                    <tr><td colSpan={8} className="py-8"><EmptyState title="Chưa có bậc lương" /></td></tr>
+                    <tr><td colSpan={7} className="py-8"><EmptyState title="Chưa có bậc lương" /></td></tr>
                   )}
                 </tbody>
               </table>
@@ -310,13 +370,18 @@ export default function SalaryLevelsPage() {
 
             {selectedGrade && (
               <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div>
+                <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-bold text-slate-900">Chi tiết khoản thu nhập</h3>
-                  <p className="text-xs text-slate-500">Grade: {textValue(selectedGrade, ["id"], "—")} · SalaryLevel {textValue(selectedGrade, ["salary_level"], "—")}</p>
+                  {/^\d+$/.test(textValue(selectedGrade, ["id"], "")) && (
+                    <button type="button" onClick={openCreateDetail} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800">
+                      <Plus className="h-3.5 w-3.5" />
+                      Thêm giá trị
+                    </button>
+                  )}
                 </div>
                 {gradeDetails.length ? (
                   <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-                    <table className="w-full border-collapse text-left">
+                    <table className="min-w-[880px] w-full border-collapse text-left">
                       <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                         <tr>
                           <th className="px-4 py-3">Khoản thu nhập</th>
@@ -325,6 +390,7 @@ export default function SalaryLevelsPage() {
                           <th className="px-4 py-3">Giá trị</th>
                           <th className="px-4 py-3">Ghi chú</th>
                           <th className="px-4 py-3">Trạng thái</th>
+                          <th className="px-4 py-3 text-right">Hành động</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -336,6 +402,13 @@ export default function SalaryLevelsPage() {
                             <td className="px-4 py-3 text-sm font-semibold tabular-nums text-slate-900">{formatCurrency(numberValue(detail, ["amount"], 0))}</td>
                             <td className="px-4 py-3 text-sm text-slate-600">{textValue(detail, ["description"], "—")}</td>
                             <td className="px-4 py-3"><Badge>{textValue(detail, ["status"], "active")}</Badge></td>
+                            <td className="px-4 py-3 text-right">
+                              {/^\d+$/.test(textValue(detail, ["id"], "")) && (
+                                <button type="button" onClick={() => openEditDetail(detail)} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:text-indigo-600" title="Sửa giá trị">
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -366,11 +439,24 @@ export default function SalaryLevelsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Mã bậc lương"><input value={gradeForm.code} onChange={(e) => setGradeForm({ ...gradeForm, code: e.target.value })} className={inputClass} required /></Field>
             <Field label="Số bậc lương"><input type="number" min="1" value={gradeForm.level_no} onChange={(e) => setGradeForm({ ...gradeForm, level_no: e.target.value })} className={inputClass} required /></Field>
-            <Field label="Mức lương"><input type="number" min="0" value={gradeForm.amount} onChange={(e) => setGradeForm({ ...gradeForm, amount: e.target.value })} className={inputClass} required /></Field>
             <Field label="Hiệu lực từ"><DateInput value={gradeForm.effective_from} onChange={(value) => setGradeForm({ ...gradeForm, effective_from: value })} className={inputClass} required /></Field>
             <Field label="Hiệu lực đến"><DateInput value={gradeForm.effective_to} onChange={(value) => setGradeForm({ ...gradeForm, effective_to: value })} className={inputClass} /></Field>
           </div>
           <ModalActions pending={saveGradeMutation.isPending} onCancel={() => setGradeModalOpen(false)} />
+        </form>
+      </Modal>
+
+      <Modal open={detailModalOpen} onClose={() => setDetailModalOpen(false)} title={editingDetailId ? "Sửa giá trị khoản thu nhập" : "Thêm giá trị khoản thu nhập"} size="md" zIndexClass="z-[70]">
+        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); saveDetailMutation.mutate(); }}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Loại khoản"><input value={detailForm.salary_type} onChange={(e) => setDetailForm({ ...detailForm, salary_type: e.target.value })} className={inputClass} required /></Field>
+            <Field label="Giá trị"><input type="number" min="0" step="1000" value={detailForm.amount} onChange={(e) => setDetailForm({ ...detailForm, amount: e.target.value })} className={inputClass} required /></Field>
+            <Field label="Ghi chú"><input value={detailForm.description} onChange={(e) => setDetailForm({ ...detailForm, description: e.target.value })} className={inputClass} /></Field>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => setDetailModalOpen(false)} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Hủy</button>
+            <button type="button" onClick={() => saveDetailMutation.mutate()} disabled={saveDetailMutation.isPending} className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg disabled:opacity-60">{saveDetailMutation.isPending ? "Đang lưu..." : "Lưu"}</button>
+          </div>
         </form>
       </Modal>
     </div>

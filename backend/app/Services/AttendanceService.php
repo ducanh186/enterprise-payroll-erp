@@ -493,10 +493,73 @@ class AttendanceService
             ->all();
     }
 
+    public function createShiftAssignment(array $data): array
+    {
+        $connection = $this->customerConnection();
+        if (
+            $this->sourceExists($connection, 'D30AssignedShift')
+            && !empty($data['employee_code'])
+            && !empty($data['shift_code'])
+        ) {
+            return $this->createCustomerShiftAssignment($connection, $data);
+        }
+
+        $employeeId = $data['employee_id'] ?? null;
+        if (!$employeeId && !empty($data['employee_code'])) {
+            $employeeId = Employee::query()
+                ->where('employee_code', (string) $data['employee_code'])
+                ->value('id');
+        }
+
+        $shiftId = $data['shift_id'] ?? null;
+        if (!$shiftId && !empty($data['shift_code'])) {
+            $shiftId = Shift::query()
+                ->where('code', (string) $data['shift_code'])
+                ->value('id');
+        }
+
+        $workDate = Carbon::parse($data['work_date'])->toDateString();
+        $assignment = ShiftAssignment::query()->updateOrCreate(
+            [
+                'employee_id' => (int) $employeeId,
+                'work_date' => $workDate,
+            ],
+            [
+                'shift_id' => (int) $shiftId,
+                'start_date' => Carbon::parse($data['start_date'] ?? $workDate)->toDateString(),
+                'end_date' => Carbon::parse($data['end_date'] ?? $data['start_date'] ?? $workDate)->toDateString(),
+                'source' => 'manual',
+                'note' => $data['note'] ?? null,
+                ...$this->weekdayFlags($workDate),
+            ]
+        );
+
+        return [
+            'id' => $assignment->id,
+            'employee_id' => $assignment->employee_id,
+            'employee_name' => data_get($assignment->fresh(['employee', 'shift']), 'employee.full_name'),
+            'employee_code' => data_get($assignment->fresh(['employee', 'shift']), 'employee.employee_code'),
+            'shift_id' => $assignment->shift_id,
+            'shift_name' => data_get($assignment->fresh(['employee', 'shift']), 'shift.name'),
+            'shift_code' => data_get($assignment->fresh(['employee', 'shift']), 'shift.code'),
+            'work_date' => $assignment->work_date?->format('Y-m-d'),
+            'date' => $assignment->work_date?->format('Y-m-d'),
+            'start_date' => $assignment->start_date?->format('Y-m-d'),
+            'end_date' => $assignment->end_date?->format('Y-m-d'),
+            'source' => $assignment->source,
+            'note' => $assignment->note,
+        ];
+    }
+
     public function getRequests(array $filters = []): array
     {
+        $connection = $this->customerConnection();
+        if ($this->sourceExists($connection, 'D30AttendanceDoc') && $this->sourceExists($connection, 'D30AbsenceDetail')) {
+            return $this->getCustomerLeaveRequests($filters);
+        }
+
         $query = AttendanceRequest::query()
-            ->with(['employee.department', 'approver'])
+            ->with(['employee.department', 'approver', 'details'])
             ->orderByDesc('submitted_at')
             ->orderByDesc('id');
 
@@ -525,6 +588,16 @@ class AttendanceService
 
     public function createRequest(array $data): array
     {
+        $connection = $this->customerConnection();
+        if (
+            ($data['doc_type'] ?? null) === 'AL'
+            && !empty($data['employee_code'])
+            && $this->sourceExists($connection, 'D30AttendanceDoc')
+            && $this->sourceExists($connection, 'D30AbsenceDetail')
+        ) {
+            return $this->createCustomerLeaveRequest($data);
+        }
+
         $requestDate = Carbon::parse($data['request_date'])->toDateString();
 
         $request = DB::transaction(function () use ($data, $requestDate) {
@@ -557,11 +630,66 @@ class AttendanceService
 
     public function getRequest(int $id): ?array
     {
+        $connection = $this->customerConnection();
+        if ($this->sourceExists($connection, 'D30AttendanceDoc') && $this->sourceExists($connection, 'D30AbsenceDetail')) {
+            return $this->getCustomerLeaveRequest($id);
+        }
+
         $request = AttendanceRequest::query()
             ->with(['employee.department', 'approver', 'details'])
             ->find($id);
 
         return $request ? $this->formatRequest($request) : null;
+    }
+
+    public function updateRequest(int $id, array $data): ?array
+    {
+        $connection = $this->customerConnection();
+        if ($this->sourceExists($connection, 'D30AttendanceDoc') && $this->sourceExists($connection, 'D30AbsenceDetail')) {
+            $customerRequest = $this->updateCustomerLeaveRequest($id, $data);
+            if ($customerRequest) {
+                return $customerRequest;
+            }
+        }
+
+        return DB::transaction(function () use ($id, $data) {
+            $request = AttendanceRequest::query()
+                ->with(['employee.department', 'approver', 'details'])
+                ->find($id);
+
+            if (!$request) {
+                return null;
+            }
+
+            $requestDate = array_key_exists('request_date', $data)
+                ? Carbon::parse($data['request_date'])->toDateString()
+                : $request->from_date?->toDateString();
+            $toDate = array_key_exists('to_date', $data) && $data['to_date']
+                ? Carbon::parse($data['to_date'])->toDateString()
+                : $requestDate;
+
+            $request->fill(array_filter([
+                'employee_id' => $data['employee_id'] ?? null,
+                'request_type' => $data['request_type'] ?? null,
+                'from_date' => $requestDate,
+                'to_date' => $toDate,
+                'reason' => $data['reason'] ?? null,
+                'status' => $data['status'] ?? null,
+            ], fn ($value) => $value !== null))->save();
+
+            $detail = $request->details()->orderBy('id')->first();
+            if ($detail) {
+                $detail->fill([
+                    'work_date' => $requestDate,
+                    'requested_hours' => $data['working_hours'] ?? $detail->requested_hours,
+                    'note' => $data['detail_description'] ?? $data['reason'] ?? $detail->note,
+                ])->save();
+            }
+
+            $request->load(['employee.department', 'approver', 'details']);
+
+            return $this->formatRequest($request);
+        });
     }
 
     public function approveRequest(int $id, array $data = []): ?array
@@ -612,6 +740,209 @@ class AttendanceService
 
             return $this->formatRequest($request, $data['note'] ?? null);
         });
+    }
+
+    private function getCustomerLeaveRequests(array $filters = []): array
+    {
+        $connection = $this->customerConnection();
+        $query = $connection->table('D30AttendanceDoc')
+            ->where('DocType', 'AL')
+            ->where('IsActive', 1)
+            ->orderByDesc('DocDate')
+            ->orderByDesc('Id');
+
+        if (!empty($filters['employee_code'])) {
+            $query->where('EmployeeCode', Str::upper((string) $filters['employee_code']));
+        }
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('DocDate', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('DocDate', '<=', $filters['date_to']);
+        }
+
+        $docs = collect($query->get());
+        $docIds = $docs->pluck('DocId')->filter()->map(fn ($value) => (string) $value)->all();
+        $details = $docIds
+            ? collect($connection->table('D30AbsenceDetail')->whereIn('DocId', $docIds)->where('IsActive', 1)->orderBy('Date')->get())->groupBy('DocId')
+            : collect();
+        $names = $this->customerEmployeeNames($connection, $docs->pluck('EmployeeCode')->map(fn ($code) => (string) $code)->all());
+
+        return $docs
+            ->map(fn (object $doc) => $this->formatCustomerLeaveRequest($doc, $details->get((string) data_get($doc, 'DocId'), collect()), $names))
+            ->values()
+            ->all();
+    }
+
+    private function getCustomerLeaveRequest(int $id): ?array
+    {
+        $connection = $this->customerConnection();
+        $doc = $connection->table('D30AttendanceDoc')->where('Id', $id)->where('DocType', 'AL')->first();
+        if (!$doc) {
+            return null;
+        }
+
+        $details = collect($connection->table('D30AbsenceDetail')
+            ->where('DocId', (string) data_get($doc, 'DocId'))
+            ->where('IsActive', 1)
+            ->orderBy('Date')
+            ->get());
+        $names = $this->customerEmployeeNames($connection, [(string) data_get($doc, 'EmployeeCode')]);
+
+        return $this->formatCustomerLeaveRequest($doc, $details, $names);
+    }
+
+    private function createCustomerLeaveRequest(array $data): array
+    {
+        return $this->customerConnection()->transaction(function () use ($data) {
+            $connection = $this->customerConnection();
+            $docDate = Carbon::parse($data['request_date'])->toDateString();
+            $now = Carbon::now();
+
+            $id = $connection->table('D30AttendanceDoc')->insertGetId([
+                'DocNo' => 'AL' . Carbon::parse($docDate)->format('Ym') . '-TEMP',
+                'DocDate' => $docDate,
+                'DocType' => 'AL',
+                'EmployeeCode' => Str::upper((string) $data['employee_code']),
+                'ManagerCode' => Str::upper((string) ($data['manager_code'] ?? '')),
+                'Description' => (string) $data['reason'],
+                'IsActive' => 1,
+                'CreatedBy' => -1,
+                'CreatedAt' => $now,
+                'ModifiedBy' => -1,
+                'ModifiedAt' => $now,
+            ]);
+
+            $docNo = 'AL' . Carbon::parse($docDate)->format('Ym') . '-' . sprintf('%03d', (int) $id);
+            $connection->table('D30AttendanceDoc')->where('Id', $id)->update([
+                'DocNo' => $docNo,
+            ]);
+            $doc = $connection->table('D30AttendanceDoc')->where('Id', $id)->first();
+            $docId = (string) data_get($doc, 'DocId');
+
+            $connection->table('D30AbsenceDetail')->insertGetId([
+                'DocId' => $docId,
+                'Date' => Carbon::parse($data['to_date'] ?? $docDate)->toDateString(),
+                'WorkingHours' => (float) ($data['working_hours'] ?? 8),
+                'WorkingDays' => (float) ($data['working_days'] ?? 1),
+                'Description' => $data['detail_description'] ?? null,
+                'IsActive' => 1,
+                'CreatedBy' => -1,
+                'CreatedAt' => $now,
+                'ModifiedBy' => -1,
+                'ModifiedAt' => $now,
+                'AbsenceType' => $data['absence_type'] ?? 1,
+            ]);
+
+            return $this->getCustomerLeaveRequest((int) $id) ?? [];
+        });
+    }
+
+    private function updateCustomerLeaveRequest(int $id, array $data): ?array
+    {
+        return $this->customerConnection()->transaction(function () use ($id, $data) {
+            $connection = $this->customerConnection();
+            $doc = $connection->table('D30AttendanceDoc')->where('Id', $id)->where('DocType', 'AL')->first();
+            if (!$doc) {
+                return null;
+            }
+
+            $docDate = array_key_exists('request_date', $data)
+                ? Carbon::parse($data['request_date'])->toDateString()
+                : $this->nullableDate(data_get($doc, 'DocDate'));
+            $now = Carbon::now();
+            $payload = ['ModifiedAt' => $now];
+
+            if ($docDate) {
+                $payload['DocDate'] = $docDate;
+            }
+            if (array_key_exists('employee_code', $data)) {
+                $payload['EmployeeCode'] = Str::upper((string) $data['employee_code']);
+            }
+            if (array_key_exists('manager_code', $data)) {
+                $payload['ManagerCode'] = Str::upper((string) ($data['manager_code'] ?? ''));
+            }
+            if (array_key_exists('reason', $data)) {
+                $payload['Description'] = (string) $data['reason'];
+            }
+
+            $connection->table('D30AttendanceDoc')->where('Id', $id)->update($payload);
+
+            $detail = $connection->table('D30AbsenceDetail')
+                ->where('DocId', (string) data_get($doc, 'DocId'))
+                ->where('IsActive', 1)
+                ->orderBy('Id')
+                ->first();
+
+            $detailDate = array_key_exists('to_date', $data) && $data['to_date']
+                ? Carbon::parse($data['to_date'])->toDateString()
+                : $docDate;
+
+            $detailPayload = [
+                'Date' => $detailDate,
+                'WorkingHours' => (float) ($data['working_hours'] ?? data_get($detail, 'WorkingHours', 8)),
+                'WorkingDays' => (float) ($data['working_days'] ?? data_get($detail, 'WorkingDays', 1)),
+                'Description' => $data['detail_description'] ?? data_get($detail, 'Description'),
+                'ModifiedAt' => $now,
+                'AbsenceType' => $data['absence_type'] ?? data_get($detail, 'AbsenceType', 1),
+            ];
+
+            if ($detail) {
+                $connection->table('D30AbsenceDetail')->where('Id', data_get($detail, 'Id'))->update($detailPayload);
+            } else {
+                $connection->table('D30AbsenceDetail')->insertGetId(array_merge($detailPayload, [
+                    'DocId' => (string) data_get($doc, 'DocId'),
+                    'IsActive' => 1,
+                    'CreatedBy' => -1,
+                    'CreatedAt' => $now,
+                    'ModifiedBy' => -1,
+                ]));
+            }
+
+            return $this->getCustomerLeaveRequest($id);
+        });
+    }
+
+    private function formatCustomerLeaveRequest(object $doc, Collection $details, array $employeeNames = []): array
+    {
+        $docId = (string) data_get($doc, 'DocId');
+        $employeeCode = (string) data_get($doc, 'EmployeeCode');
+        $detailRows = $details->map(fn (object $detail) => $this->formatCustomerAbsenceDetail($detail))->values()->all();
+        $lastDate = collect($detailRows)->pluck('work_date')->filter()->last();
+
+        return [
+            'id' => (int) data_get($doc, 'Id'),
+            'doc_id' => $docId,
+            'doc_no' => (string) data_get($doc, 'DocNo'),
+            'doc_type' => (string) data_get($doc, 'DocType'),
+            'employee_code' => $employeeCode,
+            'employee_name' => $employeeNames[$employeeCode] ?? $employeeCode,
+            'manager_code' => (string) data_get($doc, 'ManagerCode'),
+            'request_type' => 'leave',
+            'request_date' => $this->nullableDate(data_get($doc, 'DocDate')),
+            'from_date' => $this->nullableDate(data_get($doc, 'DocDate')),
+            'to_date' => $lastDate ?: $this->nullableDate(data_get($doc, 'DocDate')),
+            'reason' => (string) data_get($doc, 'Description'),
+            'status' => (bool) data_get($doc, 'IsActive', true) ? 'active' : 'inactive',
+            'details' => $detailRows,
+            'created_at' => Carbon::parse(data_get($doc, 'CreatedAt'))->toISOString(),
+        ];
+    }
+
+    private function formatCustomerAbsenceDetail(object $detail): array
+    {
+        return [
+            'id' => (int) data_get($detail, 'Id'),
+            'row_id' => (string) data_get($detail, 'RowId'),
+            'doc_id' => (string) data_get($detail, 'DocId'),
+            'work_date' => $this->nullableDate(data_get($detail, 'Date')),
+            'date' => $this->nullableDate(data_get($detail, 'Date')),
+            'working_hours' => (float) data_get($detail, 'WorkingHours', 0),
+            'working_days' => (float) data_get($detail, 'WorkingDays', 0),
+            'description' => data_get($detail, 'Description'),
+            'absence_type' => data_get($detail, 'AbsenceType'),
+            'is_active' => (bool) data_get($detail, 'IsActive', true),
+        ];
     }
 
     private function formatTimeLog(TimeLog $log): array
@@ -751,10 +1082,26 @@ class AttendanceService
             'employee_name' => $request->employee?->full_name ?? 'Unknown',
             'request_type' => $request->request_type,
             'request_date' => $request->from_date?->format('Y-m-d'),
+            'from_date' => $request->from_date?->format('Y-m-d'),
+            'to_date' => $request->to_date?->format('Y-m-d'),
             'reason' => $request->reason,
             'status' => $request->status instanceof AttendanceRequestStatus
                 ? $request->status->value
                 : (string) $request->status,
+            'details' => $request->details
+                ->map(fn (AttendanceRequestDetail $detail) => [
+                    'id' => $detail->id,
+                    'work_date' => $detail->work_date?->format('Y-m-d'),
+                    'date' => $detail->work_date?->format('Y-m-d'),
+                    'requested_check_in' => $detail->requested_check_in?->toISOString(),
+                    'requested_check_out' => $detail->requested_check_out?->toISOString(),
+                    'working_hours' => $detail->requested_hours !== null ? (float) $detail->requested_hours : null,
+                    'requested_hours' => $detail->requested_hours !== null ? (float) $detail->requested_hours : null,
+                    'description' => $detail->note,
+                    'note' => $detail->note,
+                ])
+                ->values()
+                ->all(),
             'attachment' => null,
             'reviewed_by' => $request->approver?->name ?? $request->approver?->username ?? ($request->approved_by ? 'admin' : null),
             'reviewed_at' => $request->approved_at?->toISOString(),
@@ -874,6 +1221,88 @@ class AttendanceService
             'source' => 'customer_source',
             'source_table' => 'D30AssignedShift',
             'is_active' => (bool) data_get($assignment, 'IsActive', true),
+        ];
+    }
+
+    private function createCustomerShiftAssignment(ConnectionInterface $connection, array $data): array
+    {
+        $workDate = Carbon::parse($data['work_date'])->toDateString();
+        $startDate = Carbon::parse($data['start_date'] ?? $workDate)->toDateString();
+        $endDate = Carbon::parse($data['end_date'] ?? $data['start_date'] ?? $workDate)->toDateString();
+        $assignId = (string) ($data['assign_id'] ?? ('AS' . Carbon::now()->format('ymdHis')));
+        $flags = $this->weekdayFlags($workDate);
+
+        $connection->table('D30AssignedShift')->insert([
+            'AssignId' => $assignId,
+            'Date' => $workDate,
+            'EmployeeCode' => (string) $data['employee_code'],
+            'ShiftCode' => (string) $data['shift_code'],
+            'StartDate' => $startDate,
+            'EndDate' => $endDate,
+            'IncludeMon' => (int) $flags['include_mon'],
+            'IncludeTue' => (int) $flags['include_tue'],
+            'IncludeWed' => (int) $flags['include_wed'],
+            'IncludeThu' => (int) $flags['include_thu'],
+            'IncludeFri' => (int) $flags['include_fri'],
+            'IncludeSat' => (int) $flags['include_sat'],
+            'IncludeSun' => (int) $flags['include_sun'],
+            'Description' => $data['note'] ?? null,
+            'IsActive' => 1,
+        ]);
+
+        $assignment = $connection->table('D30AssignedShift as a')
+            ->leftJoin('D20Shift as s', 's.Code', '=', 'a.ShiftCode')
+            ->leftJoin('D20Employee as e', 'e.Code', '=', 'a.EmployeeCode')
+            ->select([
+                'a.Id',
+                'a.AssignId',
+                'a.Date',
+                'a.EmployeeCode',
+                'a.ShiftCode',
+                'a.StartDate',
+                'a.EndDate',
+                'a.IncludeMon',
+                'a.IncludeTue',
+                'a.IncludeWed',
+                'a.IncludeThu',
+                'a.IncludeFri',
+                'a.IncludeSat',
+                'a.IncludeSun',
+                'a.Description',
+                'a.IsActive',
+                's.Name as ShiftName',
+                'e.FullName as EmployeeFullName',
+            ])
+            ->where('a.AssignId', $assignId)
+            ->first();
+
+        return $assignment
+            ? $this->formatCustomerShiftAssignment($assignment)
+            : [
+                'id' => $assignId,
+                'assign_id' => $assignId,
+                'employee_code' => (string) $data['employee_code'],
+                'shift_code' => (string) $data['shift_code'],
+                'work_date' => $workDate,
+                'date' => $workDate,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'note' => $data['note'] ?? null,
+            ];
+    }
+
+    private function weekdayFlags(string $date): array
+    {
+        $day = Carbon::parse($date)->dayOfWeekIso;
+
+        return [
+            'include_mon' => $day === 1,
+            'include_tue' => $day === 2,
+            'include_wed' => $day === 3,
+            'include_thu' => $day === 4,
+            'include_fri' => $day === 5,
+            'include_sat' => $day === 6,
+            'include_sun' => $day === 7,
         ];
     }
 

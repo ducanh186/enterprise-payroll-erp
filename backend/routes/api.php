@@ -63,6 +63,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/salary-scales/{scaleId}/grades', [ReferenceController::class, 'storeSalaryGrade'])->where('scaleId', '[0-9]+')->middleware('permission:reference.manage');
         Route::put('/salary-grades/{id}', [ReferenceController::class, 'updateSalaryGrade'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
         Route::post('/salary-grades/{id}/suspend', [ReferenceController::class, 'suspendSalaryGrade'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
+        Route::get('/salary-grades/{id}/details', [ReferenceController::class, 'salaryGradeDetails'])->where('id', '[0-9]+');
+        Route::post('/salary-grades/{id}/details', [ReferenceController::class, 'storeSalaryGradeDetail'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
+        Route::put('/salary-grade-details/{id}', [ReferenceController::class, 'updateSalaryGradeDetail'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
         Route::get('/allowances', [ReferenceController::class, 'allowances']);
         Route::post('/allowances', [ReferenceController::class, 'storeAllowance'])->middleware('permission:reference.manage');
         Route::put('/allowances/{id}', [ReferenceController::class, 'updateAllowance'])->where('id', '[0-9]+')->middleware('permission:reference.manage');
@@ -111,9 +114,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/requests', [AttendanceController::class, 'requestsIndex'])->middleware('permission:attendance.manage_request');
         Route::post('/requests', [AttendanceController::class, 'requestsStore'])->middleware('permission:attendance.manage_request');
         Route::get('/requests/{id}', [AttendanceController::class, 'requestsShow'])->where('id', '[0-9]+')->middleware('permission:attendance.manage_request');
+        Route::put('/requests/{id}', [AttendanceController::class, 'requestsUpdate'])->where('id', '[0-9]+')->middleware('permission:attendance.manage_request');
         Route::post('/requests/{id}/approve', [AttendanceController::class, 'requestsApprove'])->where('id', '[0-9]+')->middleware('permission:attendance.confirm');
         Route::post('/requests/{id}/reject', [AttendanceController::class, 'requestsReject'])->where('id', '[0-9]+')->middleware('permission:attendance.confirm');
         Route::get('/shift-assignments', [AttendanceController::class, 'shiftAssignments'])->middleware('permission:attendance.manage_period');
+        Route::post('/shift-assignments', [AttendanceController::class, 'storeShiftAssignment'])->middleware('permission:attendance.manage_period');
     });
 
     // -----------------------------------------------------------------------

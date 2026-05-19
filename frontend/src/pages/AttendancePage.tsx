@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -68,6 +69,7 @@ function buildCalendar(year: number, month: number) {
 
 export default function AttendancePage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [date, setDate] = useState("2026-01-05");
   const todayDay = new Date(date).getDate();
   const [selectedDay, setSelectedDay] = useState<number>(todayDay);
@@ -464,7 +466,7 @@ export default function AttendancePage() {
                   {viDayOfWeek(selectedDayISO)}
                 </p>
               </div>
-              <button className="rounded-lg bg-slate-950 px-4 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90">
+              <button type="button" onClick={() => navigate("/attendance/leave-requests")} className="rounded-lg bg-slate-950 px-4 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90">
                 Yêu cầu điều chỉnh
               </button>
             </div>
@@ -533,13 +535,14 @@ export default function AttendancePage() {
               <p className="mb-4 text-sm opacity-80">
                 Quên chấm ra hôm qua? Gửi yêu cầu điều chỉnh chấm công cho quản lý.
               </p>
-              <a
-                href="#"
+              <button
+                type="button"
+                onClick={() => navigate("/attendance/leave-requests")}
                 className="inline-flex items-center gap-2 text-xs font-black uppercase text-emerald-300 hover:underline"
               >
                 Tạo yêu cầu
                 <AlertTriangle className="h-4 w-4" />
-              </a>
+              </button>
             </div>
             <Users className="pointer-events-none absolute -bottom-4 -right-4 h-24 w-24 text-white/5" />
           </div>

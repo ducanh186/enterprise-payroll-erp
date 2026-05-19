@@ -698,16 +698,6 @@ export default function ReportsPage() {
                   </span>
                 </p>
 
-                {/* Raw JSON */}
-                <div className="rounded-2xl overflow-hidden border border-slate-800">
-                  <div className="flex items-center justify-between border-b border-slate-700 bg-slate-900 px-4 py-2">
-                    <span className="text-xs font-semibold text-slate-400">Phản hồi JSON</span>
-                    <span className="text-xs text-slate-500">{selectedCode}</span>
-                  </div>
-                  <pre className="overflow-x-auto bg-slate-950 p-4 text-xs leading-6 text-slate-300 max-h-72">
-                    {JSON.stringify(preview, null, 2)}
-                  </pre>
-                </div>
               </div>
             ) : (
               <EmptyState

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, RefreshCcw, Search } from "lucide-react";
-import { apiGet } from "../lib/api";
+import DateInput from "../components/DateInput";
+import { apiGet, apiPost, getApiErrorMessage } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { textValue, toArray } from "../lib/records";
 import { EmptyState, Modal, PageHeader } from "../components/ui";
@@ -26,8 +27,16 @@ function getInitials(name: string): string {
 }
 
 export default function ShiftAssignmentsPage() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({
+    employee_code: "",
+    shift_code: "",
+    work_date: new Date().toISOString().slice(0, 10),
+    note: "",
+  });
+  const [error, setError] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["attendance", "shift-assignments"],
@@ -49,6 +58,19 @@ export default function ShiftAssignmentsPage() {
       return name.includes(q) || shift.includes(q);
     });
   }, [items, search]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => apiPost<unknown>("/attendance/shift-assignments", form),
+    onSuccess: async () => {
+      setError(null);
+      setShowModal(false);
+      setForm({ employee_code: "", shift_code: "", work_date: new Date().toISOString().slice(0, 10), note: "" });
+      await queryClient.invalidateQueries({ queryKey: ["attendance", "shift-assignments"] });
+    },
+    onError: (mutationError) => {
+      setError(getApiErrorMessage(mutationError, "Không thể lưu phân ca làm việc."));
+    },
+  });
 
   return (
     <div className="space-y-8 pb-10">
@@ -98,7 +120,6 @@ export default function ShiftAssignmentsPage() {
               <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nhân viên</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ca làm việc</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ngày</th>
-              <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nguồn</th>
               <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ghi chú</th>
             </tr>
           </thead>
@@ -112,7 +133,7 @@ export default function ShiftAssignmentsPage() {
                       <div className="h-3.5 w-32 rounded bg-slate-200" />
                     </div>
                   </td>
-                  {Array.from({ length: 4 }).map((__, j) => (
+                  {Array.from({ length: 3 }).map((__, j) => (
                     <td key={j} className="px-4 py-4"><div className="h-3.5 w-24 rounded bg-slate-200" /></td>
                   ))}
                 </tr>
@@ -124,7 +145,6 @@ export default function ShiftAssignmentsPage() {
                 const code = textValue(item, ["employee.employee_code", "employee_code"], "");
                 const shiftName = textValue(item, ["shift.name", "shift_name", "shift"], "—");
                 const date = textValue(item, ["date", "work_date", "assigned_date"], "");
-                const source = textValue(item, ["source", "assignment_source"], "—");
                 const note = textValue(item, ["note", "notes", "remark"], "");
                 const colorClass = avatarColor(name);
                 return (
@@ -144,14 +164,13 @@ export default function ShiftAssignmentsPage() {
                       <span className="rounded bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700">{shiftName}</span>
                     </td>
                     <td className="px-4 py-4 text-sm tabular-nums text-slate-700">{date ? formatDate(date) : "—"}</td>
-                    <td className="px-4 py-4 text-sm text-slate-700">{source}</td>
                     <td className="px-4 py-4 text-sm text-slate-500">{note || "—"}</td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={5} className="py-10">
+                <td colSpan={4} className="py-10">
                   <EmptyState
                     title="Không có phân ca"
                     description="Dữ liệu phân ca chưa được backend trả về hoặc không khớp bộ lọc."
@@ -171,26 +190,27 @@ export default function ShiftAssignmentsPage() {
 
       {/* Modal */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Thêm phân ca làm việc" size="md">
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); saveMutation.mutate(); }}>
+          {error && <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Mã nhân viên</label>
-            <input type="text" placeholder="Ví dụ: NV001" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+            <input type="text" value={form.employee_code} onChange={(event) => setForm((current) => ({ ...current, employee_code: event.target.value }))} placeholder="Ví dụ: NV001" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" required />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Ca làm việc</label>
-            <input type="text" placeholder="Ca sáng" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Mã ca làm việc</label>
+            <input type="text" value={form.shift_code} onChange={(event) => setForm((current) => ({ ...current, shift_code: event.target.value }))} placeholder="Ví dụ: SHIFT_A" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" required />
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Ngày</label>
-            <input type="text" inputMode="numeric" placeholder="DD/MM/YYYY" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+            <DateInput value={form.work_date} onChange={(value) => setForm((current) => ({ ...current, work_date: value }))} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" required />
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-700">Ghi chú</label>
-            <textarea rows={3} placeholder="Ghi chú thêm..." className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
+            <textarea rows={3} value={form.note} onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))} placeholder="Ghi chú thêm..." className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100" />
           </div>
           <div className="flex items-center justify-end gap-3 pt-2">
             <button type="button" onClick={() => setShowModal(false)} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Hủy</button>
-            <button type="button" onClick={() => setShowModal(false)} className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95">Lưu</button>
+            <button type="submit" disabled={saveMutation.isPending} className="rounded-xl bg-gradient-to-br from-slate-950 to-indigo-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 disabled:opacity-60">{saveMutation.isPending ? "Đang lưu..." : "Lưu"}</button>
           </div>
         </form>
       </Modal>
