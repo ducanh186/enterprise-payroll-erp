@@ -3,6 +3,7 @@ backend/vendor/
 frontend/node_modules/
 
 # Environment
+.env
 backend/.env
 frontend/.env
 frontend/.env.local

@@ -7,7 +7,6 @@ import {
   CalendarDays,
   ChevronDown,
   Download,
-  FileSearch2,
   FileText,
   Filter,
   PieChart,
@@ -20,8 +19,7 @@ import {
 } from "lucide-react";
 import { apiDownloadFile, apiGet, apiPost, getApiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
-import { formatDateTime, formatNumber } from "../lib/format";
-import { numberValue, textValue, toArray } from "../lib/records";
+import { textValue, toArray } from "../lib/records";
 import { createPermissionSet, hasPermissionAccess } from "../lib/rbac";
 import { Badge, EmptyState, Panel } from "../components/ui";
 import DateInput from "../components/DateInput";
@@ -109,7 +107,6 @@ export default function ReportsPage() {
     branch_code: "",
   });
 
-  const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
   const [exportResult, setExportResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.get("category") ?? "all");
@@ -134,7 +131,6 @@ export default function ReportsPage() {
   const departments = useMemo(() => toArray<Department>(departmentsQuery.data?.data), [departmentsQuery.data?.data]);
 
   const refreshReports = async () => {
-    setPreview(null);
     setExportResult(null);
     setError(null);
     await Promise.all([
@@ -189,18 +185,6 @@ export default function ReportsPage() {
     return base;
   };
 
-  const previewMutation = useMutation({
-    mutationFn: async () =>
-      apiPost<unknown>(`/reports/${selectedCode}/preview`, buildReportParams()),
-    onSuccess: (response) => {
-      setError(null);
-      setPreview((response.data ?? {}) as Record<string, unknown>);
-    },
-    onError: (mutationError) => {
-      setError(getApiErrorMessage(mutationError, "Không thể preview report."));
-    },
-  });
-
   const exportMutation = useMutation({
     mutationFn: async () =>
       apiPost<unknown>(`/reports/${selectedCode}/export`, {
@@ -249,7 +233,7 @@ export default function ReportsPage() {
             Trung tâm báo cáo
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            Chọn template, thiết lập tham số, preview nhanh hoặc export file.
+            Chọn template, thiết lập tham số và export file.
           </p>
         </div>
 
@@ -384,7 +368,7 @@ export default function ReportsPage() {
         )}
       </section>
 
-      {/* Parameters + Preview/Export split */}
+      {/* Parameters + Export result split */}
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         {/* Parameters panel */}
         <Panel
@@ -608,26 +592,13 @@ export default function ReportsPage() {
               )}
 
               {/* Action buttons */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => previewMutation.mutate()}
-                  disabled={previewMutation.isPending || !selectedCode}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {previewMutation.isPending ? (
-                    <RefreshCcw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <FileSearch2 className="h-4 w-4" />
-                  )}
-                  Xem trước
-                </button>
+              <div className="grid gap-3">
                 {canExportReports && (
                   <button
                     type="button"
                     onClick={() => exportMutation.mutate()}
                     disabled={exportMutation.isPending || !selectedCode}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {exportMutation.isPending ? (
                       <RefreshCcw className="h-4 w-4 animate-spin" />
@@ -647,66 +618,9 @@ export default function ReportsPage() {
           )}
         </Panel>
 
-        {/* Preview / Export output panel */}
-        <Panel title="Kết quả xem trước / Xuất báo cáo" subtitle="Kết quả trả về từ controller">
+        {/* Export output panel */}
+        <Panel title="Kết quả xuất báo cáo" subtitle="File mới nhất trả về từ controller">
           <div className="space-y-5">
-            {preview ? (
-              <div className="space-y-4">
-                {/* Summary metrics from preview */}
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {[
-                    {
-                      label: "Tiêu đề",
-                      value: textValue(preview, ["title"], "N/A"),
-                    },
-                    {
-                      label: "Mã báo cáo",
-                      value: textValue(preview, ["report_code"], selectedCode),
-                    },
-                    {
-                      label: "Tổng nhân viên",
-                      value: formatNumber(
-                        numberValue(preview, ["summary.total_employees", "total_employees"], 0)
-                      ),
-                    },
-                    {
-                      label: "Tổng lương gộp",
-                      value: textValue(
-                        preview,
-                        ["summary.total_gross_salary", "summary.total_amount"],
-                        "—"
-                      ),
-                    },
-                  ].map(({ label, value }) => (
-                    <div
-                      key={label}
-                      className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
-                    >
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        {label}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">{String(value)}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Generated at */}
-                <p className="text-xs text-slate-400">
-                  Tạo lúc:{" "}
-                  <span className="font-medium text-slate-600">
-                    {formatDateTime(textValue(preview, ["generated_at"], ""))}
-                  </span>
-                </p>
-
-              </div>
-            ) : (
-              <EmptyState
-                title="Chưa có preview"
-                description="Bấm Xem trước để xem dữ liệu báo cáo trước khi xuất."
-              />
-            )}
-
-            {/* Export result banner */}
             {exportResult && (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                 <div className="flex items-start gap-3">
@@ -734,6 +648,13 @@ export default function ReportsPage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {!exportResult && (
+              <EmptyState
+                title="Chưa có file xuất"
+                description="Chọn template và bấm Xuất báo cáo để tạo file."
+              />
             )}
           </div>
         </Panel>
@@ -842,7 +763,7 @@ export default function ReportsPage() {
                               : "text-slate-600 hover:bg-slate-100"
                           }`}
                         >
-                          <FileSearch2 className="h-3.5 w-3.5" />
+                          <FileText className="h-3.5 w-3.5" />
                           {isSelected ? "Đang chọn" : "Chọn"}
                         </button>
                       </td>

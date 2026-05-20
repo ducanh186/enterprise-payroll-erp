@@ -278,7 +278,7 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
   });
 
   for (const report of FUJIMART_REPORTS) {
-    await test.step(`Preview and export ${report.title}`, async () => {
+    await test.step(`Export ${report.title}`, async () => {
       await openRoute(page, report.url, "Trung tâm báo cáo");
       await page.getByRole("button", { name: "Làm mới" }).first().click();
       await expect(page.getByText("Bảng chấm công").first()).toBeVisible();
@@ -291,8 +291,8 @@ test("admin can use Fujimart HRM customer flows without FE/BE runtime errors", a
       if (report.employeeCode) {
         await page.getByPlaceholder("Dùng cho phiếu lương cá nhân").fill(report.employeeCode);
       }
-      await page.getByRole("button", { name: "Xem trước" }).click();
-      await expect(page.getByText(/Phản hồi JSON|Tạo lúc/i).first()).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("button", { name: "Xem trước" })).toHaveCount(0);
+      await expect(page.getByText(/Chưa có preview|Bấm Xem trước/i)).toHaveCount(0);
 
       await page.getByRole("button", { name: "Xuất báo cáo" }).click();
       await expect(page.getByText("Export thành công")).toBeVisible({ timeout: 30_000 });

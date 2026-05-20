@@ -46,11 +46,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 transform border-r border-white/10 bg-slate-950/95 px-4 py-5 text-white shadow-2xl transition-all duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex transform flex-col border-r border-white/10 bg-slate-950/95 px-4 py-5 text-white shadow-2xl transition-all duration-300 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "lg:w-16 lg:px-2" : "w-72"}`}
       >
-        <div className={`mb-6 flex items-center ${collapsed ? "justify-center" : "px-1"}`}>
+        <div className={`mb-6 flex shrink-0 items-center ${collapsed ? "justify-center" : "px-1"}`}>
           <div
             className={
               collapsed
@@ -67,7 +67,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
           </div>
         </div>
 
-        <nav className="flex flex-col gap-2 overflow-y-auto pb-20" style={{ maxHeight: "calc(100vh - 128px)" }}>
+        <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-4">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isExpanded = expandedModules[item.label];
@@ -170,10 +170,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }: 
         <button
           type="button"
           onClick={onToggleCollapse}
-          className={`absolute bottom-5 hidden items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white lg:flex ${
+          className={`mt-4 hidden shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white lg:flex ${
             collapsed
-              ? "left-1/2 -translate-x-1/2 p-2"
-              : "left-4 right-4 px-3 py-2 text-sm font-semibold"
+              ? "mx-auto p-2"
+              : "w-full px-3 py-2 text-sm font-semibold"
           }`}
           aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
           title={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}

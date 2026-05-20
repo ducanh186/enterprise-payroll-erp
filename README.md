@@ -10,7 +10,7 @@ He thong gom 3 service chinh:
 | --- | --- | --- |
 | Frontend | Man hinh React/Vite de user thao tac | `http://127.0.0.1:5174/login` |
 | Backend | Laravel API xu ly nghiep vu | `http://127.0.0.1:8001/api` |
-| SQL Server | Database local trong Docker | `127.0.0.1:1433` |
+| SQL Server | Mac dinh la database local trong Docker | `127.0.0.1:1433` |
 
 Nen dung `127.0.0.1` thay cho `localhost` khi test tren Windows. Cach nay giup tranh loi login `Network Error` do may resolve `localhost` qua IPv6/WSL relay.
 
@@ -64,7 +64,69 @@ Mo app:
 http://127.0.0.1:5174/login
 ```
 
-Neu moi clone repo hoac can reset lai app DB, chay:
+### Chay app voi SQL Server tren may host
+
+Mac dinh `docker compose up -d --build` se dung SQL Server container cua repo. Neu khach dang chay SQL Server truc tiep tren may Windows cua ho, backend container can tro ve host qua `host.docker.internal`.
+
+Lam tung buoc nhu sau de user tu sua `.env`:
+
+```powershell
+cd D:\CODE\enterprise-payroll-erp
+Copy-Item .env.example .env
+notepad .env
+```
+
+Trong Notepad, repo da dien san host local cua khach. User chi can dien password vao 2 dong `HOST_DB_PASSWORD` va `CUSTOMER_DB_PASSWORD`:
+
+```text
+HOST_DB_HOST=192.168.1.86
+HOST_DB_PORT=1433
+HOST_DB_DATABASE=DUNGNTN_HRM
+HOST_DB_USERNAME=sa
+HOST_DB_PASSWORD=<mat-khau-sql-server>
+
+CUSTOMER_DB_HOST=192.168.1.86
+CUSTOMER_DB_PORT=1433
+CUSTOMER_DB_DATABASE=DUNGNTN_HRM
+CUSTOMER_DB_USERNAME=sa
+CUSTOMER_DB_PASSWORD=<mat-khau-sql-server>
+```
+
+Neu sau nay IP hoac database doi, sua lai cac dong nay trong `.env`:
+
+```text
+HOST_DB_HOST=<ip-sql-server>
+HOST_DB_DATABASE=<ten-database-app>
+CUSTOMER_DB_HOST=<ip-sql-server>
+CUSTOMER_DB_DATABASE=<ten-database-nguon>
+```
+
+Khong commit file `.env` len GitHub vi file nay co password that.
+
+Sau do chay app bang override rieng cho SQL Server tren host:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.host-sqlserver.yml up -d --build backend frontend
+```
+
+Kiem tra backend co ket noi duoc database host khong:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.host-sqlserver.yml exec -T backend php artisan tinker --execute="DB::connection()->select('SELECT 1 AS ok'); echo 'main_db_ok'.PHP_EOL;"
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.host-sqlserver.yml exec -T backend php artisan tinker --execute="DB::connection('customer_sqlsrv')->select('SELECT 1 AS ok'); echo 'customer_db_ok'.PHP_EOL;"
+```
+
+Neu khong ket noi duoc, hay kiem tra:
+
+- SQL Server Configuration Manager da bat `TCP/IP`.
+- SQL Server dang lang nghe port `1433`.
+- User/password trong `.env` dang dung.
+- Windows Firewall cho phep ket noi SQL Server tu Docker.
+- Neu SQL Server dung instance name thay vi port co dinh, cau hinh instance do lang nghe port `1433` truoc khi test.
+
+Chi chay lenh reset DB ben duoi voi database dev/local. Khong chay `migrate:fresh` tren SQL Server that cua khach neu chua backup va chua duoc phe duyet.
+
+Neu moi clone repo hoac can reset lai app DB dev/local, chay:
 
 ```powershell
 docker compose exec -T backend php artisan migrate:fresh --seed --force
